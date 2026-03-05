@@ -1,10 +1,16 @@
 import json
+from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from database import init_db, get_db
-from llm import generate_workout, parse_workout_log, analyze_progress
+from llm import (
+    generate_workout, parse_workout_log, parse_workout_image,
+    analyze_progress, generate_training_plan, analyze_plan_progress,
+)
+import strava
 
 
 @asynccontextmanager
@@ -40,6 +46,9 @@ class SaveWorkoutLog(BaseModel):
     notes: str | None = None
     prescribed_workout: dict | None = None
     exercises: list[dict]
+    source: str = "manual"
+    plan_id: int | None = None
+    plan_week: int | None = None
 
 
 class PRConfirm(BaseModel):
@@ -51,6 +60,26 @@ class PRConfirm(BaseModel):
 
 class ProgressQuery(BaseModel):
     question: str
+
+
+class PlanRequest(BaseModel):
+    goal: str
+    total_weeks: int
+    modalities: list[str]
+    start_date: str
+    mesocycle_weeks: int = 4
+    notes: str = ""
+
+
+class PlanUpdate(BaseModel):
+    status: str | None = None
+    notes: str | None = None
+
+
+class BenchmarkResult(BaseModel):
+    result_value: float
+    result_notes: str = ""
+    workout_id: int | None = None
 
 
 # --- Exercise endpoints ---
@@ -86,15 +115,35 @@ def parse_log(req: LogRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/workouts/parse-image")
+async def parse_image(
+    file: UploadFile = File(...),
+    prescribed_workout: str = Form(default=""),
+):
+    allowed_types = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Unsupported image type: {file.content_type}")
+    try:
+        image_bytes = await file.read()
+        prescribed = json.loads(prescribed_workout) if prescribed_workout else None
+        parsed = parse_workout_image(image_bytes, file.content_type, prescribed)
+        return parsed
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid prescribed_workout JSON")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/workouts/save")
 def save_workout(req: SaveWorkoutLog):
     with get_db() as conn:
         prescribed_json = json.dumps(req.prescribed_workout) if req.prescribed_workout else None
         cursor = conn.execute(
-            """INSERT INTO workouts (workout_type, duration_minutes, notes, llm_generated, prescribed_workout)
-               VALUES (?, ?, ?, ?, ?)""",
+            """INSERT INTO workouts (workout_type, duration_minutes, notes, llm_generated, prescribed_workout, source, plan_id, plan_week)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (req.workout_type, req.duration_minutes, req.notes,
-             1 if req.prescribed_workout else 0, prescribed_json),
+             1 if req.prescribed_workout else 0, prescribed_json,
+             req.source, req.plan_id, req.plan_week),
         )
         workout_id = cursor.lastrowid
 
@@ -230,6 +279,220 @@ def list_benchmarks():
             "SELECT * FROM benchmark_tests ORDER BY date DESC"
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+# --- Training Plans ---
+
+@app.post("/api/plans/generate")
+def create_plan(req: PlanRequest):
+    try:
+        plan_data = generate_training_plan(
+            goal=req.goal,
+            total_weeks=req.total_weeks,
+            modalities=req.modalities,
+            start_date=req.start_date,
+            mesocycle_weeks=req.mesocycle_weeks,
+            notes=req.notes,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    start = datetime.strptime(req.start_date, "%Y-%m-%d")
+    end = start + timedelta(weeks=req.total_weeks)
+
+    with get_db() as conn:
+        cursor = conn.execute(
+            """INSERT INTO training_plans (name, goal, start_date, end_date, total_weeks, mesocycle_weeks, plan_json, notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (plan_data.get("plan_name", "Training Plan"), req.goal,
+             req.start_date, end.strftime("%Y-%m-%d"), req.total_weeks,
+             req.mesocycle_weeks, json.dumps(plan_data),
+             plan_data.get("notes", "")),
+        )
+        plan_id = cursor.lastrowid
+
+        for week in plan_data.get("weeks", []):
+            week_cursor = conn.execute(
+                """INSERT INTO training_plan_weeks (plan_id, week_number, week_type, focus, notes)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (plan_id, week["week_number"], week["week_type"],
+                 week.get("focus", ""), week.get("notes", "")),
+            )
+            week_id = week_cursor.lastrowid
+
+            week_start = start + timedelta(weeks=week["week_number"] - 1)
+            week_end = week_start + timedelta(days=6)
+
+            for bm in week.get("benchmarks", []):
+                conn.execute(
+                    """INSERT INTO plan_benchmarks (plan_id, week_id, benchmark_name, benchmark_type, target_value, scheduled_date)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (plan_id, week_id, bm["benchmark_name"], bm["benchmark_type"],
+                     bm.get("target_value"), week_end.strftime("%Y-%m-%d")),
+                )
+
+    return {"plan_id": plan_id, "plan": plan_data}
+
+
+@app.get("/api/plans")
+def list_plans():
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT id, name, goal, start_date, end_date, total_weeks, mesocycle_weeks, status, notes, created_at FROM training_plans ORDER BY created_at DESC"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.get("/api/plans/{plan_id}")
+def get_plan(plan_id: int):
+    with get_db() as conn:
+        plan = conn.execute("SELECT * FROM training_plans WHERE id = ?", (plan_id,)).fetchone()
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        pd = dict(plan)
+        if pd.get("plan_json"):
+            pd["plan_json"] = json.loads(pd["plan_json"])
+
+        weeks = conn.execute(
+            "SELECT * FROM training_plan_weeks WHERE plan_id = ? ORDER BY week_number", (plan_id,)
+        ).fetchall()
+        pd["weeks"] = []
+        for w in weeks:
+            wd = dict(w)
+            benchmarks = conn.execute(
+                "SELECT * FROM plan_benchmarks WHERE week_id = ?", (w["id"],)
+            ).fetchall()
+            wd["benchmarks"] = [dict(b) for b in benchmarks]
+            pd["weeks"].append(wd)
+
+    return pd
+
+
+@app.put("/api/plans/{plan_id}")
+def update_plan(plan_id: int, req: PlanUpdate):
+    with get_db() as conn:
+        plan = conn.execute("SELECT id FROM training_plans WHERE id = ?", (plan_id,)).fetchone()
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        if req.status:
+            conn.execute("UPDATE training_plans SET status = ? WHERE id = ?", (req.status, plan_id))
+        if req.notes is not None:
+            conn.execute("UPDATE training_plans SET notes = ? WHERE id = ?", (req.notes, plan_id))
+    return {"message": "Plan updated"}
+
+
+@app.get("/api/plans/{plan_id}/benchmarks")
+def list_plan_benchmarks(plan_id: int):
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT pb.*, tpw.week_number, tpw.week_type
+            FROM plan_benchmarks pb
+            JOIN training_plan_weeks tpw ON tpw.id = pb.week_id
+            WHERE pb.plan_id = ?
+            ORDER BY tpw.week_number, pb.id
+        """, (plan_id,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/plans/{plan_id}/benchmarks/{benchmark_id}/result")
+def record_benchmark_result(plan_id: int, benchmark_id: int, req: BenchmarkResult):
+    with get_db() as conn:
+        bm = conn.execute(
+            "SELECT * FROM plan_benchmarks WHERE id = ? AND plan_id = ?", (benchmark_id, plan_id)
+        ).fetchone()
+        if not bm:
+            raise HTTPException(status_code=404, detail="Benchmark not found")
+        conn.execute(
+            """UPDATE plan_benchmarks SET completed = 1, result_value = ?, result_notes = ?, workout_id = ?
+               WHERE id = ?""",
+            (req.result_value, req.result_notes, req.workout_id, benchmark_id),
+        )
+    return {"message": "Benchmark result recorded"}
+
+
+@app.get("/api/plans/{plan_id}/progress")
+def plan_progress(plan_id: int):
+    with get_db() as conn:
+        plan = conn.execute("SELECT * FROM training_plans WHERE id = ?", (plan_id,)).fetchone()
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        plan_data = dict(plan)
+        if plan_data.get("plan_json"):
+            plan_data["plan_json"] = json.loads(plan_data["plan_json"])
+
+        benchmarks = conn.execute("""
+            SELECT pb.*, tpw.week_number, tpw.week_type
+            FROM plan_benchmarks pb
+            JOIN training_plan_weeks tpw ON tpw.id = pb.week_id
+            WHERE pb.plan_id = ?
+            ORDER BY tpw.week_number, pb.id
+        """, (plan_id,)).fetchall()
+        benchmarks = [dict(b) for b in benchmarks]
+
+    try:
+        analysis = analyze_plan_progress(plan_data, benchmarks)
+        return {"analysis": analysis, "benchmarks": benchmarks}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Strava Integration ---
+
+@app.get("/api/strava/auth-url")
+def strava_auth_url():
+    if not strava.STRAVA_CLIENT_ID:
+        raise HTTPException(status_code=400, detail="STRAVA_CLIENT_ID not configured")
+    return {"url": strava.get_auth_url()}
+
+
+@app.get("/api/strava/callback")
+def strava_callback(code: str):
+    try:
+        strava.exchange_code(code)
+        return RedirectResponse(url="http://localhost:5173?strava=connected")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/strava/status")
+def strava_status():
+    return {"connected": strava.is_connected()}
+
+
+@app.get("/api/strava/activities")
+def strava_activities(per_page: int = 30):
+    try:
+        activities = strava.get_activities(per_page)
+        return activities
+    except RuntimeError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/strava/import/{activity_id}")
+def strava_import(activity_id: int):
+    try:
+        activity = strava.get_activity_detail(activity_id)
+        workout_text = strava.strava_to_workout_text(activity)
+        parsed = parse_workout_log(workout_text)
+        parsed["source"] = "strava"
+        parsed["strava_activity"] = {
+            "id": activity["id"],
+            "name": activity.get("name", ""),
+            "type": activity.get("sport_type", activity.get("type", "")),
+        }
+        return parsed
+    except RuntimeError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/strava/disconnect")
+def strava_disconnect():
+    strava.disconnect()
+    return {"message": "Strava disconnected"}
 
 
 if __name__ == "__main__":

@@ -44,6 +44,9 @@ def init_db():
                 notes TEXT,
                 llm_generated INTEGER NOT NULL DEFAULT 0,
                 prescribed_workout TEXT,
+                source TEXT NOT NULL DEFAULT 'manual',
+                plan_id INTEGER REFERENCES training_plans(id),
+                plan_week INTEGER,
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             );
 
@@ -77,7 +80,61 @@ def init_db():
                 notes TEXT,
                 workout_id INTEGER REFERENCES workouts(id)
             );
+
+            CREATE TABLE IF NOT EXISTS training_plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                goal TEXT NOT NULL,
+                start_date TEXT NOT NULL,
+                end_date TEXT,
+                total_weeks INTEGER NOT NULL,
+                mesocycle_weeks INTEGER NOT NULL DEFAULT 4,
+                status TEXT NOT NULL DEFAULT 'active',
+                plan_json TEXT,
+                notes TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS training_plan_weeks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id INTEGER NOT NULL REFERENCES training_plans(id) ON DELETE CASCADE,
+                week_number INTEGER NOT NULL,
+                week_type TEXT NOT NULL CHECK(week_type IN ('build', 'deload')),
+                focus TEXT,
+                notes TEXT,
+                UNIQUE(plan_id, week_number)
+            );
+
+            CREATE TABLE IF NOT EXISTS plan_benchmarks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id INTEGER NOT NULL REFERENCES training_plans(id) ON DELETE CASCADE,
+                week_id INTEGER NOT NULL REFERENCES training_plan_weeks(id) ON DELETE CASCADE,
+                benchmark_name TEXT NOT NULL,
+                benchmark_type TEXT NOT NULL CHECK(benchmark_type IN ('time_trial', 'max_lift', 'timed_wod', 'amrap')),
+                target_value REAL,
+                scheduled_date TEXT,
+                completed INTEGER NOT NULL DEFAULT 0,
+                result_value REAL,
+                result_notes TEXT,
+                workout_id INTEGER REFERENCES workouts(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS strava_tokens (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                access_token TEXT NOT NULL,
+                refresh_token TEXT NOT NULL,
+                expires_at INTEGER NOT NULL
+            );
         """)
+
+        # Add new columns to workouts if they don't exist (migration)
+        existing_cols = {row[1] for row in conn.execute("PRAGMA table_info(workouts)").fetchall()}
+        if "source" not in existing_cols:
+            conn.execute("ALTER TABLE workouts ADD COLUMN source TEXT NOT NULL DEFAULT 'manual'")
+        if "plan_id" not in existing_cols:
+            conn.execute("ALTER TABLE workouts ADD COLUMN plan_id INTEGER REFERENCES training_plans(id)")
+        if "plan_week" not in existing_cols:
+            conn.execute("ALTER TABLE workouts ADD COLUMN plan_week INTEGER")
 
         # Seed common exercises if table is empty
         count = conn.execute("SELECT COUNT(*) FROM exercises").fetchone()[0]

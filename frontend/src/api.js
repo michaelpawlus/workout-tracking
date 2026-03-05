@@ -12,6 +12,15 @@ async function request(path, options = {}) {
   return res.json();
 }
 
+async function requestRaw(path, options = {}) {
+  const res = await fetch(`${API}${path}`, options);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Request failed");
+  }
+  return res.json();
+}
+
 export const api = {
   // Exercises
   getExercises: () => request("/exercises"),
@@ -32,6 +41,18 @@ export const api = {
         prescribed_workout: prescribedWorkout,
       }),
     }),
+
+  parseImage: (file, prescribedWorkout = null) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (prescribedWorkout) {
+      formData.append("prescribed_workout", JSON.stringify(prescribedWorkout));
+    }
+    return requestRaw("/workouts/parse-image", {
+      method: "POST",
+      body: formData,
+    });
+  },
 
   saveWorkout: (data) =>
     request("/workouts/save", {
@@ -60,4 +81,40 @@ export const api = {
 
   // Benchmarks
   getBenchmarks: () => request("/benchmarks"),
+
+  // Training Plans
+  generatePlan: (data) =>
+    request("/plans/generate", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  getPlans: () => request("/plans"),
+
+  getPlan: (id) => request(`/plans/${id}`),
+
+  updatePlan: (id, data) =>
+    request(`/plans/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  getPlanBenchmarks: (planId) => request(`/plans/${planId}/benchmarks`),
+
+  recordBenchmarkResult: (planId, benchmarkId, data) =>
+    request(`/plans/${planId}/benchmarks/${benchmarkId}/result`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  getPlanProgress: (planId) => request(`/plans/${planId}/progress`),
+
+  // Strava
+  getStravaAuthUrl: () => request("/strava/auth-url"),
+  getStravaStatus: () => request("/strava/status"),
+  getStravaActivities: (perPage = 30) => request(`/strava/activities?per_page=${perPage}`),
+  importStravaActivity: (activityId) =>
+    request(`/strava/import/${activityId}`, { method: "POST" }),
+  disconnectStrava: () =>
+    request("/strava/disconnect", { method: "DELETE" }),
 };

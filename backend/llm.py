@@ -1,3 +1,4 @@
+import base64
 import json
 import anthropic
 from database import get_db
@@ -139,9 +140,7 @@ Respond ONLY with the JSON object, no other text."""
     return json.loads(text)
 
 
-def parse_workout_log(user_input: str, prescribed_workout: dict | None = None) -> dict:
-    context = _build_context()
-
+def _workout_parse_system_prompt(context: str, prescribed_workout: dict | None = None) -> str:
     prescribed_section = ""
     if prescribed_workout:
         prescribed_section = f"""
@@ -150,7 +149,7 @@ The user was performing this workout:
 {json.dumps(prescribed_workout, indent=2)}
 """
 
-    system_prompt = f"""You are a workout logging assistant. Parse the user's natural language workout description into structured data.
+    return f"""You are a workout logging assistant. Parse the user's workout description into structured data.
 
 {context}
 {prescribed_section}
@@ -160,6 +159,8 @@ IMPORTANT RULES:
 2. If you're unsure which exercise the user means, include a "clarification_needed" field.
 3. Extract all quantitative data: sets, reps, weights, times, rounds, distances.
 4. If the user references the prescribed workout (e.g., "finished as prescribed", "used the suggested weights"), use those values.
+5. Recognize CrossFit/SugarWOD formats: AMRAP, EMOM, rounds for time, 21-15-9 rep schemes, "Rx" / "scaled", named WODs (Fran, Murph, Cindy, etc).
+6. If the input is an image/photo of a whiteboard or phone screenshot, extract the workout exactly as written.
 
 Respond with a JSON object in this exact format:
 {{
@@ -192,6 +193,20 @@ Respond with a JSON object in this exact format:
 
 Respond ONLY with the JSON object, no other text."""
 
+
+def _parse_llm_json(text: str) -> dict:
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1]
+        if text.endswith("```"):
+            text = text[:-3].strip()
+    return json.loads(text)
+
+
+def parse_workout_log(user_input: str, prescribed_workout: dict | None = None) -> dict:
+    context = _build_context()
+    system_prompt = _workout_parse_system_prompt(context, prescribed_workout)
+
     response = client.messages.create(
         model=MODEL,
         max_tokens=2000,
@@ -199,13 +214,39 @@ Respond ONLY with the JSON object, no other text."""
         system=system_prompt,
     )
 
-    text = response.content[0].text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1]
-        if text.endswith("```"):
-            text = text[:-3].strip()
+    return _parse_llm_json(response.content[0].text)
 
-    return json.loads(text)
+
+def parse_workout_image(image_bytes: bytes, media_type: str, prescribed_workout: dict | None = None) -> dict:
+    context = _build_context()
+    system_prompt = _workout_parse_system_prompt(context, prescribed_workout)
+
+    image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
+
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=2000,
+        messages=[{
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": media_type,
+                        "data": image_data,
+                    },
+                },
+                {
+                    "type": "text",
+                    "text": "Parse this workout image into structured data.",
+                },
+            ],
+        }],
+        system=system_prompt,
+    )
+
+    return _parse_llm_json(response.content[0].text)
 
 
 def analyze_progress(user_question: str) -> str:
@@ -240,6 +281,103 @@ Be encouraging but honest. If data is insufficient, say so."""
         model=MODEL,
         max_tokens=1500,
         messages=[{"role": "user", "content": user_question}],
+        system=system_prompt,
+    )
+
+    return response.content[0].text
+
+
+def generate_training_plan(goal: str, total_weeks: int, modalities: list[str],
+                           start_date: str, mesocycle_weeks: int = 4, notes: str = "") -> dict:
+    context = _build_context()
+
+    system_prompt = f"""You are a training plan designer. Create a structured mesocycle training plan.
+
+{context}
+
+IMPORTANT RULES:
+1. Follow a build/build/build/deload mesocycle pattern (default 4-week cycles, configurable).
+   - Build weeks increase intensity/volume progressively.
+   - Deload weeks reduce volume by ~40-50%.
+2. Schedule benchmark tests at the END of each build week (not deload weeks) so progress can be tracked.
+3. Recurring benchmarks should be consistent across cycles for comparison:
+   - Running: mile time trial, 5K time trial
+   - Lifting: 1RM or 5RM on key lifts (back squat, deadlift, bench press, overhead press, clean)
+   - MetCon: named WODs (Fran, Cindy, Murph), custom timed WODs
+   - AMRAP: standard AMRAP tests (e.g., max pull-ups in 2 min, max burpees in 5 min)
+4. Only include benchmarks relevant to the selected modalities.
+5. Use exercises from the Available Exercises list.
+6. Scale suggestions based on user's history and PRs when available.
+
+Respond with JSON:
+{{
+  "plan_name": "Descriptive plan name",
+  "goal": "Restated goal",
+  "total_weeks": <number>,
+  "mesocycle_weeks": <number>,
+  "weeks": [
+    {{
+      "week_number": <1-based>,
+      "week_type": "build" or "deload",
+      "focus": "Brief focus description",
+      "notes": "Training notes for this week",
+      "benchmarks": [
+        {{
+          "benchmark_name": "e.g. Back Squat 1RM",
+          "benchmark_type": "time_trial" or "max_lift" or "timed_wod" or "amrap",
+          "target_value": <number or null>,
+          "notes": "Description of the benchmark test"
+        }}
+      ]
+    }}
+  ],
+  "notes": "Overall plan notes and coaching advice"
+}}
+
+Respond ONLY with the JSON object."""
+
+    user_msg = f"""Create a {total_weeks}-week training plan.
+Goal: {goal}
+Modalities: {', '.join(modalities)}
+Start date: {start_date}
+Mesocycle length: {mesocycle_weeks} weeks
+Additional notes: {notes or 'None'}"""
+
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=4000,
+        messages=[{"role": "user", "content": user_msg}],
+        system=system_prompt,
+    )
+
+    return _parse_llm_json(response.content[0].text)
+
+
+def analyze_plan_progress(plan_data: dict, benchmarks: list[dict]) -> str:
+    context = _build_context()
+
+    system_prompt = f"""You are a training progress analyst. Analyze benchmark results across a training plan's mesocycles.
+
+{context}
+
+## Training Plan
+{json.dumps(plan_data, indent=2, default=str)}
+
+## Benchmark Results
+{json.dumps(benchmarks, indent=2, default=str)}
+
+Compare benchmark results across cycles. Identify:
+1. Improvements and their magnitude (percentage gains)
+2. Plateaus or regressions
+3. Which modalities are progressing well vs. need attention
+4. Recommendations for the next training cycle
+
+Be specific with numbers. Use encouraging but honest tone."""
+
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=2000,
+        messages=[{"role": "user", "content": "Analyze my training plan progress based on the benchmark results."}],
         system=system_prompt,
     )
 

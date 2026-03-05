@@ -1,20 +1,42 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { api } from "../api";
 
 export default function LogWorkout({ activeWorkout, onSaved }) {
   const [input, setInput] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [parsed, setParsed] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  function handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setInput("");
+  }
+
+  function clearImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function handleParse(e) {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() && !imageFile) return;
     setLoading(true);
     setError(null);
     try {
-      const result = await api.parseLog(input, activeWorkout);
+      let result;
+      if (imageFile) {
+        result = await api.parseImage(imageFile, activeWorkout);
+      } else {
+        result = await api.parseLog(input, activeWorkout);
+      }
       setParsed(result);
     } catch (err) {
       setError(err.message);
@@ -33,6 +55,7 @@ export default function LogWorkout({ activeWorkout, onSaved }) {
         notes: parsed.notes,
         prescribed_workout: activeWorkout,
         exercises: parsed.exercises,
+        source: parsed.source || (imageFile ? "image" : "manual"),
       });
 
       // Handle PR confirmations
@@ -65,31 +88,64 @@ export default function LogWorkout({ activeWorkout, onSaved }) {
           </p>
         )}
         <form onSubmit={handleParse}>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              activeWorkout
-                ? 'Describe how it went, e.g. "Finished in 22 minutes, used 135 on squats and 95 on overhead press"'
-                : 'Describe your workout, e.g. "Bench press 5x5 at 205, then 3x10 dumbbell rows at 60 lbs"'
-            }
-            rows={4}
-            disabled={loading}
-          />
+          {!imageFile && (
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={
+                activeWorkout
+                  ? 'Describe how it went, e.g. "Finished in 22 minutes, used 135 on squats and 95 on overhead press"'
+                  : 'Describe your workout, e.g. "Bench press 5x5 at 205, then 3x10 dumbbell rows at 60 lbs"'
+              }
+              rows={4}
+              disabled={loading}
+            />
+          )}
+
+          {imagePreview && (
+            <div style={{ marginBottom: 12, position: "relative" }}>
+              <img
+                src={imagePreview}
+                alt="Workout preview"
+                style={{ maxWidth: "100%", maxHeight: 300, borderRadius: "var(--radius)", border: "1px solid var(--border)" }}
+              />
+              <button
+                type="button"
+                onClick={clearImage}
+                className="btn btn-secondary"
+                style={{ position: "absolute", top: 8, right: 8, padding: "4px 10px", fontSize: "0.75rem" }}
+              >
+                Remove
+              </button>
+            </div>
+          )}
+
           <div className="btn-group">
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={loading || !input.trim()}
+              disabled={loading || (!input.trim() && !imageFile)}
             >
               {loading ? "Parsing..." : "Parse Workout"}
             </button>
+            <label className="btn btn-secondary" style={{ cursor: "pointer" }}>
+              Upload Photo
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageSelect}
+                style={{ display: "none" }}
+                disabled={loading}
+              />
+            </label>
           </div>
         </form>
         {loading && (
           <div className="loading">
             <div className="spinner" />
-            Understanding your workout...
+            {imageFile ? "Reading workout image..." : "Understanding your workout..."}
           </div>
         )}
         {error && <div className="error">{error}</div>}

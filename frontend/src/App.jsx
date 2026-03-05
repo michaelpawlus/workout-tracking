@@ -5,13 +5,17 @@ import LogWorkout from "./components/LogWorkout";
 import History from "./components/History";
 import PRBoard from "./components/PRBoard";
 import ProgressAnalysis from "./components/ProgressAnalysis";
+import TrainingPlans from "./components/TrainingPlans";
+import StravaImport from "./components/StravaImport";
 import "./App.css";
 
 const TABS = [
   { id: "generate", label: "Program" },
   { id: "log", label: "Log" },
+  { id: "plans", label: "Plans" },
   { id: "history", label: "History" },
   { id: "prs", label: "PRs" },
+  { id: "import", label: "Import" },
   { id: "progress", label: "Progress" },
 ];
 
@@ -62,8 +66,10 @@ export default function App() {
             onSaved={handleWorkoutLogged}
           />
         )}
+        {tab === "plans" && <TrainingPlans />}
         {tab === "history" && <History />}
         {tab === "prs" && <PRBoard />}
+        {tab === "import" && <StravaImport onImported={() => setTab("history")} />}
         {tab === "progress" && <ProgressAnalysis />}
       </main>
     </div>
