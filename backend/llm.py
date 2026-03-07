@@ -353,6 +353,111 @@ Additional notes: {notes or 'None'}"""
     return _parse_llm_json(response.content[0].text)
 
 
+def analyze_run_feedback(prescribed: dict, actual: dict,
+                         weekly_context: dict | None = None,
+                         trend_data: list[dict] | None = None,
+                         benchmarks: list[dict] | None = None,
+                         race_info: dict | None = None) -> dict:
+    """Analyze a completed run against the prescribed workout and return structured feedback."""
+
+    system_prompt = """You are an experienced ultramarathon coach analyzing a training run for an athlete preparing for a 100-mile race (Burning River 100, July 25, 2026, sub-24hr goal).
+
+COACHING PRINCIPLES:
+- 80/20 rule: 80% of runs should be easy (conversational pace), 20% quality (tempo/hills/intervals)
+- Most common ultra training mistake: running easy days too fast. Easy means EASY.
+- Back-to-back long runs build fatigue resistance — the key ultra adaptation
+- For runs >90 min: athlete should practice race nutrition (~200 cal/hr)
+- HR drift in long runs: >10% drift in last third signals insufficient aerobic base
+- During taper: feeling flat/sluggish is NORMAL and expected. Don't panic.
+- MAF test improvement (more distance at same HR) = aerobic fitness improving
+- Pace decay in long runs should decrease over training cycle
+
+Respond with JSON only:
+{
+    "compliance_score": <0-100 float>,
+    "pace_feedback": "...",
+    "hr_feedback": "...",
+    "distance_feedback": "...",
+    "overall_feedback": "...",
+    "weekly_mileage": {"target": <num>, "completed": <num>, "remaining": <num>},
+    "warnings": ["warning1", "warning2"],
+    "race_readiness": "On track / Needs attention / Behind"
+}"""
+
+    user_msg_parts = [
+        f"## Prescribed Workout\n{json.dumps(prescribed, indent=2, default=str)}",
+        f"\n## Actual Run Data\n{json.dumps(actual, indent=2, default=str)}",
+    ]
+    if weekly_context:
+        user_msg_parts.append(f"\n## Weekly Context\n{json.dumps(weekly_context, indent=2, default=str)}")
+    if trend_data:
+        user_msg_parts.append(f"\n## Recent Trend Data (last 10 runs)\n{json.dumps(trend_data, indent=2, default=str)}")
+    if benchmarks:
+        user_msg_parts.append(f"\n## Benchmark Results\n{json.dumps(benchmarks, indent=2, default=str)}")
+    if race_info:
+        user_msg_parts.append(f"\n## Race Info\n{json.dumps(race_info, indent=2, default=str)}")
+
+    user_msg_parts.append("\nAnalyze this run and provide structured feedback.")
+
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=1500,
+        messages=[{"role": "user", "content": "\n".join(user_msg_parts)}],
+        system=system_prompt,
+    )
+
+    return _parse_llm_json(response.content[0].text)
+
+
+def analyze_strava_screenshot(image_bytes: bytes, media_type: str,
+                               prescribed_workout: dict | None = None) -> dict:
+    """Extract running metrics from a Strava screenshot."""
+
+    system_prompt = """You are a data extraction assistant. Extract running metrics from this Strava screenshot.
+
+Return JSON only:
+{
+    "distance_miles": <float>,
+    "duration_minutes": <float>,
+    "avg_pace_min_per_mile": <float>,
+    "avg_heart_rate": <int or null>,
+    "max_heart_rate": <int or null>,
+    "elevation_gain_ft": <float or null>,
+    "calories": <int or null>,
+    "splits": [{"mile": 1, "pace": "9:30", "hr": 135}],
+    "activity_name": "...",
+    "date": "YYYY-MM-DD",
+    "notes": "any additional observations"
+}
+
+Extract ALL visible data. Convert units if needed (km to miles, m to ft). If a field is not visible, use null."""
+
+    image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
+
+    content = [
+        {
+            "type": "image",
+            "source": {"type": "base64", "media_type": media_type, "data": image_data},
+        },
+        {"type": "text", "text": "Extract all running metrics from this Strava screenshot."},
+    ]
+
+    if prescribed_workout:
+        content.append({
+            "type": "text",
+            "text": f"This was the prescribed workout: {json.dumps(prescribed_workout, default=str)}",
+        })
+
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=1500,
+        messages=[{"role": "user", "content": content}],
+        system=system_prompt,
+    )
+
+    return _parse_llm_json(response.content[0].text)
+
+
 def analyze_plan_progress(plan_data: dict, benchmarks: list[dict]) -> str:
     context = _build_context()
 

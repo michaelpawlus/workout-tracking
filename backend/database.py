@@ -25,6 +25,17 @@ def get_db():
         conn.close()
 
 
+def _needs_check_migration(conn, table, column, test_value):
+    """Test if a CHECK constraint rejects a new valid value by inspecting the DDL."""
+    ddl = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
+    ).fetchone()
+    if not ddl:
+        return False
+    # If the DDL doesn't contain the test_value in the CHECK, it needs migration
+    return test_value not in ddl[0]
+
+
 def init_db():
     with get_db() as conn:
         conn.executescript("""
@@ -99,7 +110,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 plan_id INTEGER NOT NULL REFERENCES training_plans(id) ON DELETE CASCADE,
                 week_number INTEGER NOT NULL,
-                week_type TEXT NOT NULL CHECK(week_type IN ('build', 'deload')),
+                week_type TEXT NOT NULL CHECK(week_type IN ('build', 'deload', 'base', 'peak', 'taper', 'race', 'recovery')),
                 focus TEXT,
                 notes TEXT,
                 UNIQUE(plan_id, week_number)
@@ -110,13 +121,68 @@ def init_db():
                 plan_id INTEGER NOT NULL REFERENCES training_plans(id) ON DELETE CASCADE,
                 week_id INTEGER NOT NULL REFERENCES training_plan_weeks(id) ON DELETE CASCADE,
                 benchmark_name TEXT NOT NULL,
-                benchmark_type TEXT NOT NULL CHECK(benchmark_type IN ('time_trial', 'max_lift', 'timed_wod', 'amrap')),
+                benchmark_type TEXT NOT NULL CHECK(benchmark_type IN ('time_trial', 'max_lift', 'timed_wod', 'amrap', 'maf_test', 'endurance_test', 'race')),
                 target_value REAL,
                 scheduled_date TEXT,
                 completed INTEGER NOT NULL DEFAULT 0,
                 result_value REAL,
                 result_notes TEXT,
                 workout_id INTEGER REFERENCES workouts(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS daily_workouts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id INTEGER NOT NULL REFERENCES training_plans(id) ON DELETE CASCADE,
+                week_id INTEGER NOT NULL REFERENCES training_plan_weeks(id) ON DELETE CASCADE,
+                scheduled_date TEXT NOT NULL,
+                workout_type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                target_distance_miles REAL,
+                target_duration_minutes INTEGER,
+                target_pace_min_per_mile REAL,
+                target_hr_zone TEXT,
+                intensity TEXT,
+                notes TEXT,
+                is_benchmark INTEGER NOT NULL DEFAULT 0,
+                completed INTEGER NOT NULL DEFAULT 0,
+                actual_workout_id INTEGER REFERENCES workouts(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS run_feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                workout_id INTEGER NOT NULL REFERENCES workouts(id),
+                daily_workout_id INTEGER REFERENCES daily_workouts(id),
+                plan_id INTEGER REFERENCES training_plans(id),
+                prescribed_distance_miles REAL,
+                actual_distance_miles REAL,
+                prescribed_pace REAL,
+                actual_pace REAL,
+                avg_heart_rate INTEGER,
+                max_heart_rate INTEGER,
+                elevation_gain_ft REAL,
+                effort_rating INTEGER,
+                compliance_score REAL,
+                pace_feedback TEXT,
+                hr_feedback TEXT,
+                overall_feedback TEXT,
+                warnings TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS weekly_summaries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id INTEGER NOT NULL REFERENCES training_plans(id),
+                week_number INTEGER NOT NULL,
+                target_miles REAL,
+                actual_miles REAL DEFAULT 0,
+                runs_planned INTEGER,
+                runs_completed INTEGER DEFAULT 0,
+                long_run_miles REAL,
+                avg_easy_pace REAL,
+                avg_heart_rate REAL,
+                notes TEXT,
+                UNIQUE(plan_id, week_number)
             );
 
             CREATE TABLE IF NOT EXISTS strava_tokens (
@@ -126,6 +192,43 @@ def init_db():
                 expires_at INTEGER NOT NULL
             );
         """)
+
+        # Migrate CHECK constraints if DB predates ultra plan support
+        if _needs_check_migration(conn, "training_plan_weeks", "week_type", "base"):
+            conn.execute("ALTER TABLE training_plan_weeks RENAME TO _old_tpw")
+            conn.execute("""
+                CREATE TABLE training_plan_weeks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    plan_id INTEGER NOT NULL REFERENCES training_plans(id) ON DELETE CASCADE,
+                    week_number INTEGER NOT NULL,
+                    week_type TEXT NOT NULL CHECK(week_type IN ('build', 'deload', 'base', 'peak', 'taper', 'race', 'recovery')),
+                    focus TEXT,
+                    notes TEXT,
+                    UNIQUE(plan_id, week_number)
+                )
+            """)
+            conn.execute("INSERT INTO training_plan_weeks SELECT * FROM _old_tpw")
+            conn.execute("DROP TABLE _old_tpw")
+
+        if _needs_check_migration(conn, "plan_benchmarks", "benchmark_type", "maf_test"):
+            conn.execute("ALTER TABLE plan_benchmarks RENAME TO _old_pb")
+            conn.execute("""
+                CREATE TABLE plan_benchmarks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    plan_id INTEGER NOT NULL REFERENCES training_plans(id) ON DELETE CASCADE,
+                    week_id INTEGER NOT NULL REFERENCES training_plan_weeks(id) ON DELETE CASCADE,
+                    benchmark_name TEXT NOT NULL,
+                    benchmark_type TEXT NOT NULL CHECK(benchmark_type IN ('time_trial', 'max_lift', 'timed_wod', 'amrap', 'maf_test', 'endurance_test', 'race')),
+                    target_value REAL,
+                    scheduled_date TEXT,
+                    completed INTEGER NOT NULL DEFAULT 0,
+                    result_value REAL,
+                    result_notes TEXT,
+                    workout_id INTEGER REFERENCES workouts(id)
+                )
+            """)
+            conn.execute("INSERT INTO plan_benchmarks SELECT * FROM _old_pb")
+            conn.execute("DROP TABLE _old_pb")
 
         # Add new columns to workouts if they don't exist (migration)
         existing_cols = {row[1] for row in conn.execute("PRAGMA table_info(workouts)").fetchall()}

@@ -9,8 +9,10 @@ from database import init_db, get_db
 from llm import (
     generate_workout, parse_workout_log, parse_workout_image,
     analyze_progress, generate_training_plan, analyze_plan_progress,
+    analyze_run_feedback, analyze_strava_screenshot,
 )
 import strava
+from ultra_plan import create_br100_plan
 
 
 @asynccontextmanager
@@ -80,6 +82,17 @@ class BenchmarkResult(BaseModel):
     result_value: float
     result_notes: str = ""
     workout_id: int | None = None
+
+
+class UltraSubmit(BaseModel):
+    distance: float
+    duration_minutes: float | None = None
+    avg_hr: int | None = None
+    max_hr: int | None = None
+    elevation_gain_ft: float | None = None
+    effort_rating: int | None = None
+    pace: float | None = None
+    notes: str = ""
 
 
 # --- Exercise endpoints ---
@@ -434,6 +447,340 @@ def plan_progress(plan_id: int):
         return {"analysis": analysis, "benchmarks": benchmarks}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Ultra Training (Burning River 100) ---
+
+def _get_active_ultra_plan(conn):
+    return conn.execute(
+        "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+
+
+@app.post("/api/ultra/init")
+def ultra_init():
+    with get_db() as conn:
+        existing = _get_active_ultra_plan(conn)
+        if existing:
+            return {"plan_id": existing["id"], "message": "Plan already exists", "already_existed": True}
+        plan_id = create_br100_plan(conn)
+    return {"plan_id": plan_id, "message": "Burning River 100 plan created"}
+
+
+@app.get("/api/ultra/today")
+def ultra_today():
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_db() as conn:
+        plan = _get_active_ultra_plan(conn)
+        if not plan:
+            raise HTTPException(status_code=404, detail="No active BR100 plan. Run POST /api/ultra/init first.")
+        workout = conn.execute(
+            "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
+            (plan["id"], today),
+        ).fetchone()
+        if not workout:
+            raise HTTPException(status_code=404, detail=f"No workout scheduled for {today}")
+    return dict(workout)
+
+
+@app.get("/api/ultra/week")
+def ultra_week(week_num: int | None = None):
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_db() as conn:
+        plan = _get_active_ultra_plan(conn)
+        if not plan:
+            raise HTTPException(status_code=404, detail="No active BR100 plan")
+
+        if week_num is None:
+            week_row = conn.execute(
+                """SELECT tpw.* FROM training_plan_weeks tpw
+                   JOIN daily_workouts dw ON dw.week_id = tpw.id
+                   WHERE dw.plan_id = ? AND dw.scheduled_date <= ?
+                   ORDER BY dw.scheduled_date DESC LIMIT 1""",
+                (plan["id"], today),
+            ).fetchone()
+            if not week_row:
+                week_row = conn.execute(
+                    "SELECT * FROM training_plan_weeks WHERE plan_id = ? ORDER BY week_number LIMIT 1",
+                    (plan["id"],),
+                ).fetchone()
+        else:
+            week_row = conn.execute(
+                "SELECT * FROM training_plan_weeks WHERE plan_id = ? AND week_number = ?",
+                (plan["id"], week_num),
+            ).fetchone()
+
+        if not week_row:
+            raise HTTPException(status_code=404, detail="Week not found")
+
+        week = dict(week_row)
+        workouts = conn.execute(
+            "SELECT * FROM daily_workouts WHERE week_id = ? ORDER BY scheduled_date",
+            (week_row["id"],),
+        ).fetchall()
+        week["workouts"] = [dict(w) for w in workouts]
+
+        summary = conn.execute(
+            "SELECT * FROM weekly_summaries WHERE plan_id = ? AND week_number = ?",
+            (plan["id"], week["week_number"]),
+        ).fetchone()
+        if summary:
+            week["summary"] = dict(summary)
+
+    return week
+
+
+@app.post("/api/ultra/submit")
+def ultra_submit(req: UltraSubmit):
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_db() as conn:
+        plan = _get_active_ultra_plan(conn)
+        if not plan:
+            raise HTTPException(status_code=404, detail="No active BR100 plan")
+
+        daily = conn.execute(
+            "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
+            (plan["id"], today),
+        ).fetchone()
+
+        pace = req.pace
+        if pace is None and req.distance and req.duration_minutes:
+            pace = req.duration_minutes / req.distance
+
+        # Save as a workout
+        cursor = conn.execute(
+            """INSERT INTO workouts (date, workout_type, duration_minutes, notes, source, plan_id)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (today, "cardio", req.duration_minutes, req.notes, "cli", plan["id"]),
+        )
+        workout_id = cursor.lastrowid
+
+        # Link to daily workout
+        daily_workout_id = None
+        if daily:
+            daily_workout_id = daily["id"]
+            conn.execute(
+                "UPDATE daily_workouts SET completed = 1, actual_workout_id = ? WHERE id = ?",
+                (workout_id, daily["id"]),
+            )
+
+        # Build prescribed/actual for LLM
+        prescribed = dict(daily) if daily else {"title": "Unscheduled run", "scheduled_date": today}
+        actual = {
+            "distance_miles": req.distance,
+            "duration_minutes": req.duration_minutes,
+            "avg_pace_min_per_mile": pace,
+            "avg_heart_rate": req.avg_hr,
+            "max_heart_rate": req.max_hr,
+            "elevation_gain_ft": req.elevation_gain_ft,
+            "effort_rating": req.effort_rating,
+        }
+
+        # Weekly context
+        week_row = conn.execute(
+            """SELECT tpw.*, ws.target_miles, ws.actual_miles, ws.runs_planned, ws.runs_completed
+               FROM training_plan_weeks tpw
+               LEFT JOIN weekly_summaries ws ON ws.plan_id = tpw.plan_id AND ws.week_number = tpw.week_number
+               JOIN daily_workouts dw ON dw.week_id = tpw.id
+               WHERE dw.plan_id = ? AND dw.scheduled_date = ?
+               LIMIT 1""",
+            (plan["id"], today),
+        ).fetchone()
+        weekly_context = dict(week_row) if week_row else None
+
+        # Update weekly summary
+        if week_row:
+            conn.execute(
+                """UPDATE weekly_summaries SET actual_miles = actual_miles + ?, runs_completed = runs_completed + 1
+                   WHERE plan_id = ? AND week_number = ?""",
+                (req.distance, plan["id"], week_row["week_number"]),
+            )
+
+        # Recent trend data
+        trends = conn.execute(
+            """SELECT rf.actual_distance_miles, rf.actual_pace, rf.avg_heart_rate,
+                      rf.compliance_score, rf.created_at
+               FROM run_feedback rf WHERE rf.plan_id = ?
+               ORDER BY rf.created_at DESC LIMIT 10""",
+            (plan["id"],),
+        ).fetchall()
+        trend_data = [dict(t) for t in trends] if trends else None
+
+        # Benchmarks
+        bms = conn.execute(
+            """SELECT pb.benchmark_name, pb.benchmark_type, pb.scheduled_date,
+                      pb.completed, pb.result_value, pb.result_notes
+               FROM plan_benchmarks pb WHERE pb.plan_id = ?
+               ORDER BY pb.scheduled_date""",
+            (plan["id"],),
+        ).fetchall()
+        benchmark_data = [dict(b) for b in bms]
+
+        race_info = {
+            "race": "Burning River 100",
+            "date": "2026-07-25",
+            "goal": "Sub-24 hours",
+            "weeks_remaining": max(0, (datetime(2026, 7, 25) - datetime.now()).days // 7),
+        }
+
+    # LLM feedback
+    try:
+        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info)
+    except Exception:
+        feedback = {
+            "compliance_score": None,
+            "pace_feedback": "Unable to generate AI feedback",
+            "hr_feedback": "", "distance_feedback": "", "overall_feedback": "",
+            "warnings": [], "race_readiness": "Unknown",
+        }
+
+    # Save feedback
+    with get_db() as conn:
+        conn.execute(
+            """INSERT INTO run_feedback
+               (workout_id, daily_workout_id, plan_id, prescribed_distance_miles,
+                actual_distance_miles, prescribed_pace, actual_pace, avg_heart_rate,
+                max_heart_rate, elevation_gain_ft, effort_rating, compliance_score,
+                pace_feedback, hr_feedback, overall_feedback, warnings)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (workout_id, daily_workout_id, plan["id"] if plan else None,
+             prescribed.get("target_distance_miles"), req.distance,
+             prescribed.get("target_pace_min_per_mile"), pace,
+             req.avg_hr, req.max_hr, req.elevation_gain_ft, req.effort_rating,
+             feedback.get("compliance_score"),
+             feedback.get("pace_feedback", ""),
+             feedback.get("hr_feedback", ""),
+             feedback.get("overall_feedback", ""),
+             json.dumps(feedback.get("warnings", []))),
+        )
+
+    return {"workout_id": workout_id, "feedback": feedback}
+
+
+@app.post("/api/ultra/submit-image")
+async def ultra_submit_image(file: UploadFile = File(...)):
+    allowed_types = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Unsupported image type: {file.content_type}")
+
+    image_bytes = await file.read()
+
+    with get_db() as conn:
+        plan = _get_active_ultra_plan(conn)
+        today = datetime.now().strftime("%Y-%m-%d")
+        daily = None
+        if plan:
+            daily = conn.execute(
+                "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
+                (plan["id"], today),
+            ).fetchone()
+
+    prescribed = dict(daily) if daily else None
+    extracted = analyze_strava_screenshot(image_bytes, file.content_type, prescribed)
+
+    return {"extracted": extracted, "prescribed": prescribed}
+
+
+@app.get("/api/ultra/feedback/{workout_id}")
+def ultra_feedback(workout_id: int):
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT * FROM run_feedback WHERE workout_id = ?", (workout_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="No feedback for this workout")
+    result = dict(row)
+    if result.get("warnings"):
+        try:
+            result["warnings"] = json.loads(result["warnings"])
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return result
+
+
+@app.get("/api/ultra/progress")
+def ultra_progress():
+    with get_db() as conn:
+        plan = _get_active_ultra_plan(conn)
+        if not plan:
+            raise HTTPException(status_code=404, detail="No active BR100 plan")
+
+        total = conn.execute(
+            "SELECT COUNT(*) as total FROM daily_workouts WHERE plan_id = ? AND workout_type != 'rest'",
+            (plan["id"],),
+        ).fetchone()["total"]
+        completed = conn.execute(
+            "SELECT COUNT(*) as done FROM daily_workouts WHERE plan_id = ? AND completed = 1",
+            (plan["id"],),
+        ).fetchone()["done"]
+
+        summaries = conn.execute(
+            "SELECT * FROM weekly_summaries WHERE plan_id = ? ORDER BY week_number",
+            (plan["id"],),
+        ).fetchall()
+
+        benchmarks = conn.execute(
+            """SELECT pb.*, tpw.week_number FROM plan_benchmarks pb
+               JOIN training_plan_weeks tpw ON tpw.id = pb.week_id
+               WHERE pb.plan_id = ? ORDER BY pb.scheduled_date""",
+            (plan["id"],),
+        ).fetchall()
+
+        recent_feedback = conn.execute(
+            "SELECT compliance_score, overall_feedback, created_at FROM run_feedback WHERE plan_id = ? ORDER BY created_at DESC LIMIT 5",
+            (plan["id"],),
+        ).fetchall()
+
+    today = datetime.now()
+    race_date = datetime(2026, 7, 25)
+    weeks_remaining = max(0, (race_date - today).days // 7)
+
+    return {
+        "plan_id": plan["id"],
+        "race": "Burning River 100",
+        "race_date": "2026-07-25",
+        "goal": "Sub-24 hours",
+        "weeks_remaining": weeks_remaining,
+        "workouts_total": total,
+        "workouts_completed": completed,
+        "completion_pct": round(completed / total * 100, 1) if total else 0,
+        "weekly_summaries": [dict(s) for s in summaries],
+        "benchmarks": [dict(b) for b in benchmarks],
+        "recent_feedback": [dict(f) for f in recent_feedback],
+    }
+
+
+@app.get("/api/ultra/benchmarks")
+def ultra_benchmarks():
+    with get_db() as conn:
+        plan = _get_active_ultra_plan(conn)
+        if not plan:
+            raise HTTPException(status_code=404, detail="No active BR100 plan")
+        rows = conn.execute(
+            """SELECT pb.*, tpw.week_number, tpw.week_type
+               FROM plan_benchmarks pb
+               JOIN training_plan_weeks tpw ON tpw.id = pb.week_id
+               WHERE pb.plan_id = ? ORDER BY pb.scheduled_date""",
+            (plan["id"],),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.get("/api/ultra/upcoming")
+def ultra_upcoming(days: int = 7):
+    today = datetime.now()
+    end = today + timedelta(days=days)
+    with get_db() as conn:
+        plan = _get_active_ultra_plan(conn)
+        if not plan:
+            raise HTTPException(status_code=404, detail="No active BR100 plan")
+        rows = conn.execute(
+            """SELECT * FROM daily_workouts
+               WHERE plan_id = ? AND scheduled_date >= ? AND scheduled_date <= ?
+               ORDER BY scheduled_date""",
+            (plan["id"], today.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")),
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 # --- Strava Integration ---
