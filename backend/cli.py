@@ -5,14 +5,19 @@ All commands support --json for agent-friendly output.
 Exit codes: 0=success, 1=error, 2=not found.
 """
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import argparse
 import json
 import sys
+import time
 from datetime import datetime, timedelta
 
 from database import init_db, get_db
 from ultra_plan import create_br100_plan
 from llm import analyze_run_feedback, analyze_strava_screenshot
+import strava
 
 
 def _print(data, as_json=False, file=sys.stdout):
@@ -180,33 +185,30 @@ def cmd_week(args):
             print(f"  {status} {w['scheduled_date']}  {w['title']}{dist}  [{w['intensity'] or ''}]")
 
 
-def cmd_submit(args):
-    if args.image:
-        _submit_image(args)
-        return
+def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
+                effort=None, pace=None, notes="", source="cli", run_date=None,
+                skip_feedback=False, strava_activity_id=None, as_json=False):
+    """Core run submission logic. Returns result dict."""
+    if run_date is None:
+        run_date = datetime.now().strftime("%Y-%m-%d")
 
-    if not args.distance:
-        _err("--distance is required (or use --image)", args.json)
+    if pace is None and distance and duration:
+        pace = duration / distance
 
-    today = datetime.now().strftime("%Y-%m-%d")
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err("No active BR100 plan. Run: python cli.py ultra init", as_json, 2)
 
         daily = conn.execute(
             "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
-            (plan["id"], today),
+            (plan["id"], run_date),
         ).fetchone()
 
-        pace = args.pace
-        if pace is None and args.distance and args.duration:
-            pace = args.duration / args.distance
-
         cursor = conn.execute(
-            """INSERT INTO workouts (date, workout_type, duration_minutes, notes, source, plan_id)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (today, "cardio", args.duration, args.notes or "", "cli", plan["id"]),
+            """INSERT INTO workouts (date, workout_type, duration_minutes, notes, source, plan_id, strava_activity_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (run_date, "cardio", duration, notes, source, plan["id"], strava_activity_id),
         )
         workout_id = cursor.lastrowid
 
@@ -218,18 +220,17 @@ def cmd_submit(args):
                 (workout_id, daily["id"]),
             )
 
-        prescribed = dict(daily) if daily else {"title": "Unscheduled run", "scheduled_date": today}
+        prescribed = dict(daily) if daily else {"title": "Unscheduled run", "scheduled_date": run_date}
         actual = {
-            "distance_miles": args.distance,
-            "duration_minutes": args.duration,
+            "distance_miles": distance,
+            "duration_minutes": duration,
             "avg_pace_min_per_mile": pace,
-            "avg_heart_rate": args.hr,
-            "max_heart_rate": args.max_hr,
-            "elevation_gain_ft": args.elevation,
-            "effort_rating": args.effort,
+            "avg_heart_rate": hr,
+            "max_heart_rate": max_hr,
+            "elevation_gain_ft": elevation,
+            "effort_rating": effort,
         }
 
-        # Weekly context
         week_row = conn.execute(
             """SELECT tpw.*, ws.target_miles, ws.actual_miles, ws.runs_planned, ws.runs_completed
                FROM training_plan_weeks tpw
@@ -237,7 +238,7 @@ def cmd_submit(args):
                JOIN daily_workouts dw ON dw.week_id = tpw.id
                WHERE dw.plan_id = ? AND dw.scheduled_date = ?
                LIMIT 1""",
-            (plan["id"], today),
+            (plan["id"], run_date),
         ).fetchone()
         weekly_context = dict(week_row) if week_row else None
 
@@ -245,8 +246,11 @@ def cmd_submit(args):
             conn.execute(
                 """UPDATE weekly_summaries SET actual_miles = actual_miles + ?, runs_completed = runs_completed + 1
                    WHERE plan_id = ? AND week_number = ?""",
-                (args.distance, plan["id"], week_row["week_number"]),
+                (distance, plan["id"], week_row["week_number"]),
             )
+
+        if skip_feedback:
+            return {"workout_id": workout_id, "feedback": None}
 
         trends = conn.execute(
             """SELECT rf.actual_distance_miles, rf.actual_pace, rf.avg_heart_rate,
@@ -273,9 +277,8 @@ def cmd_submit(args):
             "weeks_remaining": max(0, (datetime(2026, 7, 25) - datetime.now()).days // 7),
         }
 
-    # LLM feedback
     try:
-        if not args.json:
+        if not as_json:
             print("Analyzing run...", file=sys.stderr)
         feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info)
     except Exception as e:
@@ -286,7 +289,6 @@ def cmd_submit(args):
             "warnings": [], "race_readiness": "Unknown",
         }
 
-    # Save feedback
     with get_db() as conn:
         conn.execute(
             """INSERT INTO run_feedback
@@ -296,9 +298,9 @@ def cmd_submit(args):
                 pace_feedback, hr_feedback, overall_feedback, warnings)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (workout_id, daily_workout_id, plan["id"],
-             prescribed.get("target_distance_miles"), args.distance,
+             prescribed.get("target_distance_miles"), distance,
              prescribed.get("target_pace_min_per_mile"), pace,
-             args.hr, args.max_hr, args.elevation, args.effort,
+             hr, max_hr, elevation, effort,
              feedback.get("compliance_score"),
              feedback.get("pace_feedback", ""),
              feedback.get("hr_feedback", ""),
@@ -306,13 +308,32 @@ def cmd_submit(args):
              json.dumps(feedback.get("warnings", []))),
         )
 
-    result = {"workout_id": workout_id, "feedback": feedback}
+    return {"workout_id": workout_id, "feedback": feedback}
+
+
+def cmd_submit(args):
+    if args.image:
+        _submit_image(args)
+        return
+
+    if not args.distance:
+        _err("--distance is required (or use --image)", args.json)
+
+    run_date = args.date or datetime.now().strftime("%Y-%m-%d")
+    result = _submit_run(
+        distance=args.distance, duration=args.duration, hr=args.hr,
+        max_hr=args.max_hr, elevation=args.elevation, effort=args.effort,
+        pace=args.pace, notes=args.notes or "", source="cli",
+        run_date=run_date, as_json=args.json,
+    )
+
+    feedback = result.get("feedback", {}) or {}
 
     if args.json:
         _print(result, True)
     else:
-        print(f"\nRun logged (workout #{workout_id})")
-        print(f"Distance: {args.distance}mi | Duration: {args.duration or '?'}min | Pace: {_fmt_pace(pace)}")
+        print(f"\nRun logged (workout #{result['workout_id']})")
+        print(f"Distance: {args.distance}mi | Duration: {args.duration or '?'}min | Pace: {_fmt_pace(args.pace)}")
         if args.hr:
             print(f"Avg HR: {args.hr} bpm")
         score = feedback.get("compliance_score")
@@ -526,6 +547,142 @@ def cmd_upcoming(args):
             print(f"  {status} {w['scheduled_date']}  {w['title']}{dist}  [{w.get('intensity', '')}]")
 
 
+def cmd_strava_connect(args):
+    init_db()
+    if not args.access_token or not args.refresh_token:
+        _err("--access-token and --refresh-token are required", args.json)
+
+    if strava.is_connected() and not args.force:
+        _err("Strava already connected. Use --force to overwrite.", args.json)
+
+    expires_at = args.expires_at or int(time.time()) + 21600  # default 6h from now
+    strava._save_tokens(args.access_token, args.refresh_token, expires_at)
+
+    result = {"status": "connected", "expires_at": expires_at}
+    if args.json:
+        _print(result, True)
+    else:
+        print("Strava tokens saved successfully.")
+        print(f"Expires at: {datetime.fromtimestamp(expires_at).isoformat()}")
+
+
+def cmd_strava_status(args):
+    init_db()
+    connected = strava.is_connected()
+    tokens = strava._get_tokens()
+
+    if args.json:
+        result = {"connected": connected}
+        if tokens:
+            result["expires_at"] = tokens["expires_at"]
+            result["expired"] = tokens["expires_at"] < int(time.time())
+        _print(result, True)
+    else:
+        if connected:
+            exp = datetime.fromtimestamp(tokens["expires_at"])
+            expired = tokens["expires_at"] < int(time.time())
+            status = "EXPIRED" if expired else "valid"
+            print(f"Strava: Connected (token {status}, expires {exp.isoformat()})")
+        else:
+            print("Strava: Not connected")
+
+
+def cmd_strava_import(args):
+    init_db()
+    if not strava.is_connected():
+        _err("Strava not connected. Run: ultra strava-connect", args.json, 2)
+
+    try:
+        activities = strava.get_activities(per_page=args.count)
+    except Exception as e:
+        _err(f"Failed to fetch Strava activities: {e}", args.json)
+
+    if not args.all_types:
+        activities = [a for a in activities if a.get("sport_type", a.get("type", "")).lower() in ("run", "trail run", "virtualrun")]
+
+    if args.list:
+        results = []
+        for a in activities:
+            dist_m = a.get("distance", 0)
+            dist_mi = round(dist_m / 1609.34, 2)
+            results.append({
+                "id": a["id"],
+                "name": a.get("name", ""),
+                "type": a.get("sport_type", a.get("type", "")),
+                "date": a.get("start_date_local", "")[:10],
+                "distance_miles": dist_mi,
+                "moving_time_min": round(a.get("moving_time", 0) / 60, 1),
+            })
+        if args.json:
+            _print(results, True)
+        else:
+            print(f"=== {len(results)} Strava Activities ===")
+            for r in results:
+                print(f"  [{r['id']}] {r['date']}  {r['name']}  {r['distance_miles']}mi  ({r['type']})")
+        return
+
+    # Import mode
+    imported = 0
+    skipped = 0
+    errors = []
+
+    with get_db() as conn:
+        plan = _get_plan(conn)
+        if not plan:
+            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+
+    for a in activities:
+        activity_id = a["id"]
+
+        # Check for duplicate
+        with get_db() as conn:
+            existing = conn.execute(
+                "SELECT id FROM workouts WHERE strava_activity_id = ?", (activity_id,)
+            ).fetchone()
+        if existing:
+            skipped += 1
+            continue
+
+        dist_m = a.get("distance", 0)
+        dist_mi = round(dist_m / 1609.34, 2)
+        duration_min = round(a.get("moving_time", 0) / 60, 1)
+        elevation_ft = round(a.get("total_elevation_gain", 0) * 3.28084, 1) if a.get("total_elevation_gain") else None
+        avg_hr = a.get("average_heartrate")
+        max_hr = a.get("max_heartrate")
+        run_date = a.get("start_date_local", "")[:10]
+
+        pace = None
+        if dist_mi and duration_min:
+            pace = duration_min / dist_mi
+
+        try:
+            result = _submit_run(
+                distance=dist_mi, duration=duration_min, hr=avg_hr,
+                max_hr=max_hr, elevation=elevation_ft, pace=pace,
+                notes=a.get("name", ""), source="strava", run_date=run_date,
+                skip_feedback=args.no_feedback, strava_activity_id=activity_id,
+                as_json=args.json,
+            )
+            imported += 1
+            if not args.json:
+                print(f"  Imported: {run_date} - {a.get('name', '')} ({dist_mi}mi)")
+        except SystemExit:
+            errors.append({"id": activity_id, "error": "submission failed"})
+        except Exception as e:
+            errors.append({"id": activity_id, "error": str(e)})
+
+    summary = {"imported": imported, "skipped": skipped, "errors": len(errors)}
+    if errors:
+        summary["error_details"] = errors
+
+    if args.json:
+        _print(summary, True)
+    else:
+        print(f"\nImport complete: {imported} imported, {skipped} skipped (duplicates)")
+        if errors:
+            print(f"  {len(errors)} errors")
+
+
 def _fmt_pace(pace):
     if pace is None:
         return "N/A"
@@ -564,6 +721,7 @@ def main():
     submit_p.add_argument("--pace", type=float, help="Avg pace min/mi")
     submit_p.add_argument("--notes", type=str, default="")
     submit_p.add_argument("--image", type=str, help="Strava screenshot path")
+    submit_p.add_argument("--date", type=str, help="Run date (YYYY-MM-DD), default today")
     submit_p.add_argument("--json", action="store_true")
 
     # ultra feedback
@@ -583,6 +741,26 @@ def main():
     up_p.add_argument("--days", type=int, default=7)
     up_p.add_argument("--json", action="store_true")
 
+    # ultra strava-connect
+    sc_p = ultra_sub.add_parser("strava-connect", help="Seed Strava tokens")
+    sc_p.add_argument("--access-token", type=str, required=True)
+    sc_p.add_argument("--refresh-token", type=str, required=True)
+    sc_p.add_argument("--expires-at", type=int, default=None, help="Token expiry unix timestamp")
+    sc_p.add_argument("--force", action="store_true", help="Overwrite existing tokens")
+    sc_p.add_argument("--json", action="store_true")
+
+    # ultra strava-status
+    ss_p = ultra_sub.add_parser("strava-status", help="Check Strava connection")
+    ss_p.add_argument("--json", action="store_true")
+
+    # ultra strava-import
+    si_p = ultra_sub.add_parser("strava-import", help="Import runs from Strava")
+    si_p.add_argument("--count", type=int, default=10, help="Number of activities to fetch")
+    si_p.add_argument("--list", action="store_true", help="List activities without importing")
+    si_p.add_argument("--all-types", action="store_true", help="Include non-run activities")
+    si_p.add_argument("--no-feedback", action="store_true", help="Skip LLM feedback")
+    si_p.add_argument("--json", action="store_true")
+
     args = parser.parse_args()
 
     if args.command != "ultra" or not args.ultra_command:
@@ -600,6 +778,9 @@ def main():
         "progress": cmd_progress,
         "benchmarks": cmd_benchmarks,
         "upcoming": cmd_upcoming,
+        "strava-connect": cmd_strava_connect,
+        "strava-status": cmd_strava_status,
+        "strava-import": cmd_strava_import,
     }
 
     cmd = commands.get(args.ultra_command)

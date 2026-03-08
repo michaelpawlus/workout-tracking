@@ -238,6 +238,8 @@ def init_db():
             conn.execute("ALTER TABLE workouts ADD COLUMN plan_id INTEGER REFERENCES training_plans(id)")
         if "plan_week" not in existing_cols:
             conn.execute("ALTER TABLE workouts ADD COLUMN plan_week INTEGER")
+        if "strava_activity_id" not in existing_cols:
+            conn.execute("ALTER TABLE workouts ADD COLUMN strava_activity_id INTEGER")
 
         # Seed common exercises if table is empty
         count = conn.execute("SELECT COUNT(*) FROM exercises").fetchone()[0]
