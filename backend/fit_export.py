@@ -13,7 +13,7 @@ from fit_tool.profile.messages.file_id_message import FileIdMessage
 from fit_tool.profile.messages.workout_message import WorkoutMessage
 from fit_tool.profile.messages.workout_step_message import WorkoutStepMessage
 from fit_tool.profile.profile_type import (
-    FileType, Sport, Intensity, WorkoutStepDuration, WorkoutStepTarget, Manufacturer,
+    FileType, Sport, SubSport, Intensity, WorkoutStepDuration, WorkoutStepTarget, Manufacturer,
 )
 
 # HR zone boundaries (bpm) — offset by +100 for FIT custom HR targets
@@ -424,12 +424,16 @@ def build_fit_file(workout_dict, steps):
 
     file_id = FileIdMessage()
     file_id.type = FileType.WORKOUT
-    file_id.manufacturer = Manufacturer.DEVELOPMENT.value
-    file_id.product = 0
+    file_id.manufacturer = Manufacturer.GARMIN.value
+    file_id.product = 65534
     file_id.serial_number = int(datetime.now().timestamp()) & 0xFFFFFFFF
+    # time_created expects Unix timestamp in milliseconds (fit-tool applies epoch offset internally)
+    import time
+    file_id.time_created = int(time.time() * 1000)
 
     workout = WorkoutMessage()
     workout.sport = Sport.RUNNING
+    workout.sub_sport = SubSport.GENERIC
     title = workout_dict.get("title", "Workout")
     workout.workout_name = title[:24]  # FIT limits workout name
     workout.num_valid_steps = len(steps)

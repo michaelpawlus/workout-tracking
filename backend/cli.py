@@ -757,6 +757,95 @@ def cmd_export_fit(args):
                 print(f"  {r['date']}: {r['title']} ({r['steps']} steps, {r['size_bytes']}B)")
 
 
+def cmd_icu_push(args):
+    from intervals_icu import create_event, create_events_bulk, workout_to_icu_description
+
+    with get_db() as conn:
+        plan = _get_plan(conn)
+        if not plan:
+            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+
+        if args.upcoming:
+            today = datetime.now().strftime("%Y-%m-%d")
+            end = (datetime.now() + timedelta(days=args.upcoming)).strftime("%Y-%m-%d")
+            workouts = conn.execute(
+                """SELECT * FROM daily_workouts WHERE plan_id = ?
+                   AND scheduled_date >= ? AND scheduled_date <= ?
+                   ORDER BY scheduled_date""",
+                (plan["id"], today, end),
+            ).fetchall()
+            workout_list = [dict(w) for w in workouts]
+        elif args.all:
+            workouts = conn.execute(
+                "SELECT * FROM daily_workouts WHERE plan_id = ? ORDER BY scheduled_date",
+                (plan["id"],),
+            ).fetchall()
+            workout_list = [dict(w) for w in workouts]
+        elif args.week:
+            week_row = conn.execute(
+                "SELECT * FROM training_plan_weeks WHERE plan_id = ? AND week_number = ?",
+                (plan["id"], args.week),
+            ).fetchone()
+            if not week_row:
+                _err(f"Week {args.week} not found", args.json, 2)
+            workouts = conn.execute(
+                "SELECT * FROM daily_workouts WHERE week_id = ? ORDER BY scheduled_date",
+                (week_row["id"],),
+            ).fetchall()
+            workout_list = [dict(w) for w in workouts]
+        else:
+            target_date = args.date or datetime.now().strftime("%Y-%m-%d")
+            workout = conn.execute(
+                "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
+                (plan["id"], target_date),
+            ).fetchone()
+            if not workout:
+                _err(f"No workout found for {target_date}", args.json, 2)
+            w = dict(workout)
+            if w["workout_type"] in ("rest", "cross_train"):
+                _err(f"Rest day on {target_date} — nothing to push", args.json, 2)
+            workout_list = [w]
+
+    if args.dry_run:
+        # Show what would be sent without calling the API
+        skip_types = {"rest", "cross_train"}
+        results = []
+        for w in workout_list:
+            if w.get("workout_type") in skip_types:
+                continue
+            icu_desc = workout_to_icu_description(w)
+            results.append({
+                "date": w["scheduled_date"],
+                "title": w["title"],
+                "icu_description": icu_desc,
+            })
+        if args.json:
+            _print({"dry_run": True, "workouts": results, "count": len(results)}, True)
+        else:
+            for r in results:
+                print(f"--- {r['date']}: {r['title']} ---")
+                print(r["icu_description"])
+                print()
+            print(f"{len(results)} workout(s) would be pushed")
+        return
+
+    results = create_events_bulk(workout_list)
+    created = sum(1 for r in results if r["status"] == "created")
+    errors = sum(1 for r in results if r["status"] == "error")
+
+    if args.json:
+        _print({"pushed": results, "created": created, "errors": errors}, True)
+    else:
+        print(f"Pushed {created} workout(s) to Intervals.icu")
+        if errors:
+            print(f"  {errors} error(s)")
+        for r in results:
+            status = "OK" if r["status"] == "created" else "ERR"
+            print(f"  [{status}] {r['date']}: {r['title']}")
+            if r.get("error"):
+                print(f"         {r['error']}")
+
+
 def _fmt_pace(pace):
     if pace is None:
         return "N/A"
@@ -816,6 +905,15 @@ def main():
     up_p.add_argument("--days", type=int, default=7)
     up_p.add_argument("--json", action="store_true")
 
+    # ultra icu-push
+    icu_p = ultra_sub.add_parser("icu-push", help="Push workouts to Intervals.icu (syncs to Coros)")
+    icu_p.add_argument("--week", type=int, help="Push all workouts for a specific week")
+    icu_p.add_argument("--date", type=str, help="Push workout for specific date (YYYY-MM-DD)")
+    icu_p.add_argument("--upcoming", type=int, metavar="DAYS", help="Push next N days of workouts")
+    icu_p.add_argument("--all", action="store_true", help="Push entire plan")
+    icu_p.add_argument("--dry-run", action="store_true", help="Show what would be pushed without calling API")
+    icu_p.add_argument("--json", action="store_true")
+
     # ultra export-fit
     ef_p = ultra_sub.add_parser("export-fit", help="Export FIT workout files for Coros")
     ef_p.add_argument("--week", type=int, help="Export all workouts for a specific week")
@@ -860,6 +958,7 @@ def main():
         "progress": cmd_progress,
         "benchmarks": cmd_benchmarks,
         "upcoming": cmd_upcoming,
+        "icu-push": cmd_icu_push,
         "export-fit": cmd_export_fit,
         "strava-connect": cmd_strava_connect,
         "strava-status": cmd_strava_status,
