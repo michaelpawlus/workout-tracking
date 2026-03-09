@@ -71,10 +71,26 @@ def cmd_init(args):
     init_db()
     with get_db() as conn:
         existing = _get_plan(conn)
-        if existing:
+        if existing and not args.force:
             result = {"plan_id": existing["id"], "message": "Plan already exists", "already_existed": True}
             _print(result, args.json)
             return
+
+        if existing and args.force:
+            plan_id = existing["id"]
+            # Cascade delete all plan data
+            # Delete feedback for workouts in this plan
+            conn.execute("""DELETE FROM run_feedback WHERE workout_id IN
+                            (SELECT id FROM workouts WHERE plan_id = ?)""", (plan_id,))
+            conn.execute("DELETE FROM run_feedback WHERE plan_id = ?", (plan_id,))
+            conn.execute("DELETE FROM daily_workouts WHERE plan_id = ?", (plan_id,))
+            conn.execute("DELETE FROM workouts WHERE plan_id = ?", (plan_id,))
+            conn.execute("DELETE FROM weekly_summaries WHERE plan_id = ?", (plan_id,))
+            conn.execute("DELETE FROM plan_benchmarks WHERE plan_id = ?", (plan_id,))
+            conn.execute("DELETE FROM training_plan_weeks WHERE plan_id = ?", (plan_id,))
+            conn.execute("DELETE FROM training_plans WHERE id = ?", (plan_id,))
+            if not args.json:
+                print(f"Deleted existing plan (id={plan_id})", file=sys.stderr)
 
         plan_id = create_br100_plan(conn)
 
@@ -683,6 +699,64 @@ def cmd_strava_import(args):
             print(f"  {len(errors)} errors")
 
 
+def cmd_export_fit(args):
+    import os
+    from fit_export import export_workout_fit, export_week_fits
+
+    with get_db() as conn:
+        plan = _get_plan(conn)
+        if not plan:
+            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+
+        output_dir = os.path.join(os.path.dirname(__file__), "fit_exports")
+
+        if args.all:
+            # Export entire plan
+            workouts = conn.execute(
+                "SELECT * FROM daily_workouts WHERE plan_id = ? ORDER BY scheduled_date",
+                (plan["id"],),
+            ).fetchall()
+            results = export_week_fits([dict(w) for w in workouts], output_dir)
+
+        elif args.week:
+            week_row = conn.execute(
+                "SELECT * FROM training_plan_weeks WHERE plan_id = ? AND week_number = ?",
+                (plan["id"], args.week),
+            ).fetchone()
+            if not week_row:
+                _err(f"Week {args.week} not found", args.json, 2)
+            workouts = conn.execute(
+                "SELECT * FROM daily_workouts WHERE week_id = ? ORDER BY scheduled_date",
+                (week_row["id"],),
+            ).fetchall()
+            results = export_week_fits([dict(w) for w in workouts], output_dir)
+
+        else:
+            # Single date (default: today)
+            target_date = args.date or datetime.now().strftime("%Y-%m-%d")
+            workout = conn.execute(
+                "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
+                (plan["id"], target_date),
+            ).fetchone()
+            if not workout:
+                _err(f"No workout found for {target_date}", args.json, 2)
+            w = dict(workout)
+            if w["workout_type"] in ("rest", "cross_train"):
+                _err(f"Rest day on {target_date} — no FIT file to export", args.json, 2)
+            result = export_workout_fit(w, output_dir)
+            results = [result]
+
+    if args.json:
+        _print({"exported": results, "count": len(results)}, True)
+    else:
+        print(f"Exported {len(results)} FIT file(s) to {output_dir}/")
+        for r in results:
+            if "error" in r:
+                print(f"  ERROR {r['date']}: {r['title']} — {r['error']}")
+            else:
+                print(f"  {r['date']}: {r['title']} ({r['steps']} steps, {r['size_bytes']}B)")
+
+
 def _fmt_pace(pace):
     if pace is None:
         return "N/A"
@@ -699,6 +773,7 @@ def main():
 
     # ultra init
     init_p = ultra_sub.add_parser("init", help="Create the 20-week BR100 plan")
+    init_p.add_argument("--force", action="store_true", help="Delete and recreate existing plan")
     init_p.add_argument("--json", action="store_true")
 
     # ultra today
@@ -741,6 +816,13 @@ def main():
     up_p.add_argument("--days", type=int, default=7)
     up_p.add_argument("--json", action="store_true")
 
+    # ultra export-fit
+    ef_p = ultra_sub.add_parser("export-fit", help="Export FIT workout files for Coros")
+    ef_p.add_argument("--week", type=int, help="Export all workouts for a specific week")
+    ef_p.add_argument("--date", type=str, help="Export workout for specific date (YYYY-MM-DD)")
+    ef_p.add_argument("--all", action="store_true", help="Export entire plan")
+    ef_p.add_argument("--json", action="store_true")
+
     # ultra strava-connect
     sc_p = ultra_sub.add_parser("strava-connect", help="Seed Strava tokens")
     sc_p.add_argument("--access-token", type=str, required=True)
@@ -778,6 +860,7 @@ def main():
         "progress": cmd_progress,
         "benchmarks": cmd_benchmarks,
         "upcoming": cmd_upcoming,
+        "export-fit": cmd_export_fit,
         "strava-connect": cmd_strava_connect,
         "strava-status": cmd_strava_status,
         "strava-import": cmd_strava_import,

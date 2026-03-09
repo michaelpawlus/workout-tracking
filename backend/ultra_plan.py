@@ -32,38 +32,69 @@ WEEKS = [
     (20, "race",     10, 110, "Shakeouts Mon-Fri. Jul 25: Burning River 100"),
 ]
 
-# Benchmark schedule: (week_num, name, type, day_of_week (0=Mon))
+# Benchmark schedule: (week_num, name, type, day_offset_from_week_start)
+# Week starts on Friday, so: 0=Fri, 1=Sat, 2=Sun, 3=Mon, 4=Tue, 5=Wed, 6=Thu
 BENCHMARKS = [
-    (1,  "5K Time Trial",       "time_trial",     5),  # Saturday
-    (1,  "MAF Test #1",         "maf_test",       2),  # Wednesday
-    (2,  "Long Run Baseline",   "endurance_test", 5),  # Saturday
-    (7,  "MAF Test #2",         "maf_test",       2),
-    (11, "50K Training Race",   "race",           5),
-    (12, "MAF Test #3",         "maf_test",       2),
-    (16, "5K Time Trial #2",    "time_trial",     5),
-    (16, "MAF Test #4",         "maf_test",       2),
+    (1,  "5K Time Trial",       "time_trial",     5),  # Wednesday
+    (1,  "MAF Test #1",         "maf_test",       2),  # Sunday
+    (2,  "Long Run Baseline",   "endurance_test", 1),  # Saturday
+    (7,  "MAF Test #2",         "maf_test",       5),  # Wednesday
+    (11, "50K Training Race",   "race",           1),  # Saturday
+    (12, "MAF Test #3",         "maf_test",       5),  # Wednesday
+    (16, "5K Time Trial #2",    "time_trial",     1),  # Saturday
+    (16, "MAF Test #4",         "maf_test",       5),  # Wednesday
 ]
+
+
+def _week_day_map(start_date):
+    """Map workout roles to calendar dates, ensuring long runs land on Saturday.
+
+    Given a week start date (Friday in this plan), returns a dict mapping
+    role names to actual calendar dates.
+    """
+    dates = [start_date + timedelta(days=i) for i in range(7)]
+    day_map = {}
+
+    for d in dates:
+        if d.weekday() == 5:  # Saturday
+            day_map["long_run"] = d
+        elif d.weekday() == 6:  # Sunday
+            day_map["recovery"] = d
+
+    # Shakeout is always the day before Saturday (Friday)
+    day_map["shakeout"] = day_map["long_run"] - timedelta(days=1)
+
+    # Remaining weekdays: Mon=rest, Tue=easy_1, Wed=quality, Thu=easy_2
+    used = {day_map["long_run"], day_map["recovery"], day_map["shakeout"]}
+    remaining = sorted([d for d in dates if d not in used], key=lambda d: d.weekday())
+
+    day_map["rest"] = remaining[0]       # Monday
+    day_map["easy_1"] = remaining[1]     # Tuesday
+    day_map["quality"] = remaining[2]    # Wednesday
+    day_map["easy_2"] = remaining[3]     # Thursday
+
+    return day_map
 
 
 def _daily_workouts_for_week(week_num, week_type, start_date, miles_low, miles_high):
     """Generate daily workout list for a given week."""
-    days = []
-    d = start_date
-
     if week_type == "race" and week_num == 20:
-        return _race_week(start_date, d)
+        return _race_week(start_date, start_date)
+
+    dm = _week_day_map(start_date)
+    days = []
 
     long_run = _long_run_for_week(week_num)
     easy_pace_range = "9:30-10:30"
     mid_week_quality = _quality_session(week_num, week_type)
 
     # Monday — Rest or cross-train
-    days.append(_rest_or_cross(d, week_type))
+    days.append(_rest_or_cross(dm["rest"], week_type))
 
     # Tuesday — Easy run
     tue_dist = _easy_distance(week_num, week_type, "tue")
     days.append({
-        "scheduled_date": (d + timedelta(days=1)).strftime("%Y-%m-%d"),
+        "scheduled_date": dm["easy_1"].strftime("%Y-%m-%d"),
         "workout_type": "easy_run",
         "title": f"{tue_dist}mi Easy Run",
         "description": f"Easy pace ({easy_pace_range}/mi). Keep HR under 145.",
@@ -75,14 +106,14 @@ def _daily_workouts_for_week(week_num, week_type, start_date, miles_low, miles_h
 
     # Wednesday — Quality session
     days.append({
-        "scheduled_date": (d + timedelta(days=2)).strftime("%Y-%m-%d"),
+        "scheduled_date": dm["quality"].strftime("%Y-%m-%d"),
         **mid_week_quality,
     })
 
     # Thursday — Easy run
     thu_dist = _easy_distance(week_num, week_type, "thu")
     days.append({
-        "scheduled_date": (d + timedelta(days=3)).strftime("%Y-%m-%d"),
+        "scheduled_date": dm["easy_2"].strftime("%Y-%m-%d"),
         "workout_type": "easy_run",
         "title": f"{thu_dist}mi Easy Run",
         "description": f"Easy pace ({easy_pace_range}/mi). Recovery focus.",
@@ -93,11 +124,11 @@ def _daily_workouts_for_week(week_num, week_type, start_date, miles_low, miles_h
     })
 
     # Friday — Rest or short shakeout
-    days.append(_friday(d + timedelta(days=4), week_type, week_num))
+    days.append(_friday(dm["shakeout"], week_type, week_num))
 
     # Saturday — Long run
     days.append({
-        "scheduled_date": (d + timedelta(days=5)).strftime("%Y-%m-%d"),
+        "scheduled_date": dm["long_run"].strftime("%Y-%m-%d"),
         "workout_type": "long_run",
         "title": f"{long_run}mi Long Run",
         "description": _long_run_description(week_num, long_run),
@@ -108,8 +139,10 @@ def _daily_workouts_for_week(week_num, week_type, start_date, miles_low, miles_h
     })
 
     # Sunday — Recovery or B2B
-    sun = _sunday(d + timedelta(days=6), week_num, week_type)
-    days.append(sun)
+    days.append(_sunday(dm["recovery"], week_num, week_type))
+
+    # Sort by date so DB insertion is chronological
+    days.sort(key=lambda w: w["scheduled_date"])
 
     return days
 
@@ -335,11 +368,11 @@ def _race_week(start_date, d):
 # --- Special Week 1 override for March 6 ---
 
 def _week1_workouts(start_date):
-    """Week 1 starts with today's 4mi easy run on Friday March 6."""
+    """Week 1 starts Fri March 6 with long run on Saturday, MAF on Sunday."""
     d = start_date
     days = []
 
-    # Mon Mar 6 — 4mi Easy (today's run)
+    # Fri Mar 6 — 4mi Easy (first run of the plan)
     days.append({
         "scheduled_date": d.strftime("%Y-%m-%d"),
         "workout_type": "easy_run",
@@ -351,19 +384,19 @@ def _week1_workouts(start_date):
         "intensity": "easy",
     })
 
-    # Tue Mar 7
+    # Sat Mar 7 — 8mi Long Run
     days.append({
         "scheduled_date": (d + timedelta(days=1)).strftime("%Y-%m-%d"),
-        "workout_type": "easy_run",
-        "title": "4mi Easy Run",
-        "description": "Easy pace (9:30-10:30/mi). Keep HR under 145.",
-        "target_distance_miles": 4,
-        "target_pace_min_per_mile": 10.0,
-        "target_hr_zone": "Zone 2 (MAF, <137 bpm ideal)",
+        "workout_type": "long_run",
+        "title": "8mi Long Run",
+        "description": "First long run. Comfortable, conversational pace. Build your aerobic base.",
+        "target_distance_miles": 8,
+        "target_pace_min_per_mile": 10.5,
+        "target_hr_zone": "Zone 2",
         "intensity": "easy",
     })
 
-    # Wed Mar 8 — MAF Test #1
+    # Sun Mar 8 — MAF Test #1
     days.append({
         "scheduled_date": (d + timedelta(days=2)).strftime("%Y-%m-%d"),
         "workout_type": "benchmark",
@@ -375,19 +408,19 @@ def _week1_workouts(start_date):
         "is_benchmark": True,
     })
 
-    # Thu Mar 9 — Easy
+    # Mon Mar 9 — Easy run
     days.append({
         "scheduled_date": (d + timedelta(days=3)).strftime("%Y-%m-%d"),
         "workout_type": "easy_run",
         "title": "4mi Easy Run",
-        "description": "Easy pace. Recovery focus.",
+        "description": "Easy pace (9:30-10:30/mi). Keep HR under 145.",
         "target_distance_miles": 4,
         "target_pace_min_per_mile": 10.0,
-        "target_hr_zone": "Zone 2",
+        "target_hr_zone": "Zone 2 (MAF, <137 bpm ideal)",
         "intensity": "easy",
     })
 
-    # Fri Mar 10 — Rest
+    # Tue Mar 10 — Rest
     days.append({
         "scheduled_date": (d + timedelta(days=4)).strftime("%Y-%m-%d"),
         "workout_type": "rest",
@@ -396,7 +429,7 @@ def _week1_workouts(start_date):
         "intensity": "easy",
     })
 
-    # Sat Mar 11 — 5K TT
+    # Wed Mar 11 — 5K Time Trial
     days.append({
         "scheduled_date": (d + timedelta(days=5)).strftime("%Y-%m-%d"),
         "workout_type": "benchmark",
@@ -407,14 +440,14 @@ def _week1_workouts(start_date):
         "is_benchmark": True,
     })
 
-    # Sun Mar 12 — 8mi Long Run
+    # Thu Mar 12 — Easy run
     days.append({
         "scheduled_date": (d + timedelta(days=6)).strftime("%Y-%m-%d"),
-        "workout_type": "long_run",
-        "title": "8mi Long Run",
-        "description": "First long run. Comfortable, conversational pace. Build your aerobic base.",
-        "target_distance_miles": 8,
-        "target_pace_min_per_mile": 10.5,
+        "workout_type": "easy_run",
+        "title": "4mi Easy Run",
+        "description": "Easy pace. Recovery focus.",
+        "target_distance_miles": 4,
+        "target_pace_min_per_mile": 10.0,
         "target_hr_zone": "Zone 2",
         "intensity": "easy",
     })
