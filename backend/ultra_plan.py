@@ -6,6 +6,7 @@ Inserts day-by-day workouts, weekly structure, and benchmark schedule.
 
 from datetime import datetime, timedelta
 from database import get_db
+from adapt import seed_initial_targets
 
 
 # Week definitions: (week_num, phase/week_type, target_miles_low, target_miles_high, focus)
@@ -527,6 +528,9 @@ def create_br100_plan(conn=None, start_date="2026-03-06"):
                 (plan_id, week_num, (miles_low + miles_high) / 2,
                  sum(1 for w in workouts if w["workout_type"] not in ("rest", "cross_train"))),
             )
+
+        # Seed initial athlete targets
+        seed_initial_targets(conn, plan_id, start_date)
 
         conn.commit()
         return plan_id

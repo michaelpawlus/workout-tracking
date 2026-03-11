@@ -17,6 +17,12 @@ from datetime import datetime, timedelta
 from database import init_db, get_db
 from ultra_plan import create_br100_plan
 from llm import analyze_run_feedback, analyze_strava_screenshot
+from adapt import (
+    get_current_targets, get_targets_history, seed_initial_targets,
+    adapt_from_maf, adapt_from_5k_tt, adapt_from_trends,
+    apply_targets_to_future_workouts, format_adaptation_report,
+    find_unprocessed_benchmarks,
+)
 import strava
 
 
@@ -83,6 +89,7 @@ def cmd_init(args):
             conn.execute("""DELETE FROM run_feedback WHERE workout_id IN
                             (SELECT id FROM workouts WHERE plan_id = ?)""", (plan_id,))
             conn.execute("DELETE FROM run_feedback WHERE plan_id = ?", (plan_id,))
+            conn.execute("DELETE FROM athlete_targets WHERE plan_id = ?", (plan_id,))
             conn.execute("DELETE FROM daily_workouts WHERE plan_id = ?", (plan_id,))
             conn.execute("DELETE FROM workouts WHERE plan_id = ?", (plan_id,))
             conn.execute("DELETE FROM weekly_summaries WHERE plan_id = ?", (plan_id,))
@@ -293,10 +300,13 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
             "weeks_remaining": max(0, (datetime(2026, 7, 25) - datetime.now()).days // 7),
         }
 
+        current_targets = get_current_targets(conn, plan["id"])
+        targets_dict = dict(current_targets) if current_targets else None
+
     try:
         if not as_json:
             print("Analyzing run...", file=sys.stderr)
-        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info)
+        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info, athlete_targets=targets_dict)
     except Exception as e:
         feedback = {
             "compliance_score": None,
@@ -708,15 +718,18 @@ def cmd_export_fit(args):
         if not plan:
             _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
 
+        # Fetch adaptive HR zones
+        targets = get_current_targets(conn, plan["id"])
+        hr_zones = _targets_to_hr_zones(targets)
+
         output_dir = os.path.join(os.path.dirname(__file__), "fit_exports")
 
         if args.all:
-            # Export entire plan
             workouts = conn.execute(
                 "SELECT * FROM daily_workouts WHERE plan_id = ? ORDER BY scheduled_date",
                 (plan["id"],),
             ).fetchall()
-            results = export_week_fits([dict(w) for w in workouts], output_dir)
+            results = export_week_fits([dict(w) for w in workouts], output_dir, hr_zones=hr_zones)
 
         elif args.week:
             week_row = conn.execute(
@@ -729,10 +742,9 @@ def cmd_export_fit(args):
                 "SELECT * FROM daily_workouts WHERE week_id = ? ORDER BY scheduled_date",
                 (week_row["id"],),
             ).fetchall()
-            results = export_week_fits([dict(w) for w in workouts], output_dir)
+            results = export_week_fits([dict(w) for w in workouts], output_dir, hr_zones=hr_zones)
 
         else:
-            # Single date (default: today)
             target_date = args.date or datetime.now().strftime("%Y-%m-%d")
             workout = conn.execute(
                 "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
@@ -743,7 +755,7 @@ def cmd_export_fit(args):
             w = dict(workout)
             if w["workout_type"] in ("rest", "cross_train"):
                 _err(f"Rest day on {target_date} — no FIT file to export", args.json, 2)
-            result = export_workout_fit(w, output_dir)
+            result = export_workout_fit(w, output_dir, hr_zones=hr_zones)
             results = [result]
 
     if args.json:
@@ -806,14 +818,18 @@ def cmd_icu_push(args):
                 _err(f"Rest day on {target_date} — nothing to push", args.json, 2)
             workout_list = [w]
 
+    # Fetch adaptive targets for ICU descriptions
+    with get_db() as conn:
+        plan = _get_plan(conn)
+        icu_targets = get_current_targets(conn, plan["id"]) if plan else None
+
     if args.dry_run:
-        # Show what would be sent without calling the API
         skip_types = {"rest", "cross_train"}
         results = []
         for w in workout_list:
             if w.get("workout_type") in skip_types:
                 continue
-            icu_desc = workout_to_icu_description(w)
+            icu_desc = workout_to_icu_description(w, targets=icu_targets)
             results.append({
                 "date": w["scheduled_date"],
                 "title": w["title"],
@@ -844,6 +860,153 @@ def cmd_icu_push(args):
             print(f"  [{status}] {r['date']}: {r['title']}")
             if r.get("error"):
                 print(f"         {r['error']}")
+
+
+def _targets_to_hr_zones(targets):
+    """Convert athlete_targets row to HR zones dict for fit_export."""
+    if not targets:
+        return None
+    return {
+        1: (100, 120),
+        2: (120, targets["zone2_ceiling"]),
+        3: (targets["zone2_ceiling"], targets["zone3_ceiling"]),
+        4: (targets["zone3_ceiling"], targets["zone4_ceiling"]),
+        5: (targets["zone4_ceiling"], 195),
+    }
+
+
+def cmd_adapt(args):
+    from database import get_connection
+
+    conn = get_connection()
+    try:
+        plan = conn.execute(
+            "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        if not plan:
+            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+
+        plan_id = plan["id"]
+        old_targets = get_current_targets(conn, plan_id)
+        adaptations = []
+
+        # Process unprocessed benchmarks
+        unprocessed = find_unprocessed_benchmarks(conn, plan_id)
+        for bm in unprocessed:
+            if bm["benchmark_type"] == "maf_test" and bm.get("result_value"):
+                result = adapt_from_maf(conn, plan_id, bm["id"], bm["result_value"])
+                if result:
+                    adaptations.append({
+                        "source": "maf_test",
+                        "benchmark": bm["benchmark_name"],
+                        "maf_pace": result.get("maf_pace"),
+                        "targets": result["targets"],
+                    })
+            elif bm["benchmark_type"] == "time_trial" and bm.get("result_value"):
+                result = adapt_from_5k_tt(conn, plan_id, bm["id"], bm["result_value"])
+                if result:
+                    adaptations.append({
+                        "source": "5k_tt",
+                        "benchmark": bm["benchmark_name"],
+                        "five_k_pace": result.get("five_k_pace"),
+                        "targets": result["targets"],
+                    })
+
+        # Check trends
+        trend_result = adapt_from_trends(conn, plan_id)
+
+        # Get final targets
+        new_targets = get_current_targets(conn, plan_id)
+        report = format_adaptation_report(old_targets, new_targets, "adapt_command")
+
+        # Apply to future workouts (unless dry-run)
+        workouts_updated = 0
+        if not args.dry_run and report["changed"]:
+            workouts_updated = apply_targets_to_future_workouts(conn, plan_id, new_targets)
+
+        if args.dry_run:
+            conn.rollback()
+        else:
+            conn.commit()
+    except SystemExit:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    output = {
+        "adaptations": adaptations,
+        "trend_check": trend_result,
+        "current_targets": dict(new_targets) if new_targets else None,
+        "report": report,
+        "workouts_updated": workouts_updated,
+        "dry_run": args.dry_run,
+    }
+
+    if args.json:
+        _print(output, True)
+    else:
+        if not adaptations and (not trend_result or not trend_result.get("change")):
+            print("No adaptations needed.")
+            if trend_result and trend_result.get("reason"):
+                print(f"  Trends: {trend_result['reason']}")
+        else:
+            for a in adaptations:
+                print(f"Adapted from {a['source']}: {a['benchmark']}")
+            if trend_result and trend_result.get("change"):
+                print(f"Trend adjustment: {trend_result['change']}")
+            if report["changes"]:
+                print("\nTarget changes:")
+                for c in report["changes"]:
+                    old_str = _fmt_pace(c["old"]) if "pace" in c["field"] else str(c["old"])
+                    new_str = _fmt_pace(c["new"]) if "pace" in c["field"] else str(c["new"])
+                    print(f"  {c['label']}: {old_str} → {new_str}")
+            if args.dry_run:
+                print("\n(dry run — no changes applied)")
+            else:
+                print(f"\nUpdated {workouts_updated} future workout(s)")
+
+
+def cmd_targets(args):
+    with get_db() as conn:
+        plan = _get_plan(conn)
+        if not plan:
+            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+
+        if args.history:
+            history = get_targets_history(conn, plan["id"])
+            if args.json:
+                _print(history, True)
+            else:
+                print("=== Target History ===")
+                for t in history:
+                    print(f"\n[{t['effective_date']}] source={t['source']}")
+                    print(f"  Easy: {_fmt_pace(t['easy_pace'])} | Long: {_fmt_pace(t['long_run_pace'])} | Tempo: {_fmt_pace(t['tempo_pace'])}")
+                    thr = _fmt_pace(t['threshold_pace']) if t.get('threshold_pace') else "N/A"
+                    print(f"  Threshold: {thr} | MAF HR: {t['maf_hr']}")
+                    if t.get("notes"):
+                        print(f"  Notes: {t['notes']}")
+        else:
+            targets = get_current_targets(conn, plan["id"])
+            if not targets:
+                _err("No targets found. Run: python cli.py ultra init --force", args.json, 2)
+            if args.json:
+                _print(dict(targets), True)
+            else:
+                print("=== Current Targets ===")
+                print(f"Effective: {targets['effective_date']} (source: {targets['source']})")
+                print(f"Easy Pace:     {_fmt_pace(targets['easy_pace'])}")
+                print(f"Long Run Pace: {_fmt_pace(targets['long_run_pace'])}")
+                print(f"Tempo Pace:    {_fmt_pace(targets['tempo_pace'])}")
+                thr = _fmt_pace(targets['threshold_pace']) if targets.get('threshold_pace') else "N/A"
+                print(f"Threshold:     {thr}")
+                print(f"MAF HR:        {targets['maf_hr']} bpm")
+                print(f"Zone 2 Ceil:   {targets['zone2_ceiling']} bpm")
+                print(f"Zone 3 Ceil:   {targets['zone3_ceiling']} bpm")
+                print(f"Zone 4 Ceil:   {targets['zone4_ceiling']} bpm")
 
 
 def _fmt_pace(pace):
@@ -941,6 +1104,16 @@ def main():
     si_p.add_argument("--no-feedback", action="store_true", help="Skip LLM feedback")
     si_p.add_argument("--json", action="store_true")
 
+    # ultra adapt
+    adapt_p = ultra_sub.add_parser("adapt", help="Run adaptive target adjustments")
+    adapt_p.add_argument("--dry-run", action="store_true", help="Show proposed changes without applying")
+    adapt_p.add_argument("--json", action="store_true")
+
+    # ultra targets
+    tgt_p = ultra_sub.add_parser("targets", help="Show current pace/HR targets")
+    tgt_p.add_argument("--history", action="store_true", help="Show full target timeline")
+    tgt_p.add_argument("--json", action="store_true")
+
     args = parser.parse_args()
 
     if args.command != "ultra" or not args.ultra_command:
@@ -963,6 +1136,8 @@ def main():
         "strava-connect": cmd_strava_connect,
         "strava-status": cmd_strava_status,
         "strava-import": cmd_strava_import,
+        "adapt": cmd_adapt,
+        "targets": cmd_targets,
     }
 
     cmd = commands.get(args.ultra_command)

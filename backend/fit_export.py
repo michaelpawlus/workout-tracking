@@ -45,57 +45,71 @@ def _minutes_to_ms(minutes):
     return int(minutes * 60 * 1000)
 
 
-def parse_workout_segments(description, workout_type, target_distance=None, target_duration=None):
+def _resolve_hr_zones(hr_zones=None):
+    """Return HR zone dict, using overrides if provided."""
+    if hr_zones:
+        merged = dict(HR_ZONES)
+        merged.update(hr_zones)
+        return merged
+    return HR_ZONES
+
+
+def parse_workout_segments(description, workout_type, target_distance=None,
+                           target_duration=None, hr_zones=None):
     """Parse workout description into structured segments.
 
     Returns list of dicts with keys:
         name, intensity, duration_type, duration_value,
         target_type, target_hr_low, target_hr_high, target_speed_low, target_speed_high
+
+    If hr_zones is provided, overrides the module-level HR_ZONES defaults.
     """
     if not description:
-        return [_default_step(workout_type, target_distance, target_duration)]
+        return [_default_step(workout_type, target_distance, target_duration, hr_zones=hr_zones)]
 
+    zones = _resolve_hr_zones(hr_zones)
     desc = description.lower()
 
     # MAF test
     if "maf" in desc and ("137" in desc or "maf" in desc):
-        return _parse_maf(description, target_duration)
+        return _parse_maf(description, target_duration, zones)
 
     # 5K Time Trial
     if "5k" in desc and ("time trial" in desc or "all-out" in desc):
-        return _parse_5k_tt(description)
+        return _parse_5k_tt(description, zones)
 
     # Tempo runs: "Xmi at tempo" or "Nx1mi at tempo"
     if "tempo" in desc:
-        return _parse_tempo(description, target_distance)
+        return _parse_tempo(description, target_distance, zones)
 
     # Hill repeats
     if "hill repeat" in desc or "hill workout" in desc:
-        return _parse_hills(description)
+        return _parse_hills(description, zones)
 
     # Easy + strides
     if "strides" in desc:
-        return _parse_easy_strides(description, target_distance)
+        return _parse_easy_strides(description, target_distance, zones)
 
     # Long run
     if workout_type == "long_run":
-        return _parse_long_run(description, target_distance)
+        return _parse_long_run(description, target_distance, zones)
 
     # Back-to-back
     if workout_type == "back_to_back":
-        return _parse_long_run(description, target_distance)
+        return _parse_long_run(description, target_distance, zones)
 
-    return [_default_step(workout_type, target_distance, target_duration)]
+    return [_default_step(workout_type, target_distance, target_duration, hr_zones=hr_zones)]
 
 
-def _default_step(workout_type, distance=None, duration=None):
+def _default_step(workout_type, distance=None, duration=None, hr_zones=None):
     """Fallback: single active step."""
+    zones = _resolve_hr_zones(hr_zones)
     step = {
         "name": workout_type.replace("_", " ").title(),
         "intensity": "ACTIVE",
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[2][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[2][0],
+        "target_hr_high": zones[2][1],
     }
     if distance:
         step["duration_type"] = "DISTANCE"
@@ -109,10 +123,10 @@ def _default_step(workout_type, distance=None, duration=None):
     return step
 
 
-def _parse_maf(description, target_duration):
+def _parse_maf(description, target_duration, zones=None):
     """MAF test: warmup + steady MAF effort."""
+    zones = zones or HR_ZONES
     steps = []
-    # Warmup
     warmup_match = re.search(r"warm\s*up\s+(\d+)\s*min", description, re.IGNORECASE)
     warmup_min = int(warmup_match.group(1)) if warmup_match else 10
     steps.append({
@@ -121,10 +135,9 @@ def _parse_maf(description, target_duration):
         "duration_type": "TIME",
         "duration_value": _minutes_to_ms(warmup_min),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[1][0],
-        "target_hr_high": HR_ZONES[1][1],
+        "target_hr_low": zones[1][0],
+        "target_hr_high": zones[1][1],
     })
-    # MAF effort
     maf_min = (target_duration or 30)
     steps.append({
         "name": "MAF Test",
@@ -132,16 +145,16 @@ def _parse_maf(description, target_duration):
         "duration_type": "TIME",
         "duration_value": _minutes_to_ms(maf_min),
         "target_type": "HEART_RATE",
-        "target_hr_low": 135,
-        "target_hr_high": 139,
+        "target_hr_low": zones[2][0] - 2,
+        "target_hr_high": zones[2][1] + 2,
     })
     return steps
 
 
-def _parse_5k_tt(description):
+def _parse_5k_tt(description, zones=None):
     """5K Time Trial: warmup + 5K all-out + cooldown."""
+    zones = zones or HR_ZONES
     steps = []
-    # Warmup
     wu_match = re.search(r"(\d+)\s*mi\s*warmup", description, re.IGNORECASE)
     wu_miles = float(wu_match.group(1)) if wu_match else 1.0
     steps.append({
@@ -150,10 +163,9 @@ def _parse_5k_tt(description):
         "duration_type": "DISTANCE",
         "duration_value": _miles_to_cm(wu_miles),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[1][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[1][0],
+        "target_hr_high": zones[2][1],
     })
-    # 5K
     steps.append({
         "name": "5K Time Trial",
         "intensity": "ACTIVE",
@@ -161,7 +173,6 @@ def _parse_5k_tt(description):
         "duration_value": _miles_to_cm(3.1),
         "target_type": "OPEN",
     })
-    # Cooldown
     cd_match = re.search(r"(\d+)\s*mi\s*cooldown", description, re.IGNORECASE)
     cd_miles = float(cd_match.group(1)) if cd_match else 1.0
     steps.append({
@@ -170,18 +181,18 @@ def _parse_5k_tt(description):
         "duration_type": "DISTANCE",
         "duration_value": _miles_to_cm(cd_miles),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[1][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[1][0],
+        "target_hr_high": zones[2][1],
     })
     return steps
 
 
-def _parse_tempo(description, target_distance):
+def _parse_tempo(description, target_distance, zones=None):
     """Tempo run: warmup + tempo segments + cooldown."""
+    zones = zones or HR_ZONES
     steps = []
     desc = description.lower()
 
-    # Warmup
     wu_match = re.search(r"(\d+)\s*mi\s*warmup", description, re.IGNORECASE)
     wu_miles = float(wu_match.group(1)) if wu_match else 2.0
     steps.append({
@@ -190,11 +201,10 @@ def _parse_tempo(description, target_distance):
         "duration_type": "DISTANCE",
         "duration_value": _miles_to_cm(wu_miles),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[1][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[1][0],
+        "target_hr_high": zones[2][1],
     })
 
-    # Check for interval tempo: NxMmi
     interval_match = re.search(r"(\d+)\s*x\s*(\d+)\s*mi", desc)
     if interval_match:
         reps = int(interval_match.group(1))
@@ -206,11 +216,10 @@ def _parse_tempo(description, target_distance):
                 "duration_type": "DISTANCE",
                 "duration_value": _miles_to_cm(rep_dist),
                 "target_type": "HEART_RATE",
-                "target_hr_low": HR_ZONES[3][0],
-                "target_hr_high": HR_ZONES[3][1],
+                "target_hr_low": zones[3][0],
+                "target_hr_high": zones[3][1],
             })
             if i < reps - 1:
-                # Recovery jog between intervals
                 rec_match = re.search(r"(\d+)\s*min\s*(jog|recovery)", desc)
                 rec_min = int(rec_match.group(1)) if rec_match else 2
                 steps.append({
@@ -219,11 +228,10 @@ def _parse_tempo(description, target_distance):
                     "duration_type": "TIME",
                     "duration_value": _minutes_to_ms(rec_min),
                     "target_type": "HEART_RATE",
-                    "target_hr_low": HR_ZONES[1][0],
-                    "target_hr_high": HR_ZONES[2][1],
+                    "target_hr_low": zones[1][0],
+                    "target_hr_high": zones[2][1],
                 })
     else:
-        # Continuous tempo: Nmi at tempo
         tempo_match = re.search(r"(\d+)\s*mi\s*(at\s*)?tempo", desc)
         tempo_miles = float(tempo_match.group(1)) if tempo_match else 4.0
         steps.append({
@@ -232,11 +240,10 @@ def _parse_tempo(description, target_distance):
             "duration_type": "DISTANCE",
             "duration_value": _miles_to_cm(tempo_miles),
             "target_type": "HEART_RATE",
-            "target_hr_low": HR_ZONES[3][0],
-            "target_hr_high": HR_ZONES[3][1],
+            "target_hr_low": zones[3][0],
+            "target_hr_high": zones[3][1],
         })
 
-    # Cooldown
     cd_match = re.search(r"(\d+)\s*mi\s*cooldown", description, re.IGNORECASE)
     cd_miles = float(cd_match.group(1)) if cd_match else 1.0
     steps.append({
@@ -245,18 +252,18 @@ def _parse_tempo(description, target_distance):
         "duration_type": "DISTANCE",
         "duration_value": _miles_to_cm(cd_miles),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[1][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[1][0],
+        "target_hr_high": zones[2][1],
     })
     return steps
 
 
-def _parse_hills(description):
+def _parse_hills(description, zones=None):
     """Hill repeats: warmup + repeats + cooldown."""
+    zones = zones or HR_ZONES
     steps = []
     desc = description.lower()
 
-    # Warmup
     wu_match = re.search(r"(\d+)\s*mi\s*warmup", description, re.IGNORECASE)
     wu_miles = float(wu_match.group(1)) if wu_match else 2.0
     steps.append({
@@ -265,11 +272,10 @@ def _parse_hills(description):
         "duration_type": "DISTANCE",
         "duration_value": _miles_to_cm(wu_miles),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[1][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[1][0],
+        "target_hr_high": zones[2][1],
     })
 
-    # Repeats: Nx90sec or NxMmin
     rep_match = re.search(r"(\d+)\s*x\s*(\d+)\s*(sec|min)", desc)
     if rep_match:
         reps = int(rep_match.group(1))
@@ -284,20 +290,19 @@ def _parse_hills(description):
                 "duration_type": "TIME",
                 "duration_value": _minutes_to_ms(dur_min),
                 "target_type": "HEART_RATE",
-                "target_hr_low": HR_ZONES[4][0],
-                "target_hr_high": HR_ZONES[4][1],
+                "target_hr_low": zones[4][0],
+                "target_hr_high": zones[4][1],
             })
             steps.append({
                 "name": "Jog Down",
                 "intensity": "RECOVERY",
                 "duration_type": "TIME",
-                "duration_value": _minutes_to_ms(dur_min),  # recovery ~same duration
+                "duration_value": _minutes_to_ms(dur_min),
                 "target_type": "HEART_RATE",
-                "target_hr_low": HR_ZONES[1][0],
-                "target_hr_high": HR_ZONES[2][1],
+                "target_hr_low": zones[1][0],
+                "target_hr_high": zones[2][1],
             })
 
-    # Cooldown
     cd_match = re.search(r"(\d+)\s*mi\s*cooldown", description, re.IGNORECASE)
     cd_miles = float(cd_match.group(1)) if cd_match else 1.0
     steps.append({
@@ -306,22 +311,21 @@ def _parse_hills(description):
         "duration_type": "DISTANCE",
         "duration_value": _miles_to_cm(cd_miles),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[1][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[1][0],
+        "target_hr_high": zones[2][1],
     })
     return steps
 
 
-def _parse_easy_strides(description, target_distance):
+def _parse_easy_strides(description, target_distance, zones=None):
     """Easy run + strides at end."""
+    zones = zones or HR_ZONES
     steps = []
     desc = description.lower()
 
-    # Main easy distance
     main_match = re.search(r"(\d+)\s*mi\s*easy", desc)
     main_miles = float(main_match.group(1)) if main_match else (target_distance or 5)
 
-    # Strides count
     stride_match = re.search(r"(\d+)\s*x\s*100m\s*strides", desc)
     num_strides = int(stride_match.group(1)) if stride_match else 6
 
@@ -329,10 +333,10 @@ def _parse_easy_strides(description, target_distance):
         "name": "Easy Run",
         "intensity": "ACTIVE",
         "duration_type": "DISTANCE",
-        "duration_value": _miles_to_cm(main_miles - 0.5),  # leave room for strides
+        "duration_value": _miles_to_cm(main_miles - 0.5),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[2][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[2][0],
+        "target_hr_high": zones[2][1],
     })
 
     for i in range(num_strides):
@@ -340,27 +344,28 @@ def _parse_easy_strides(description, target_distance):
             "name": f"Stride {i+1}",
             "intensity": "ACTIVE",
             "duration_type": "DISTANCE",
-            "duration_value": _miles_to_cm(0.062),  # ~100m
+            "duration_value": _miles_to_cm(0.062),
             "target_type": "HEART_RATE",
-            "target_hr_low": HR_ZONES[4][0],
-            "target_hr_high": HR_ZONES[5][1],
+            "target_hr_low": zones[4][0],
+            "target_hr_high": zones[5][1],
         })
         if i < num_strides - 1:
             steps.append({
                 "name": "Easy Jog",
                 "intensity": "RECOVERY",
                 "duration_type": "DISTANCE",
-                "duration_value": _miles_to_cm(0.062),  # ~100m jog back
+                "duration_value": _miles_to_cm(0.062),
                 "target_type": "HEART_RATE",
-                "target_hr_low": HR_ZONES[1][0],
-                "target_hr_high": HR_ZONES[2][1],
+                "target_hr_low": zones[1][0],
+                "target_hr_high": zones[2][1],
             })
 
     return steps
 
 
-def _parse_long_run(description, target_distance):
+def _parse_long_run(description, target_distance, zones=None):
     """Long run: single steady effort."""
+    zones = zones or HR_ZONES
     distance = target_distance or 10
     return [{
         "name": f"{distance}mi Long Run",
@@ -368,8 +373,8 @@ def _parse_long_run(description, target_distance):
         "duration_type": "DISTANCE",
         "duration_value": _miles_to_cm(distance),
         "target_type": "HEART_RATE",
-        "target_hr_low": HR_ZONES[2][0],
-        "target_hr_high": HR_ZONES[2][1],
+        "target_hr_low": zones[2][0],
+        "target_hr_high": zones[2][1],
     }]
 
 
@@ -447,8 +452,11 @@ def build_fit_file(workout_dict, steps):
     return fit_file.to_bytes()
 
 
-def export_workout_fit(workout_dict, output_dir):
+def export_workout_fit(workout_dict, output_dir, hr_zones=None):
     """Full pipeline: parse description → build FIT → write file.
+
+    If hr_zones is provided (dict mapping zone number to (low, high) tuples),
+    overrides the module-level HR_ZONES defaults.
 
     Returns dict with file path and metadata.
     """
@@ -459,6 +467,7 @@ def export_workout_fit(workout_dict, output_dir):
         workout_dict.get("workout_type", "easy_run"),
         workout_dict.get("target_distance_miles"),
         workout_dict.get("target_duration_minutes"),
+        hr_zones=hr_zones,
     )
     steps = workout_to_fit_steps(segments)
     fit_bytes = build_fit_file(workout_dict, steps)
@@ -481,7 +490,7 @@ def export_workout_fit(workout_dict, output_dir):
     }
 
 
-def export_week_fits(week_workouts, output_dir):
+def export_week_fits(week_workouts, output_dir, hr_zones=None):
     """Export FIT files for all runnable workouts in a week.
 
     Skips rest days and cross-training.
@@ -493,7 +502,7 @@ def export_week_fits(week_workouts, output_dir):
         if w.get("workout_type") in skip_types:
             continue
         try:
-            result = export_workout_fit(w, output_dir)
+            result = export_workout_fit(w, output_dir, hr_zones=hr_zones)
             results.append(result)
         except Exception as e:
             results.append({

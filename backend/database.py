@@ -191,6 +191,24 @@ def init_db():
                 refresh_token TEXT NOT NULL,
                 expires_at INTEGER NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS athlete_targets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id INTEGER NOT NULL REFERENCES training_plans(id) ON DELETE CASCADE,
+                effective_date TEXT NOT NULL,
+                easy_pace REAL NOT NULL,
+                long_run_pace REAL NOT NULL,
+                tempo_pace REAL NOT NULL,
+                threshold_pace REAL,
+                maf_hr INTEGER NOT NULL DEFAULT 137,
+                zone2_ceiling INTEGER NOT NULL DEFAULT 137,
+                zone3_ceiling INTEGER NOT NULL DEFAULT 155,
+                zone4_ceiling INTEGER NOT NULL DEFAULT 170,
+                source TEXT NOT NULL,
+                trigger_benchmark_id INTEGER REFERENCES plan_benchmarks(id),
+                notes TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
         """)
 
         # Migrate CHECK constraints if DB predates ultra plan support
@@ -240,6 +258,20 @@ def init_db():
             conn.execute("ALTER TABLE workouts ADD COLUMN plan_week INTEGER")
         if "strava_activity_id" not in existing_cols:
             conn.execute("ALTER TABLE workouts ADD COLUMN strava_activity_id INTEGER")
+
+        # Seed athlete_targets for existing plans that lack them
+        plans_without_targets = conn.execute(
+            """SELECT id, start_date FROM training_plans
+               WHERE id NOT IN (SELECT DISTINCT plan_id FROM athlete_targets)"""
+        ).fetchall()
+        for p in plans_without_targets:
+            conn.execute(
+                """INSERT INTO athlete_targets
+                   (plan_id, effective_date, easy_pace, long_run_pace, tempo_pace,
+                    maf_hr, zone2_ceiling, zone3_ceiling, zone4_ceiling, source, notes)
+                   VALUES (?, ?, 10.0, 10.5, 8.0, 137, 137, 155, 170, 'initial', 'Plan defaults')""",
+                (p["id"], p["start_date"]),
+            )
 
         # Seed common exercises if table is empty
         count = conn.execute("SELECT COUNT(*) FROM exercises").fetchone()[0]

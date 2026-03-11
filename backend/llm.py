@@ -357,7 +357,8 @@ def analyze_run_feedback(prescribed: dict, actual: dict,
                          weekly_context: dict | None = None,
                          trend_data: list[dict] | None = None,
                          benchmarks: list[dict] | None = None,
-                         race_info: dict | None = None) -> dict:
+                         race_info: dict | None = None,
+                         athlete_targets: dict | None = None) -> dict:
     """Analyze a completed run against the prescribed workout and return structured feedback."""
 
     system_prompt = """You are an experienced ultramarathon coach analyzing a training run for an athlete preparing for a 100-mile race (Burning River 100, July 25, 2026, sub-24hr goal).
@@ -396,6 +397,8 @@ Respond with JSON only:
         user_msg_parts.append(f"\n## Benchmark Results\n{json.dumps(benchmarks, indent=2, default=str)}")
     if race_info:
         user_msg_parts.append(f"\n## Race Info\n{json.dumps(race_info, indent=2, default=str)}")
+    if athlete_targets:
+        user_msg_parts.append(f"\n## Current Athlete Targets\n{json.dumps(athlete_targets, indent=2, default=str)}")
 
     user_msg_parts.append("\nAnalyze this run and provide structured feedback.")
 

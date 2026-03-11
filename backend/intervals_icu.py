@@ -30,11 +30,14 @@ def _athlete_id():
     return os.environ.get("INTERVALS_ICU_ATHLETE_ID", "0")
 
 
-def workout_to_icu_description(workout_dict):
+def workout_to_icu_description(workout_dict, targets=None):
     """Convert a BR100 workout dict into Intervals.icu description syntax.
 
     Returns a string using Intervals.icu's structured text format:
       - Step label duration target
+
+    If targets dict is provided (from athlete_targets), uses adaptive HR zones
+    in descriptions instead of hardcoded zone labels.
     """
     desc = workout_dict.get("description", "")
     wtype = workout_dict.get("workout_type", "easy_run")
