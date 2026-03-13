@@ -137,7 +137,8 @@ def adapt_from_5k_tt(conn, plan_id, benchmark_id, tt_time_seconds):
     """Adapt tempo/threshold pace from a 5K time trial.
 
     tt_time_seconds: total time for 3.1 miles.
-    Formula: tempo = 5k_pace + 1.5, threshold = 5k_pace + 1.0
+    Formula (Daniels-style): threshold = 5k_pace + 0.5, tempo = 5k_pace + 0.75
+    Guardrail: tempo/threshold must be faster (lower) than easy pace.
     """
     if tt_time_seconds <= 0:
         return None
@@ -148,8 +149,11 @@ def adapt_from_5k_tt(conn, plan_id, benchmark_id, tt_time_seconds):
         return None
 
     new = dict(current)
-    new["tempo_pace"] = _clamp(round(pace_5k + 1.5, 2), TEMPO_PACE_MIN, TEMPO_PACE_MAX)
-    new["threshold_pace"] = round(pace_5k + 1.0, 2)
+    easy = current["easy_pace"]
+    tempo_raw = round(pace_5k + 0.75, 2)
+    threshold_raw = round(pace_5k + 0.5, 2)
+    new["tempo_pace"] = _clamp(min(tempo_raw, easy - 0.1), TEMPO_PACE_MIN, TEMPO_PACE_MAX)
+    new["threshold_pace"] = min(threshold_raw, new["tempo_pace"] - 0.1)
 
     bm = conn.execute("SELECT scheduled_date FROM plan_benchmarks WHERE id = ?",
                        (benchmark_id,)).fetchone()
