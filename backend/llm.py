@@ -358,7 +358,8 @@ def analyze_run_feedback(prescribed: dict, actual: dict,
                          trend_data: list[dict] | None = None,
                          benchmarks: list[dict] | None = None,
                          race_info: dict | None = None,
-                         athlete_targets: dict | None = None) -> dict:
+                         athlete_targets: dict | None = None,
+                         nutrition_data: dict | None = None) -> dict:
     """Analyze a completed run against the prescribed workout and return structured feedback."""
 
     system_prompt = """You are an experienced ultramarathon coach analyzing a training run for an athlete preparing for a 100-mile race (Burning River 100, July 25, 2026, sub-24hr goal).
@@ -373,6 +374,17 @@ COACHING PRINCIPLES:
 - MAF test improvement (more distance at same HR) = aerobic fitness improving
 - Pace decay in long runs should decrease over training cycle
 
+NUTRITION COACHING:
+- <60 min runs: water only, no fuel needed
+- 60-90 min: light fueling (1 gel or equivalent ~100 cal around 45 min)
+- >90 min: structured fueling every 30-45 min, targeting ~200-250 cal/hr
+- Electrolytes/sodium critical for runs >60 min, especially in heat
+- Pre-run: 40-100g carbs 2-3hr before long runs; lighter for shorter runs
+- Post-run: protein + carbs within 30-60 min for long runs
+- Bonking = ran out of glycogen. Means under-fueled, not under-trained.
+- GI issues are common — use training runs to practice nutrition, not race day
+- If athlete reports bonking or GI issues, flag it prominently in feedback
+
 Respond with JSON only:
 {
     "compliance_score": <0-100 float>,
@@ -380,6 +392,7 @@ Respond with JSON only:
     "hr_feedback": "...",
     "distance_feedback": "...",
     "overall_feedback": "...",
+    "nutrition_feedback": "...",
     "weekly_mileage": {"target": <num>, "completed": <num>, "remaining": <num>},
     "warnings": ["warning1", "warning2"],
     "race_readiness": "On track / Needs attention / Behind"
@@ -399,6 +412,8 @@ Respond with JSON only:
         user_msg_parts.append(f"\n## Race Info\n{json.dumps(race_info, indent=2, default=str)}")
     if athlete_targets:
         user_msg_parts.append(f"\n## Current Athlete Targets\n{json.dumps(athlete_targets, indent=2, default=str)}")
+    if nutrition_data:
+        user_msg_parts.append(f"\n## Nutrition Report\n{json.dumps(nutrition_data, indent=2, default=str)}")
 
     user_msg_parts.append("\nAnalyze this run and provide structured feedback.")
 

@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from database import init_db, get_db
 from ultra_plan import create_br100_plan
 from llm import analyze_run_feedback, analyze_strava_screenshot
+from nutrition import get_nutrition_tier, get_guidelines_for_workout
 from adapt import (
     get_current_targets, get_targets_history, seed_initial_targets,
     adapt_from_maf, adapt_from_5k_tt, adapt_from_trends,
@@ -127,6 +128,16 @@ def cmd_today(args):
 
         result = dict(workout)
 
+    # Add nutrition guidance for medium/long tier workouts
+    dist = result.get("target_distance_miles") or 0
+    dur = result.get("target_duration_minutes")
+    tier = get_nutrition_tier(dist, dur) if dist else "short"
+    if tier in ("medium", "long"):
+        guidelines = get_guidelines_for_workout(
+            result.get("workout_type", "easy_run"), dist, dur
+        )
+        result["nutrition"] = guidelines
+
     if args.json:
         _print(result, True)
     else:
@@ -146,6 +157,12 @@ def cmd_today(args):
             print(f"HR Zone: {w['target_hr_zone']}")
         if w.get("description"):
             print(f"\n{w['description']}")
+        if w.get("nutrition"):
+            n = w["nutrition"]
+            print(f"\nNutrition ({n['tier_label']}):")
+            print(f"  Pre-run:  {n['pre_run']['carbs_g']}g carbs, {n['pre_run']['timing']}")
+            print(f"  During:   {n['during_run']['carbs_g_per_hr']} cal/hr, {n['during_run']['water_oz_per_hr']} oz water/hr")
+            print(f"  Post-run: {n['post_run']['protein_g']}g protein + {n['post_run']['carbs_g']}g carbs ({n['post_run']['recovery_window']})")
 
 
 def cmd_week(args):
@@ -210,7 +227,9 @@ def cmd_week(args):
 
 def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
                 effort=None, pace=None, notes="", source="cli", run_date=None,
-                skip_feedback=False, strava_activity_id=None, as_json=False):
+                skip_feedback=False, strava_activity_id=None, as_json=False,
+                pre_meal=None, during_fuel=None, during_hydration=None,
+                post_meal=None, nutrition_notes=None):
     """Core run submission logic. Returns result dict."""
     if run_date is None:
         run_date = datetime.now().strftime("%Y-%m-%d")
@@ -303,10 +322,20 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
         current_targets = get_current_targets(conn, plan["id"])
         targets_dict = dict(current_targets) if current_targets else None
 
+    nutrition_data = None
+    if any(v is not None for v in (pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes)):
+        nutrition_data = {
+            "pre_meal": pre_meal,
+            "during_fuel": during_fuel,
+            "during_hydration": during_hydration,
+            "post_meal": post_meal,
+            "nutrition_notes": nutrition_notes,
+        }
+
     try:
         if not as_json:
             print("Analyzing run...", file=sys.stderr)
-        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info, athlete_targets=targets_dict)
+        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info, athlete_targets=targets_dict, nutrition_data=nutrition_data)
     except Exception as e:
         feedback = {
             "compliance_score": None,
@@ -321,8 +350,9 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
                (workout_id, daily_workout_id, plan_id, prescribed_distance_miles,
                 actual_distance_miles, prescribed_pace, actual_pace, avg_heart_rate,
                 max_heart_rate, elevation_gain_ft, effort_rating, compliance_score,
-                pace_feedback, hr_feedback, overall_feedback, warnings)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                pace_feedback, hr_feedback, overall_feedback, warnings,
+                pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (workout_id, daily_workout_id, plan["id"],
              prescribed.get("target_distance_miles"), distance,
              prescribed.get("target_pace_min_per_mile"), pace,
@@ -331,7 +361,8 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
              feedback.get("pace_feedback", ""),
              feedback.get("hr_feedback", ""),
              feedback.get("overall_feedback", ""),
-             json.dumps(feedback.get("warnings", []))),
+             json.dumps(feedback.get("warnings", [])),
+             pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes),
         )
 
     return {"workout_id": workout_id, "feedback": feedback}
@@ -351,6 +382,9 @@ def cmd_submit(args):
         max_hr=args.max_hr, elevation=args.elevation, effort=args.effort,
         pace=args.pace, notes=args.notes or "", source="cli",
         run_date=run_date, as_json=args.json,
+        pre_meal=args.pre_meal, during_fuel=args.during_fuel,
+        during_hydration=args.during_hydration, post_meal=args.post_meal,
+        nutrition_notes=args.nutrition_notes,
     )
 
     feedback = result.get("feedback", {}) or {}
@@ -1009,6 +1043,54 @@ def cmd_targets(args):
                 print(f"Zone 4 Ceil:   {targets['zone4_ceiling']} bpm")
 
 
+def cmd_nutrition(args):
+    dist = args.distance
+    dur = args.duration
+
+    if not dist and not dur:
+        # Default: show today's workout nutrition
+        today = datetime.now().strftime("%Y-%m-%d")
+        with get_db() as conn:
+            plan = _get_plan(conn)
+            if plan:
+                workout = conn.execute(
+                    "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
+                    (plan["id"], today),
+                ).fetchone()
+                if workout:
+                    dist = workout["target_distance_miles"] or 0
+                    dur = workout["target_duration_minutes"]
+
+    if not dist:
+        dist = 5.0  # fallback
+
+    guidelines = get_guidelines_for_workout(
+        args.workout_type or "easy_run", dist, dur
+    )
+
+    if args.json:
+        _print(guidelines, True)
+    else:
+        g = guidelines
+        print(f"=== Nutrition Guidelines: {g['tier_label']} ===")
+        print(f"Workout: {g['workout_type']} | {g['distance_miles']}mi")
+        print()
+        print("Pre-Run:")
+        print(f"  Carbs: {g['pre_run']['carbs_g']}g | Timing: {g['pre_run']['timing']}")
+        print(f"  Examples: {', '.join(g['pre_run']['examples'])}")
+        print()
+        print("During Run:")
+        print(f"  Water: {g['during_run']['water_oz_per_hr']} oz/hr")
+        print(f"  Fuel: {g['during_run']['carbs_g_per_hr']}")
+        print(f"  Sodium: {g['during_run']['sodium_mg_per_hr']} mg/hr")
+        print(f"  Notes: {g['during_run']['notes']}")
+        print()
+        print("Post-Run:")
+        print(f"  Protein: {g['post_run']['protein_g']}g | Carbs: {g['post_run']['carbs_g']}g")
+        print(f"  Window: {g['post_run']['recovery_window']}")
+        print(f"  Examples: {', '.join(g['post_run']['examples'])}")
+
+
 def _fmt_pace(pace):
     if pace is None:
         return "N/A"
@@ -1049,6 +1131,11 @@ def main():
     submit_p.add_argument("--notes", type=str, default="")
     submit_p.add_argument("--image", type=str, help="Strava screenshot path")
     submit_p.add_argument("--date", type=str, help="Run date (YYYY-MM-DD), default today")
+    submit_p.add_argument("--pre-meal", type=str, help="Pre-run meal description")
+    submit_p.add_argument("--during-fuel", type=str, help="During-run fueling (gels, food, etc)")
+    submit_p.add_argument("--during-hydration", type=str, help="During-run hydration")
+    submit_p.add_argument("--post-meal", type=str, help="Post-run meal description")
+    submit_p.add_argument("--nutrition-notes", type=str, help="Nutrition observations (bonking, GI issues, etc)")
     submit_p.add_argument("--json", action="store_true")
 
     # ultra feedback
@@ -1114,6 +1201,13 @@ def main():
     tgt_p.add_argument("--history", action="store_true", help="Show full target timeline")
     tgt_p.add_argument("--json", action="store_true")
 
+    # ultra nutrition
+    nut_p = ultra_sub.add_parser("nutrition", help="Nutrition guidelines for a workout")
+    nut_p.add_argument("--distance", type=float, help="Distance in miles")
+    nut_p.add_argument("--duration", type=float, help="Duration in minutes")
+    nut_p.add_argument("--workout-type", type=str, default=None, help="Workout type (easy_run, long_run, etc)")
+    nut_p.add_argument("--json", action="store_true")
+
     args = parser.parse_args()
 
     if args.command != "ultra" or not args.ultra_command:
@@ -1138,6 +1232,7 @@ def main():
         "strava-import": cmd_strava_import,
         "adapt": cmd_adapt,
         "targets": cmd_targets,
+        "nutrition": cmd_nutrition,
     }
 
     cmd = commands.get(args.ultra_command)

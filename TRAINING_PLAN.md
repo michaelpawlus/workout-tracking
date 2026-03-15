@@ -7,6 +7,37 @@
 
 ---
 
+## Nutrition Guidelines
+
+### Pre-Run Fueling
+
+| Duration Tier | Carbs (g) | Timing | Example Meals |
+|--------------|-----------|--------|---------------|
+| Short (<60 min) | 20-30 | Optional — light snack 30-60 min before | Banana, toast with jam |
+| Medium (60-90 min) | 40-60 | 1.5-2 hr before | Oatmeal + banana, toast + PB, bagel + honey |
+| Long (>90 min) | 60-100 | 2-3 hr before | Oatmeal + banana + honey, bagel + PB + banana, rice bowl + eggs |
+| Race Day (100mi) | 100-150 | 3 hr before start | Rice + eggs + toast, oatmeal + banana + PB + honey |
+
+### During-Run Fueling
+
+| Duration Tier | Carbs/hr | Water/hr | Sodium/hr | Notes |
+|--------------|----------|----------|-----------|-------|
+| Short (<60 min) | None | 12-16 oz | None | Water only |
+| Medium (60-90 min) | ~100 cal (1 gel) at 45 min | 16-20 oz | 200-400 mg | Electrolyte tabs helpful |
+| Long (>90 min) | 200-250 cal/hr (50-60g) | 20-24 oz | 400-800 mg | Fuel every 30-45 min. Practice race nutrition! |
+| Race Day (100mi) | 250-300 cal/hr (60-80g) | 20-28 oz | 500-1000 mg | Mix gels with real food. Eat before hungry. Shift to savory after 12+ hrs |
+
+### Post-Run Recovery
+
+| Duration Tier | Protein (g) | Carbs (g) | Recovery Window | Example Foods |
+|--------------|-------------|-----------|-----------------|---------------|
+| Short (<60 min) | 15-20 | 30-40 | Within 60 min if hungry | Greek yogurt + fruit, chocolate milk |
+| Medium (60-90 min) | 20-30 | 40-60 | Within 30-60 min | Protein shake + banana, eggs + toast |
+| Long (>90 min) | 30-40 | 60-80 | Within 30 min — critical | Protein shake + PB toast, chicken + rice |
+| Race Day (100mi) | 40-50 | 80-100 | Eat whatever sounds good | Pizza, burger, soup + bread |
+
+---
+
 ## Week 1 — BASE
 
 **Focus:** Baseline week. Easy running, 5K TT, MAF test

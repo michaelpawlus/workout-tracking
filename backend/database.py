@@ -259,6 +259,12 @@ def init_db():
         if "strava_activity_id" not in existing_cols:
             conn.execute("ALTER TABLE workouts ADD COLUMN strava_activity_id INTEGER")
 
+        # Add nutrition columns to run_feedback if they don't exist (migration)
+        rf_cols = {row[1] for row in conn.execute("PRAGMA table_info(run_feedback)").fetchall()}
+        for col in ("pre_meal", "during_fuel", "during_hydration", "post_meal", "nutrition_notes"):
+            if col not in rf_cols:
+                conn.execute(f"ALTER TABLE run_feedback ADD COLUMN {col} TEXT")
+
         # Seed athlete_targets for existing plans that lack them
         plans_without_targets = conn.execute(
             """SELECT id, start_date FROM training_plans
