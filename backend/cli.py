@@ -1208,38 +1208,112 @@ def main():
     nut_p.add_argument("--workout-type", type=str, default=None, help="Workout type (easy_run, long_run, etc)")
     nut_p.add_argument("--json", action="store_true")
 
+    # -----------------------------------------------------------------------
+    # gym subcommand — strength & gym workout tracking
+    # -----------------------------------------------------------------------
+    gym_parser = subparsers.add_parser("gym", help="Strength & gym workout tracking")
+    gym_sub = gym_parser.add_subparsers(dest="gym_command")
+
+    # gym log
+    gym_log_p = gym_sub.add_parser("log", help="Log a strength workout")
+    gym_log_p.add_argument("--exercise", action="append", metavar="NAME:SETS:REPS:WEIGHT",
+                           help="Exercise in name:sets:reps:weight format (repeatable)")
+    gym_log_p.add_argument("--text", type=str, help="Free-text workout description (uses AI to parse)")
+    gym_log_p.add_argument("--date", type=str, help="Workout date (YYYY-MM-DD), default today")
+    gym_log_p.add_argument("--duration", type=int, help="Total session duration in minutes")
+    gym_log_p.add_argument("--notes", type=str, default="")
+    gym_log_p.add_argument("--json", action="store_true")
+
+    # gym pr
+    gym_pr_p = gym_sub.add_parser("pr", help="View/manage personal records")
+    gym_pr_p.add_argument("--exercise", type=str, help="Filter by exercise name (snake_case)")
+    gym_pr_p.add_argument("--set", action="store_true", help="Set a PR manually")
+    gym_pr_p.add_argument("--type", type=str, choices=["1RM", "5RM", "max_reps", "best_time"],
+                          help="PR type (required with --set)")
+    gym_pr_p.add_argument("--value", type=float, help="PR value (required with --set)")
+    gym_pr_p.add_argument("--json", action="store_true")
+
+    # gym suggest
+    gym_sug_p = gym_sub.add_parser("suggest", help="Generate a workout with weight suggestions")
+    gym_sug_p.add_argument("prompt", nargs="?", type=str, help="Workout request (e.g., 'upper body 30 minutes')")
+    gym_sug_p.add_argument("--type", type=str, choices=["upper-body", "lower-body", "full-body", "push", "pull", "legs"],
+                           help="Shorthand workout type preset")
+    gym_sug_p.add_argument("--json", action="store_true")
+
+    # gym history
+    gym_hist_p = gym_sub.add_parser("history", help="View past gym sessions")
+    gym_hist_p.add_argument("--last", type=int, default=10, help="Number of workouts to show")
+    gym_hist_p.add_argument("--exercise", type=str, help="Filter by exercise name")
+    gym_hist_p.add_argument("--json", action="store_true")
+
+    # gym exercises
+    gym_ex_p = gym_sub.add_parser("exercises", help="List available exercises")
+    gym_ex_p.add_argument("--category", type=str, help="Filter by category")
+    gym_ex_p.add_argument("--json", action="store_true")
+
     args = parser.parse_args()
 
-    if args.command != "ultra" or not args.ultra_command:
+    if not args.command:
         parser.print_help()
         sys.exit(1)
 
     init_db()
 
-    commands = {
-        "init": cmd_init,
-        "today": cmd_today,
-        "week": cmd_week,
-        "submit": cmd_submit,
-        "feedback": cmd_feedback,
-        "progress": cmd_progress,
-        "benchmarks": cmd_benchmarks,
-        "upcoming": cmd_upcoming,
-        "icu-push": cmd_icu_push,
-        "export-fit": cmd_export_fit,
-        "strava-connect": cmd_strava_connect,
-        "strava-status": cmd_strava_status,
-        "strava-import": cmd_strava_import,
-        "adapt": cmd_adapt,
-        "targets": cmd_targets,
-        "nutrition": cmd_nutrition,
-    }
+    if args.command == "ultra":
+        if not getattr(args, "ultra_command", None):
+            ultra_parser.print_help()
+            sys.exit(1)
 
-    cmd = commands.get(args.ultra_command)
-    if cmd:
-        cmd(args)
+        ultra_commands = {
+            "init": cmd_init,
+            "today": cmd_today,
+            "week": cmd_week,
+            "submit": cmd_submit,
+            "feedback": cmd_feedback,
+            "progress": cmd_progress,
+            "benchmarks": cmd_benchmarks,
+            "upcoming": cmd_upcoming,
+            "icu-push": cmd_icu_push,
+            "export-fit": cmd_export_fit,
+            "strava-connect": cmd_strava_connect,
+            "strava-status": cmd_strava_status,
+            "strava-import": cmd_strava_import,
+            "adapt": cmd_adapt,
+            "targets": cmd_targets,
+            "nutrition": cmd_nutrition,
+        }
+
+        cmd = ultra_commands.get(args.ultra_command)
+        if cmd:
+            cmd(args)
+        else:
+            ultra_parser.print_help()
+            sys.exit(1)
+
+    elif args.command == "gym":
+        from gym import cmd_gym_log, cmd_gym_pr, cmd_gym_suggest, cmd_gym_history, cmd_gym_exercises
+
+        if not getattr(args, "gym_command", None):
+            gym_parser.print_help()
+            sys.exit(1)
+
+        gym_commands = {
+            "log": cmd_gym_log,
+            "pr": cmd_gym_pr,
+            "suggest": cmd_gym_suggest,
+            "history": cmd_gym_history,
+            "exercises": cmd_gym_exercises,
+        }
+
+        cmd = gym_commands.get(args.gym_command)
+        if cmd:
+            cmd(args)
+        else:
+            gym_parser.print_help()
+            sys.exit(1)
+
     else:
-        ultra_parser.print_help()
+        parser.print_help()
         sys.exit(1)
 
 
