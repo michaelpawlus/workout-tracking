@@ -1,885 +1,650 @@
-# Burning River 100 Training Plan
+# Burning River 100 — 20-Week Training Plan
 
-**Race:** Burning River 100 — July 25, 2026
 **Goal:** Sub-24 hour finish
-**Duration:** 20 weeks (2026-03-06 to 2026-07-23)
-**Mesocycle:** 4-week blocks
+**Race Date:** July 25, 2026
+**Start:** 2026-03-09 | **End:** 2026-07-26
+
+## Current Pace Targets
+
+| Zone | Target |
+|------|--------|
+| Easy | 10:15/mi |
+| Long Run | 10:45/mi |
+| Tempo | 9:15/mi |
+| MAF HR | 137 bpm |
+
+*Targets update automatically from benchmark results (MAF tests, 5K TTs).*
 
 ---
 
-## Nutrition Guidelines
-
-### Pre-Run Fueling
-
-| Duration Tier | Carbs (g) | Timing | Example Meals |
-|--------------|-----------|--------|---------------|
-| Short (<60 min) | 20-30 | Optional — light snack 30-60 min before | Banana, toast with jam |
-| Medium (60-90 min) | 40-60 | 1.5-2 hr before | Oatmeal + banana, toast + PB, bagel + honey |
-| Long (>90 min) | 60-100 | 2-3 hr before | Oatmeal + banana + honey, bagel + PB + banana, rice bowl + eggs |
-| Race Day (100mi) | 100-150 | 3 hr before start | Rice + eggs + toast, oatmeal + banana + PB + honey |
-
-### During-Run Fueling
-
-| Duration Tier | Carbs/hr | Water/hr | Sodium/hr | Notes |
-|--------------|----------|----------|-----------|-------|
-| Short (<60 min) | None | 12-16 oz | None | Water only |
-| Medium (60-90 min) | ~100 cal (1 gel) at 45 min | 16-20 oz | 200-400 mg | Electrolyte tabs helpful |
-| Long (>90 min) | 200-250 cal/hr (50-60g) | 20-24 oz | 400-800 mg | Fuel every 30-45 min. Practice race nutrition! |
-| Race Day (100mi) | 250-300 cal/hr (60-80g) | 20-28 oz | 500-1000 mg | Mix gels with real food. Eat before hungry. Shift to savory after 12+ hrs |
-
-### Post-Run Recovery
-
-| Duration Tier | Protein (g) | Carbs (g) | Recovery Window | Example Foods |
-|--------------|-------------|-----------|-----------------|---------------|
-| Short (<60 min) | 15-20 | 30-40 | Within 60 min if hungry | Greek yogurt + fruit, chocolate milk |
-| Medium (60-90 min) | 20-30 | 40-60 | Within 30-60 min | Protein shake + banana, eggs + toast |
-| Long (>90 min) | 30-40 | 60-80 | Within 30 min — critical | Protein shake + PB toast, chicken + rice |
-| Race Day (100mi) | 40-50 | 80-100 | Eat whatever sounds good | Pizza, burger, soup + bread |
-
----
-
-## Week 1 — BASE
+## Week 1 (BASE) — 2026-03-09 to 2026-03-15
 
 **Focus:** Baseline week. Easy running, 5K TT, MAF test
-**Notes:** Target: 25-30 miles
-**Target:** 27.5 miles / 6 runs
+Target: 25-30 miles
 
-> Benchmark [TODO]: MAF Test #1 (maf_test)
-> Benchmark [TODO]: 5K Time Trial (time_trial)
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-03-09 | Rest Day | — | — | easy |
+| 2026-03-10 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-03-11 | 5K Time Trial | 5.1mi | — | hard |
+| 2026-03-12 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-03-13 | Rest Day | — | — | easy |
+| 2026-03-14 | 8mi Long Run | 8.0mi | 10:45/mi | easy |
+| 2026-03-15 | 4mi Recovery Run | 4.0mi | 10:45/mi | easy |
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-03-06 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-03-07 | 8mi Long Run | long_run | 8.0mi | 10:30/mi | Zone 2 | easy |
-| 2026-03-08 | MAF Test #1 | benchmark | 30min | — | MAF (137 bpm) | easy |
-| 2026-03-09 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-03-10 | Rest Day | rest | — | — | — | easy |
-| 2026-03-11 | 5K Time Trial | benchmark | 5.1mi | — | — | hard |
-| 2026-03-12 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 | easy |
-
-<details>
-<summary>Workout details (Week 1)</summary>
-
-**2026-03-06 — 4mi Easy Run**
-> First run of the plan. Easy effort, find your rhythm. Welcome to BR100 training!
-
-**2026-03-07 — 8mi Long Run**
-> First long run. Comfortable, conversational pace. Build your aerobic base.
-
-**2026-03-08 — MAF Test #1**
-> 30 min at HR ~137 bpm on flat ground. Record distance covered. Warm up 10 min easy first.
-
-**2026-03-09 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
-
-**2026-03-10 — Rest Day**
-> Rest. Hydrate. Stretch.
+**2026-03-10 — 4mi Easy Run**
+> First run of the plan. Easy effort, find your rhythm.
 
 **2026-03-11 — 5K Time Trial**
 > 1mi warmup, all-out 5K (3.1mi), 1mi cooldown. Record time, pace, HR. This establishes pace zones.
 
 **2026-03-12 — 4mi Easy Run**
-> Easy pace. Recovery focus.
+> Easy pace. Recovery focus after yesterday's time trial.
 
-</details>
-
-## Week 2 — BASE
-
-**Focus:** Endurance baseline. Strides 2x
-**Notes:** Target: 30-35 miles
-**Target:** 32.5 miles / 5 runs
-
-> Benchmark [TODO]: Long Run Baseline (endurance_test)
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-03-13 | Rest Day | rest | — | — | — | easy |
-| 2026-03-14 | 10mi Long Run | long_run | 10.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-03-15 | 4mi Recovery Run | easy_run | 4.0mi | 10:30/mi | — | easy |
-| 2026-03-16 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-03-17 | 5mi Easy Run | easy_run | 5.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-03-18 | 6mi Easy + Strides | easy_run | 6.0mi | — | — | easy |
-| 2026-03-19 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 2)</summary>
-
-**2026-03-13 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-03-14 — 10mi Long Run**
-> 10mi long run. Comfortable, conversational pace. Build your aerobic base.
+**2026-03-14 — 8mi Long Run**
+> First long run. Comfortable, conversational pace. Build your aerobic base.
 
 **2026-03-15 — 4mi Recovery Run**
-> Easy recovery run. If legs are trashed from yesterday, walk instead.
+> Easy recovery run after yesterday's long run.
 
-**2026-03-16 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+---
+
+## Week 2 (BASE) — 2026-03-16 to 2026-03-22
+
+**Focus:** Endurance baseline. Strides 2x
+Target: 30-35 miles
+
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-03-16 | Rest / Cross-Train | — | — | easy |
+| 2026-03-17 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-03-18 | 6mi Easy + Strides | 6.0mi | — | easy |
+| 2026-03-19 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-03-20 | Rest Day | — | — | easy |
+| 2026-03-21 | 10mi Long Run | 10.0mi | 10:45/mi | easy |
+| 2026-03-22 | 4mi Recovery Run | 4.0mi | 10:45/mi | easy |
 
 **2026-03-17 — 5mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-03-18 — 6mi Easy + Strides**
 > 6mi easy with 6x100m strides at end. Focus on quick turnover, relaxed form.
 
 **2026-03-19 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
-
-## Week 3 — BASE
-
-**Focus:** First tempo segments. Trail run
-**Notes:** Target: 35-40 miles
-**Target:** 37.5 miles / 5 runs
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-03-20 | Rest Day | rest | — | — | — | easy |
-| 2026-03-21 | 12mi Long Run | long_run | 12.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-03-22 | 4mi Recovery Run | easy_run | 4.0mi | 10:30/mi | — | easy |
-| 2026-03-23 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-03-24 | 5mi Easy Run | easy_run | 5.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-03-25 | Tempo Segments: 3x1mi | tempo | 8.0mi | 8:00/mi | — | threshold |
-| 2026-03-26 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 3)</summary>
-
-**2026-03-20 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-03-21 — 12mi Long Run**
-> 12mi long run. Comfortable, conversational pace. Build your aerobic base.
+**2026-03-21 — 10mi Long Run**
+> 10mi long run. Comfortable, conversational pace. Build your aerobic base.
 
 **2026-03-22 — 4mi Recovery Run**
 > Easy recovery run. If legs are trashed from yesterday, walk instead.
 
-**2026-03-23 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+---
+
+## Week 3 (BASE) — 2026-03-23 to 2026-03-29
+
+**Focus:** First tempo segments. Trail run
+Target: 35-40 miles
+
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-03-23 | Rest / Cross-Train | — | — | easy |
+| 2026-03-24 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-03-25 | Tempo Segments: 3x1mi | 8.0mi | 9:15/mi | threshold |
+| 2026-03-26 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-03-27 | Rest Day | — | — | easy |
+| 2026-03-28 | 12mi Long Run | 12.0mi | 10:45/mi | easy |
+| 2026-03-29 | 4mi Recovery Run | 4.0mi | 10:45/mi | easy |
 
 **2026-03-24 — 5mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-03-25 — Tempo Segments: 3x1mi**
-> 2mi warmup, 3x1mi at tempo (7:45-8:15/mi) with 2min jog recovery, 1mi cooldown.
+> 2mi warmup, 3x1mi at current tempo target with 2min jog recovery, 1mi cooldown.
 
 **2026-03-26 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-03-28 — 12mi Long Run**
+> 12mi long run. Comfortable, conversational pace. Build your aerobic base.
 
-## Week 4 — RECOVERY
+**2026-03-29 — 4mi Recovery Run**
+> Easy recovery run. If legs are trashed from yesterday, walk instead.
+
+---
+
+## Week 4 (RECOVERY) — 2026-03-30 to 2026-04-05
 
 **Focus:** ~70% volume cutback
-**Notes:** Target: 25-28 miles
-**Target:** 26.5 miles / 4 runs
+Target: 25-28 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-03-27 | Rest Day | rest | — | — | — | easy |
-| 2026-03-28 | 8mi Long Run | long_run | 8.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-03-29 | Rest / Easy Walk | rest | — | — | — | easy |
-| 2026-03-30 | Rest Day | rest | — | — | — | easy |
-| 2026-03-31 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-04-01 | 4mi Easy + Strides | easy_run | 4.0mi | — | — | easy |
-| 2026-04-02 | 3mi Easy Run | easy_run | 3.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 4)</summary>
-
-**2026-03-27 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-03-28 — 8mi Long Run**
-> 8mi long run. Comfortable, conversational pace. Build your aerobic base.
-
-**2026-03-29 — Rest / Easy Walk**
-> Full rest or easy 30-min walk. Let the body absorb training.
-
-**2026-03-30 — Rest Day**
-> Full rest. Walk, foam roll, stretch.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-03-30 | Rest Day | — | — | easy |
+| 2026-03-31 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-04-01 | 4mi Easy + Strides | 4.0mi | — | easy |
+| 2026-04-02 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-04-03 | Rest Day | — | — | easy |
+| 2026-04-04 | 8mi Long Run | 8.0mi | 10:45/mi | easy |
+| 2026-04-05 | Rest / Easy Walk | — | — | easy |
 
 **2026-03-31 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-04-01 — 4mi Easy + Strides**
 > Recovery week. 4mi easy with 4x100m strides.
 
 **2026-04-02 — 3mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-04-04 — 8mi Long Run**
+> 8mi long run. Comfortable, conversational pace. Build your aerobic base.
 
-## Week 5 — BUILD
+---
+
+## Week 5 (BUILD) — 2026-04-06 to 2026-04-12
 
 **Focus:** Tempo 4mi. Hill repeats
-**Notes:** Target: 40-45 miles
-**Target:** 42.5 miles / 6 runs
+Target: 40-45 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-04-03 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-04-04 | 14mi Long Run | long_run | 14.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-04-05 | 5mi Recovery Run | easy_run | 5.0mi | 10:30/mi | — | easy |
-| 2026-04-06 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-04-07 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-04-08 | Hill Repeats: 8x90sec | hills | 7.0mi | — | — | hard |
-| 2026-04-09 | 5mi Easy Run | easy_run | 5.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 5)</summary>
-
-**2026-04-03 — 3mi Shakeout**
-> Very short, very easy. Loosening up before tomorrow's long run.
-
-**2026-04-04 — 14mi Long Run**
-> 14mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
-
-**2026-04-05 — 5mi Recovery Run**
-> Easy recovery run. If legs are trashed from yesterday, walk instead.
-
-**2026-04-06 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-04-06 | Rest / Cross-Train | — | — | easy |
+| 2026-04-07 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-04-08 | Hill Repeats: 8x90sec | 7.0mi | — | hard |
+| 2026-04-09 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-04-10 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-04-11 | 14mi Long Run | 14.0mi | 10:45/mi | easy |
+| 2026-04-12 | 5mi Recovery Run | 5.0mi | 10:45/mi | easy |
 
 **2026-04-07 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-04-08 — Hill Repeats: 8x90sec**
 > 2mi warmup, 8x90sec hill repeats at hard effort, jog down recovery, 1mi cooldown.
 
 **2026-04-09 — 5mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
-
-</details>
-
-## Week 6 — BUILD
-
-**Focus:** Back-to-back long runs: 16 Sat / 8 Sun
-**Notes:** Target: 45-50 miles
-**Target:** 47.5 miles / 6 runs
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-04-10 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-04-11 | 16mi Long Run | long_run | 16.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-04-12 | 8mi B2B Long Run | back_to_back | 8.0mi | 10:30/mi | — | moderate |
-| 2026-04-13 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-04-14 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-04-15 | Tempo Run: 4mi | tempo | 7.0mi | 8:00/mi | — | threshold |
-| 2026-04-16 | 5mi Easy Run | easy_run | 5.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 6)</summary>
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
 **2026-04-10 — 3mi Shakeout**
 > Very short, very easy. Loosening up before tomorrow's long run.
 
-**2026-04-11 — 16mi Long Run**
-> 16mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
+**2026-04-11 — 14mi Long Run**
+> 14mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
 
-**2026-04-12 — 8mi B2B Long Run**
-> Back-to-back run on tired legs. 8mi easy. This simulates late-race fatigue. Keep effort easy.
+**2026-04-12 — 5mi Recovery Run**
+> Easy recovery run. If legs are trashed from yesterday, walk instead.
 
-**2026-04-13 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+---
+
+## Week 6 (BUILD) — 2026-04-13 to 2026-04-19
+
+**Focus:** Back-to-back long runs: 16 Sat / 8 Sun
+Target: 45-50 miles
+
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-04-13 | Rest / Cross-Train | — | — | easy |
+| 2026-04-14 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-04-15 | Tempo Run: 4mi | 7.0mi | 9:15/mi | threshold |
+| 2026-04-16 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-04-17 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-04-18 | 16mi Long Run | 16.0mi | 10:45/mi | moderate |
+| 2026-04-19 | 8mi B2B Long Run | 8.0mi | 10:45/mi | moderate |
 
 **2026-04-14 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-04-15 — Tempo Run: 4mi**
-> 2mi warmup, 4mi at tempo (7:45-8:15/mi), 1mi cooldown.
+> 2mi warmup, 4mi at current tempo target, 1mi cooldown.
 
 **2026-04-16 — 5mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
-
-</details>
-
-## Week 7 — BUILD
-
-**Focus:** MAF retest #2. Trail long run
-**Notes:** Target: 45-50 miles
-**Target:** 47.5 miles / 6 runs
-
-> Benchmark [TODO]: MAF Test #2 (maf_test)
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-04-17 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-04-18 | 18mi Long Run | long_run | 18.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-04-19 | 5mi Recovery Run | easy_run | 5.0mi | 10:30/mi | — | easy |
-| 2026-04-20 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-04-21 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-04-22 | MAF Test #2 | benchmark | 30min | — | MAF (137 bpm) | easy |
-| 2026-04-23 | 5mi Easy Run | easy_run | 5.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 7)</summary>
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
 **2026-04-17 — 3mi Shakeout**
 > Very short, very easy. Loosening up before tomorrow's long run.
 
-**2026-04-18 — 18mi Long Run**
-> 18mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
+**2026-04-18 — 16mi Long Run**
+> 16mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
 
-**2026-04-19 — 5mi Recovery Run**
-> Easy recovery run. If legs are trashed from yesterday, walk instead.
+**2026-04-19 — 8mi B2B Long Run**
+> Back-to-back run on tired legs. 8mi easy. This simulates late-race fatigue. Keep effort easy.
 
-**2026-04-20 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+---
+
+## Week 7 (BUILD) — 2026-04-20 to 2026-04-26
+
+**Focus:** MAF retest #2. Trail long run
+Target: 45-50 miles
+
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-04-20 | Rest / Cross-Train | — | — | easy |
+| 2026-04-21 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-04-22 | MAF Test #2 | — | — | easy |
+| 2026-04-23 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-04-24 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-04-25 | 18mi Long Run | 18.0mi | 10:45/mi | moderate |
+| 2026-04-26 | 5mi Recovery Run | 5.0mi | 10:45/mi | easy |
 
 **2026-04-21 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-04-22 — MAF Test #2**
 > 30 min at HR ~137 bpm on flat ground. Compare distance to Test #1.
 
 **2026-04-23 — 5mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-04-24 — 3mi Shakeout**
+> Very short, very easy. Loosening up before tomorrow's long run.
 
-## Week 8 — RECOVERY
+**2026-04-25 — 18mi Long Run**
+> 18mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
+
+**2026-04-26 — 5mi Recovery Run**
+> Easy recovery run. If legs are trashed from yesterday, walk instead.
+
+---
+
+## Week 8 (RECOVERY) — 2026-04-27 to 2026-05-03
 
 **Focus:** Cutback. Light strides
-**Notes:** Target: 30-35 miles
-**Target:** 32.5 miles / 4 runs
+Target: 30-35 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-04-24 | Rest Day | rest | — | — | — | easy |
-| 2026-04-25 | 10mi Long Run | long_run | 10.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-04-26 | Rest / Easy Walk | rest | — | — | — | easy |
-| 2026-04-27 | Rest Day | rest | — | — | — | easy |
-| 2026-04-28 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-04-29 | 5mi Easy + Light Strides | easy_run | 5.0mi | — | — | easy |
-| 2026-04-30 | 3mi Easy Run | easy_run | 3.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 8)</summary>
-
-**2026-04-24 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-04-25 — 10mi Long Run**
-> 10mi long run. Comfortable, conversational pace. Build your aerobic base.
-
-**2026-04-26 — Rest / Easy Walk**
-> Full rest or easy 30-min walk. Let the body absorb training.
-
-**2026-04-27 — Rest Day**
-> Full rest. Walk, foam roll, stretch.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-04-27 | Rest Day | — | — | easy |
+| 2026-04-28 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-04-29 | 5mi Easy + Light Strides | 5.0mi | — | easy |
+| 2026-04-30 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-05-01 | Rest Day | — | — | easy |
+| 2026-05-02 | 10mi Long Run | 10.0mi | 10:45/mi | easy |
+| 2026-05-03 | Rest / Easy Walk | — | — | easy |
 
 **2026-04-28 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-04-29 — 5mi Easy + Light Strides**
 > Recovery week. Easy effort with 4x100m strides.
 
 **2026-04-30 — 3mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-05-02 — 10mi Long Run**
+> 10mi long run. Comfortable, conversational pace. Build your aerobic base.
 
-## Week 9 — BUILD
+---
+
+## Week 9 (BUILD) — 2026-05-04 to 2026-05-10
 
 **Focus:** B2B: 14/8. Tempo 5mi
-**Notes:** Target: 50-55 miles
-**Target:** 52.5 miles / 6 runs
+Target: 50-55 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-05-01 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-05-02 | 20mi Long Run | long_run | 20.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-05-03 | 8mi B2B Long Run | back_to_back | 8.0mi | 10:30/mi | — | moderate |
-| 2026-05-04 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-05-05 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-05-06 | Tempo Run: 5mi | tempo | 8.0mi | 7:54/mi | — | threshold |
-| 2026-05-07 | 5mi Easy Run | easy_run | 5.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 9)</summary>
-
-**2026-05-01 — 3mi Shakeout**
-> Very short, very easy. Loosening up before tomorrow's long run.
-
-**2026-05-02 — 20mi Long Run**
-> 20mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
-
-**2026-05-03 — 8mi B2B Long Run**
-> Back-to-back run on tired legs. 8mi easy. This simulates late-race fatigue. Keep effort easy.
-
-**2026-05-04 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-05-04 | Rest / Cross-Train | — | — | easy |
+| 2026-05-05 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-05-06 | Tempo Run: 5mi | 8.0mi | 9:15/mi | threshold |
+| 2026-05-07 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-05-08 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-05-09 | 20mi Long Run | 20.0mi | 10:45/mi | moderate |
+| 2026-05-10 | 8mi B2B Long Run | 8.0mi | 10:45/mi | moderate |
 
 **2026-05-05 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-05-06 — Tempo Run: 5mi**
-> 2mi warmup, 5mi at tempo (7:45-8:00/mi), 1mi cooldown.
+> 2mi warmup, 5mi at current tempo target, 1mi cooldown.
 
 **2026-05-07 — 5mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
-
-</details>
-
-## Week 10 — BUILD
-
-**Focus:** Nutrition practice. Hill workout
-**Notes:** Target: 55-60 miles
-**Target:** 57.5 miles / 6 runs
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-05-08 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-05-09 | 22mi Long Run | long_run | 22.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-05-10 | 5mi Recovery Run | easy_run | 5.0mi | 10:30/mi | — | easy |
-| 2026-05-11 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-05-12 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-05-13 | Hill Workout: 10x90sec | hills | 8.0mi | — | — | hard |
-| 2026-05-14 | 5mi Easy Run | easy_run | 5.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 10)</summary>
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
 **2026-05-08 — 3mi Shakeout**
 > Very short, very easy. Loosening up before tomorrow's long run.
 
-**2026-05-09 — 22mi Long Run**
-> 22mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+**2026-05-09 — 20mi Long Run**
+> 20mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
 
-**2026-05-10 — 5mi Recovery Run**
-> Easy recovery run. If legs are trashed from yesterday, walk instead.
+**2026-05-10 — 8mi B2B Long Run**
+> Back-to-back run on tired legs. 8mi easy. This simulates late-race fatigue. Keep effort easy.
 
-**2026-05-11 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+---
+
+## Week 10 (BUILD) — 2026-05-11 to 2026-05-17
+
+**Focus:** Nutrition practice. Hill workout
+Target: 55-60 miles
+
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-05-11 | Rest / Cross-Train | — | — | easy |
+| 2026-05-12 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-05-13 | Hill Workout: 10x90sec | 8.0mi | — | hard |
+| 2026-05-14 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-05-15 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-05-16 | 22mi Long Run | 22.0mi | 10:45/mi | moderate |
+| 2026-05-17 | 5mi Recovery Run | 5.0mi | 10:45/mi | easy |
 
 **2026-05-12 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-05-13 — Hill Workout: 10x90sec**
 > 2mi warmup, 10x90sec hill repeats, jog down recovery, 1mi cooldown. Practice race-day climbing.
 
 **2026-05-14 — 5mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
-
-</details>
-
-## Week 11 — BUILD
-
-**Focus:** Benchmark: 50K training race
-**Notes:** Target: 55-65 miles
-**Target:** 60.0 miles / 6 runs
-
-> Benchmark [TODO]: 50K Training Race (race)
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-05-15 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-05-16 | 31mi Long Run | long_run | 31.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-05-17 | 5mi Recovery Run | easy_run | 5.0mi | 10:30/mi | — | easy |
-| 2026-05-18 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-05-19 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-05-20 | 5mi Easy (Pre-Race) | easy_run | 5.0mi | — | — | easy |
-| 2026-05-21 | 5mi Easy Run | easy_run | 5.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 11)</summary>
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
 **2026-05-15 — 3mi Shakeout**
 > Very short, very easy. Loosening up before tomorrow's long run.
 
-**2026-05-16 — 31mi Long Run**
-> 31mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+**2026-05-16 — 22mi Long Run**
+> 22mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
 
 **2026-05-17 — 5mi Recovery Run**
 > Easy recovery run. If legs are trashed from yesterday, walk instead.
 
-**2026-05-18 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+---
+
+## Week 11 (BUILD) — 2026-05-18 to 2026-05-24
+
+**Focus:** Benchmark: 50K training race
+Target: 55-65 miles
+
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-05-18 | Rest / Cross-Train | — | — | easy |
+| 2026-05-19 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-05-20 | 5mi Easy (Pre-Race) | 5.0mi | — | easy |
+| 2026-05-21 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-05-22 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-05-23 | 31mi Long Run | 31.0mi | 10:45/mi | moderate |
+| 2026-05-24 | 5mi Recovery Run | 5.0mi | 10:45/mi | easy |
 
 **2026-05-19 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-05-20 — 5mi Easy (Pre-Race)**
 > Easy shakeout before Saturday 50K. Stay loose, don't push.
 
 **2026-05-21 — 5mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-05-22 — 3mi Shakeout**
+> Very short, very easy. Loosening up before tomorrow's long run.
 
-## Week 12 — RECOVERY
+**2026-05-23 — 31mi Long Run**
+> 31mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+
+**2026-05-24 — 5mi Recovery Run**
+> Easy recovery run. If legs are trashed from yesterday, walk instead.
+
+---
+
+## Week 12 (RECOVERY) — 2026-05-25 to 2026-05-31
 
 **Focus:** MAF test #3. Recovery/absorb
-**Notes:** Target: 35-40 miles
-**Target:** 37.5 miles / 4 runs
+Target: 35-40 miles
 
-> Benchmark [TODO]: MAF Test #3 (maf_test)
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-05-22 | Rest Day | rest | — | — | — | easy |
-| 2026-05-23 | 12mi Long Run | long_run | 12.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-05-24 | Rest / Easy Walk | rest | — | — | — | easy |
-| 2026-05-25 | Rest Day | rest | — | — | — | easy |
-| 2026-05-26 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-05-27 | MAF Test #3 | benchmark | 30min | — | MAF (137 bpm) | easy |
-| 2026-05-28 | 3mi Easy Run | easy_run | 3.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 12)</summary>
-
-**2026-05-22 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-05-23 — 12mi Long Run**
-> 12mi long run. Comfortable, conversational pace. Build your aerobic base.
-
-**2026-05-24 — Rest / Easy Walk**
-> Full rest or easy 30-min walk. Let the body absorb training.
-
-**2026-05-25 — Rest Day**
-> Full rest. Walk, foam roll, stretch.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-05-25 | Rest Day | — | — | easy |
+| 2026-05-26 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-05-27 | MAF Test #3 | — | — | easy |
+| 2026-05-28 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-05-29 | Rest Day | — | — | easy |
+| 2026-05-30 | 12mi Long Run | 12.0mi | 10:45/mi | easy |
+| 2026-05-31 | Rest / Easy Walk | — | — | easy |
 
 **2026-05-26 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-05-27 — MAF Test #3**
 > 30 min at HR ~137 bpm. Compare to previous tests.
 
 **2026-05-28 — 3mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-05-30 — 12mi Long Run**
+> 12mi long run. Comfortable, conversational pace. Build your aerobic base.
 
-## Week 13 — PEAK
+---
+
+## Week 13 (PEAK) — 2026-06-01 to 2026-06-07
 
 **Focus:** B2B: 26/10. Night running practice
-**Notes:** Target: 65-70 miles
-**Target:** 67.5 miles / 6 runs
+Target: 65-70 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-05-29 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-05-30 | 26mi Long Run | long_run | 26.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-05-31 | 10mi B2B Long Run | back_to_back | 10.0mi | 10:30/mi | — | moderate |
-| 2026-06-01 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-06-02 | 7mi Easy Run | easy_run | 7.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-06-03 | Tempo: 4mi + Trail Segments | tempo | 7.0mi | 8:00/mi | — | threshold |
-| 2026-06-04 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 13)</summary>
-
-**2026-05-29 — 3mi Shakeout**
-> Very short, very easy. Loosening up before tomorrow's long run.
-
-**2026-05-30 — 26mi Long Run**
-> 26mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
-
-**2026-05-31 — 10mi B2B Long Run**
-> Back-to-back run on tired legs. 10mi easy. This simulates late-race fatigue. Keep effort easy.
-
-**2026-06-01 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-06-01 | Rest / Cross-Train | — | — | easy |
+| 2026-06-02 | 7mi Easy Run | 7.0mi | 10:15/mi | easy |
+| 2026-06-03 | Tempo: 4mi + Trail Segments | 7.0mi | 9:15/mi | threshold |
+| 2026-06-04 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-06-05 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-06-06 | 26mi Long Run | 26.0mi | 10:45/mi | moderate |
+| 2026-06-07 | 10mi B2B Long Run | 10.0mi | 10:45/mi | moderate |
 
 **2026-06-02 — 7mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-06-03 — Tempo: 4mi + Trail Segments**
-> 2mi warmup, 4mi tempo on trails if possible, 1mi cooldown.
+> 2mi warmup, 4mi at current tempo target on trails if possible, 1mi cooldown.
 
 **2026-06-04 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
-
-</details>
-
-## Week 14 — PEAK
-
-**Focus:** Peak week. Longest run
-**Notes:** Target: 70-80 miles
-**Target:** 75.0 miles / 6 runs
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-06-05 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-06-06 | 30mi Long Run | long_run | 30.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-06-07 | 6mi Recovery Run | easy_run | 6.0mi | 10:30/mi | — | easy |
-| 2026-06-08 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-06-09 | 7mi Easy Run | easy_run | 7.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-06-10 | Tempo: 5mi | tempo | 8.0mi | 7:54/mi | — | threshold |
-| 2026-06-11 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 14)</summary>
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
 **2026-06-05 — 3mi Shakeout**
 > Very short, very easy. Loosening up before tomorrow's long run.
 
-**2026-06-06 — 30mi Long Run**
-> 30mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+**2026-06-06 — 26mi Long Run**
+> 26mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
 
-**2026-06-07 — 6mi Recovery Run**
-> Easy recovery run. If legs are trashed from yesterday, walk instead.
+**2026-06-07 — 10mi B2B Long Run**
+> Back-to-back run on tired legs. 10mi easy. This simulates late-race fatigue. Keep effort easy.
 
-**2026-06-08 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+---
+
+## Week 14 (PEAK) — 2026-06-08 to 2026-06-14
+
+**Focus:** Peak week. Longest run
+Target: 70-80 miles
+
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-06-08 | Rest / Cross-Train | — | — | easy |
+| 2026-06-09 | 7mi Easy Run | 7.0mi | 10:15/mi | easy |
+| 2026-06-10 | Tempo: 5mi | 8.0mi | 9:15/mi | threshold |
+| 2026-06-11 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-06-12 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-06-13 | 30mi Long Run | 30.0mi | 10:45/mi | moderate |
+| 2026-06-14 | 6mi Recovery Run | 6.0mi | 10:45/mi | easy |
 
 **2026-06-09 — 7mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-06-10 — Tempo: 5mi**
-> Peak week quality. 2mi warmup, 5mi at tempo, 1mi cooldown.
+> Peak week quality. 2mi warmup, 5mi at current tempo target, 1mi cooldown.
 
 **2026-06-11 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
-
-</details>
-
-## Week 15 — PEAK
-
-**Focus:** B2B: 24/12. Race logistics practice
-**Notes:** Target: 65-70 miles
-**Target:** 67.5 miles / 6 runs
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-06-12 | 3mi Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-06-13 | 24mi Long Run | long_run | 24.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-06-14 | 12mi B2B Long Run | back_to_back | 12.0mi | 10:30/mi | — | moderate |
-| 2026-06-15 | Rest / Cross-Train | cross_train | — | — | — | easy |
-| 2026-06-16 | 7mi Easy Run | easy_run | 7.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-06-17 | Tempo: 3mi | tempo | 6.0mi | 8:00/mi | — | threshold |
-| 2026-06-18 | 6mi Easy Run | easy_run | 6.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 15)</summary>
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
 **2026-06-12 — 3mi Shakeout**
 > Very short, very easy. Loosening up before tomorrow's long run.
 
-**2026-06-13 — 24mi Long Run**
-> 24mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+**2026-06-13 — 30mi Long Run**
+> 30mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
 
-**2026-06-14 — 12mi B2B Long Run**
-> Back-to-back run on tired legs. 12mi easy. This simulates late-race fatigue. Keep effort easy.
+**2026-06-14 — 6mi Recovery Run**
+> Easy recovery run. If legs are trashed from yesterday, walk instead.
 
-**2026-06-15 — Rest / Cross-Train**
-> Rest or light cross-training (yoga, swimming, cycling). No running.
+---
+
+## Week 15 (PEAK) — 2026-06-15 to 2026-06-21
+
+**Focus:** B2B: 24/12. Race logistics practice
+Target: 65-70 miles
+
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-06-15 | Rest / Cross-Train | — | — | easy |
+| 2026-06-16 | 7mi Easy Run | 7.0mi | 10:15/mi | easy |
+| 2026-06-17 | Tempo: 3mi | 6.0mi | 9:15/mi | threshold |
+| 2026-06-18 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-06-19 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-06-20 | 24mi Long Run | 24.0mi | 10:45/mi | moderate |
+| 2026-06-21 | 12mi B2B Long Run | 12.0mi | 10:45/mi | moderate |
 
 **2026-06-16 — 7mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-06-17 — Tempo: 3mi**
-> Reduced quality volume. 2mi warmup, 3mi at tempo, 1mi cooldown.
+> Reduced quality volume. 2mi warmup, 3mi at current tempo target, 1mi cooldown.
 
 **2026-06-18 — 6mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-06-19 — 3mi Shakeout**
+> Very short, very easy. Loosening up before tomorrow's long run.
 
-## Week 16 — RECOVERY
+**2026-06-20 — 24mi Long Run**
+> 24mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+
+**2026-06-21 — 12mi B2B Long Run**
+> Back-to-back run on tired legs. 12mi easy. This simulates late-race fatigue. Keep effort easy.
+
+---
+
+## Week 16 (RECOVERY) — 2026-06-22 to 2026-06-28
 
 **Focus:** Final benchmarks: MAF #4, 5K TT #2
-**Notes:** Target: 40-45 miles
-**Target:** 42.5 miles / 4 runs
+Target: 40-45 miles
 
-> Benchmark [TODO]: 5K Time Trial #2 (time_trial)
-> Benchmark [TODO]: MAF Test #4 (maf_test)
-
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-06-19 | Rest Day | rest | — | — | — | easy |
-| 2026-06-20 | 14mi Long Run | long_run | 14.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-06-21 | Rest / Easy Walk | rest | — | — | — | easy |
-| 2026-06-22 | Rest Day | rest | — | — | — | easy |
-| 2026-06-23 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-06-24 | MAF Test #4 | benchmark | 30min | — | MAF (137 bpm) | easy |
-| 2026-06-25 | 3mi Easy Run | easy_run | 3.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 16)</summary>
-
-**2026-06-19 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-06-20 — 14mi Long Run**
-> 14mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
-
-**2026-06-21 — Rest / Easy Walk**
-> Full rest or easy 30-min walk. Let the body absorb training.
-
-**2026-06-22 — Rest Day**
-> Full rest. Walk, foam roll, stretch.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-06-22 | Rest Day | — | — | easy |
+| 2026-06-23 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-06-24 | MAF Test #4 | — | — | easy |
+| 2026-06-25 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-06-26 | Rest Day | — | — | easy |
+| 2026-06-27 | 14mi Long Run | 14.0mi | 10:45/mi | easy |
+| 2026-06-28 | Rest / Easy Walk | — | — | easy |
 
 **2026-06-23 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-06-24 — MAF Test #4**
 > Final MAF test. 30 min at HR ~137 bpm. Compare all 4 tests.
 
 **2026-06-25 — 3mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-06-27 — 14mi Long Run**
+> 14mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
 
-## Week 17 — TAPER
+---
+
+## Week 17 (TAPER) — 2026-06-29 to 2026-07-05
 
 **Focus:** Last hard tempo. Begin taper
-**Notes:** Target: 45-50 miles
-**Target:** 47.5 miles / 4 runs
+Target: 45-50 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-06-26 | Rest Day | rest | — | — | — | easy |
-| 2026-06-27 | 18mi Long Run | long_run | 18.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | moderate |
-| 2026-06-28 | Rest / Easy Walk | rest | — | — | — | easy |
-| 2026-06-29 | Rest Day | rest | — | — | — | easy |
-| 2026-06-30 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-07-01 | Last Tempo: 3mi | tempo | 6.0mi | 8:00/mi | — | threshold |
-| 2026-07-02 | 3mi Easy Run | easy_run | 3.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 17)</summary>
-
-**2026-06-26 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-06-27 — 18mi Long Run**
-> 18mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
-
-**2026-06-28 — Rest / Easy Walk**
-> Full rest or easy 30-min walk. Let the body absorb training.
-
-**2026-06-29 — Rest Day**
-> Full rest. Walk, foam roll, stretch.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-06-29 | Rest Day | — | — | easy |
+| 2026-06-30 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-07-01 | Last Tempo: 3mi | 6.0mi | 9:15/mi | threshold |
+| 2026-07-02 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-07-03 | Rest Day | — | — | easy |
+| 2026-07-04 | 18mi Long Run | 18.0mi | 10:45/mi | moderate |
+| 2026-07-05 | Rest / Easy Walk | — | — | easy |
 
 **2026-06-30 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-07-01 — Last Tempo: 3mi**
-> Final hard session. 2mi warmup, 3mi tempo, 1mi cooldown. After this, all easy.
+> Final hard session. 2mi warmup, 3mi at current tempo target, 1mi cooldown. After this, all easy.
 
 **2026-07-02 — 3mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-07-04 — 18mi Long Run**
+> 18mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
 
-## Week 18 — TAPER
+---
+
+## Week 18 (TAPER) — 2026-07-06 to 2026-07-12
 
 **Focus:** ~50% of peak. Short strides
-**Notes:** Target: 35-40 miles
-**Target:** 37.5 miles / 4 runs
+Target: 35-40 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-07-03 | Rest Day | rest | — | — | — | easy |
-| 2026-07-04 | 13mi Long Run | long_run | 13.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-07-05 | Rest / Easy Walk | rest | — | — | — | easy |
-| 2026-07-06 | Rest Day | rest | — | — | — | easy |
-| 2026-07-07 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-07-08 | 5mi Easy + 4 Strides | easy_run | 5.0mi | — | — | easy |
-| 2026-07-09 | 3mi Easy Run | easy_run | 3.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 18)</summary>
-
-**2026-07-03 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-07-04 — 13mi Long Run**
-> 13mi long run. Comfortable, conversational pace. Build your aerobic base.
-
-**2026-07-05 — Rest / Easy Walk**
-> Full rest or easy 30-min walk. Let the body absorb training.
-
-**2026-07-06 — Rest Day**
-> Full rest. Walk, foam roll, stretch.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-07-06 | Rest Day | — | — | easy |
+| 2026-07-07 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-07-08 | 5mi Easy + 4 Strides | 5.0mi | — | easy |
+| 2026-07-09 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-07-10 | Rest Day | — | — | easy |
+| 2026-07-11 | 13mi Long Run | 13.0mi | 10:45/mi | easy |
+| 2026-07-12 | Rest / Easy Walk | — | — | easy |
 
 **2026-07-07 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-07-08 — 5mi Easy + 4 Strides**
 > Taper. Stay sharp with short strides but keep effort very easy.
 
 **2026-07-09 — 3mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-07-11 — 13mi Long Run**
+> 13mi long run. Comfortable, conversational pace. Build your aerobic base.
 
-## Week 19 — TAPER
+---
+
+## Week 19 (TAPER) — 2026-07-13 to 2026-07-19
 
 **Focus:** Very easy. Gear check
-**Notes:** Target: 20-25 miles
-**Target:** 22.5 miles / 4 runs
+Target: 20-25 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-07-10 | Rest Day | rest | — | — | — | easy |
-| 2026-07-11 | 9mi Long Run | long_run | 9.0mi | 10:30/mi | Zone 2, allow drift to Zone 3 in final third | easy |
-| 2026-07-12 | Rest / Easy Walk | rest | — | — | — | easy |
-| 2026-07-13 | Rest Day | rest | — | — | — | easy |
-| 2026-07-14 | 4mi Easy Run | easy_run | 4.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-| 2026-07-15 | 3mi Easy Shakeout | easy_run | 3.0mi | — | — | easy |
-| 2026-07-16 | 3mi Easy Run | easy_run | 3.0mi | 10:00/mi | Zone 2 (MAF, <137 bpm ideal) | easy |
-
-<details>
-<summary>Workout details (Week 19)</summary>
-
-**2026-07-10 — Rest Day**
-> Rest. Stretch, foam roll, hydrate well for tomorrow.
-
-**2026-07-11 — 9mi Long Run**
-> 9mi long run. Comfortable, conversational pace. Build your aerobic base.
-
-**2026-07-12 — Rest / Easy Walk**
-> Full rest or easy 30-min walk. Let the body absorb training.
-
-**2026-07-13 — Rest Day**
-> Full rest. Walk, foam roll, stretch.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-07-13 | Rest Day | — | — | easy |
+| 2026-07-14 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-07-15 | 3mi Easy Shakeout | 3.0mi | — | easy |
+| 2026-07-16 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-07-17 | Rest Day | — | — | easy |
+| 2026-07-18 | 9mi Long Run | 9.0mi | 10:45/mi | easy |
+| 2026-07-19 | Rest / Easy Walk | — | — | easy |
 
 **2026-07-14 — 4mi Easy Run**
-> Easy pace (9:30-10:30/mi). Keep HR under 145.
+> Easy pace (10:00-10:30/mi). Keep HR under 145.
 
 **2026-07-15 — 3mi Easy Shakeout**
 > Very easy. Just move the legs. Gear check — run in race-day shoes/kit.
 
 **2026-07-16 — 3mi Easy Run**
-> Easy pace (9:30-10:30/mi). Recovery focus.
+> Easy pace (10:00-10:30/mi). Recovery focus.
 
-</details>
+**2026-07-18 — 9mi Long Run**
+> 9mi long run. Comfortable, conversational pace. Build your aerobic base.
 
-## Week 20 — RACE
+---
+
+## Week 20 (RACE) — 2026-07-20 to 2026-07-26
 
 **Focus:** Shakeouts Mon-Fri. Jul 25: Burning River 100
-**Notes:** Target: 10-110 miles
-**Target:** 60.0 miles / 8 runs
+Target: 10-110 miles
 
-| Date | Workout | Type | Distance | Pace | HR Zone | Intensity |
-|------|---------|------|----------|------|---------|-----------|
-| 2026-07-17 | 2mi Shakeout | easy_run | 2.0mi | — | — | easy |
-| 2026-07-18 | 2mi Shakeout | easy_run | 2.0mi | — | — | easy |
-| 2026-07-19 | 2mi Shakeout | easy_run | 2.0mi | — | — | easy |
-| 2026-07-20 | 2mi Shakeout | easy_run | 2.0mi | — | — | easy |
-| 2026-07-21 | 2mi Shakeout | easy_run | 2.0mi | — | — | easy |
-| 2026-07-22 | 2mi Shakeout | easy_run | 2.0mi | — | — | easy |
-| 2026-07-23 | 2mi Shakeout | easy_run | 2.0mi | — | — | easy |
-| 2026-07-24 | Rest — Race Eve | rest | — | — | — | easy |
-| 2026-07-25 | BURNING RIVER 100 | race | 100.0mi | — | — | hard |
-| 2026-07-26 | Post-Race Recovery | rest | — | — | — | easy |
-
-<details>
-<summary>Workout details (Week 20)</summary>
-
-**2026-07-17 — 2mi Shakeout**
-> Very easy 2mi. Stay loose. Hydrate well.
-
-**2026-07-18 — 2mi Shakeout**
-> Very easy 2mi. Stay loose. Hydrate well.
-
-**2026-07-19 — 2mi Shakeout**
-> Very easy 2mi. Stay loose. Hydrate well.
+| Date | Workout | Distance | Pace | Intensity |
+|------|---------|----------|------|-----------|
+| 2026-07-20 | 2mi Shakeout | 2.0mi | — | easy |
+| 2026-07-21 | 2mi Shakeout | 2.0mi | — | easy |
+| 2026-07-22 | 2mi Shakeout | 2.0mi | — | easy |
+| 2026-07-23 | 2mi Shakeout | 2.0mi | — | easy |
+| 2026-07-24 | Rest — Race Eve | — | — | easy |
+| 2026-07-25 | BURNING RIVER 100 | 100.0mi | — | hard |
+| 2026-07-26 | Post-Race Recovery | — | — | easy |
 
 **2026-07-20 — 2mi Shakeout**
 > Very easy 2mi. Stay loose. Hydrate well.
@@ -893,13 +658,6 @@
 **2026-07-23 — 2mi Shakeout**
 > Very easy 2mi. Stay loose. Hydrate well.
 
-**2026-07-24 — Rest — Race Eve**
-> Full rest. Gear check. Eat well. Sleep early. Trust your training.
-
 **2026-07-25 — BURNING RIVER 100**
 > 100 miles. Sub-24 goal = ~14:24/mi avg including all stops. Start conservative. Walk all uphills. Eat early and often. The race starts at mile 60.
 
-**2026-07-26 — Post-Race Recovery**
-> You did it. Rest. Celebrate. Eat everything.
-
-</details>

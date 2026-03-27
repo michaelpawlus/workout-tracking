@@ -14,11 +14,11 @@ EASY_PACE_MAX = 12.0
 TEMPO_PACE_MIN = 7.0
 TEMPO_PACE_MAX = 10.0
 
-# Defaults
+# Defaults (adjusted from first tempo workout data: 9:13-9:29 at correct HR)
 DEFAULT_TARGETS = {
-    "easy_pace": 10.0,
-    "long_run_pace": 10.5,
-    "tempo_pace": 8.0,
+    "easy_pace": 10.25,
+    "long_run_pace": 10.75,
+    "tempo_pace": 9.25,
     "threshold_pace": None,
     "maf_hr": 137,
     "zone2_ceiling": 137,
@@ -322,6 +322,31 @@ def format_adaptation_report(old, new, source):
         "changes": changes,
         "changed": len(changes) > 0,
     }
+
+
+def set_manual_targets(conn, plan_id, easy=None, long_run=None, tempo=None,
+                       threshold=None, maf_hr=None, notes=None):
+    """Set targets manually from CLI. Merges provided values with current targets."""
+    current = get_current_targets(conn, plan_id)
+    if not current:
+        return None
+
+    new = dict(current)
+    if easy is not None:
+        new["easy_pace"] = _clamp(easy, EASY_PACE_MIN, EASY_PACE_MAX)
+    if long_run is not None:
+        new["long_run_pace"] = _clamp(long_run, EASY_PACE_MIN + 0.5, EASY_PACE_MAX + 0.5)
+    if tempo is not None:
+        new["tempo_pace"] = _clamp(tempo, TEMPO_PACE_MIN, TEMPO_PACE_MAX)
+    if threshold is not None:
+        new["threshold_pace"] = threshold
+    if maf_hr is not None:
+        new["maf_hr"] = maf_hr
+        new["zone2_ceiling"] = maf_hr
+
+    effective = datetime.now().strftime("%Y-%m-%d")
+    row_id = _insert_targets(conn, plan_id, effective, new, "manual", notes=notes)
+    return {"id": row_id, "targets": new}
 
 
 def find_unprocessed_benchmarks(conn, plan_id):

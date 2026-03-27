@@ -22,7 +22,7 @@ from adapt import (
     get_current_targets, get_targets_history, seed_initial_targets,
     adapt_from_maf, adapt_from_5k_tt, adapt_from_trends,
     apply_targets_to_future_workouts, format_adaptation_report,
-    find_unprocessed_benchmarks,
+    find_unprocessed_benchmarks, set_manual_targets,
 )
 import strava
 
@@ -105,7 +105,7 @@ def cmd_init(args):
     result = {"plan_id": plan_id, "message": "Burning River 100 plan created"}
     if not args.json:
         print(f"Created Burning River 100 plan (id={plan_id})")
-        print("20 weeks: Mar 6 - Jul 25, 2026")
+        print("20 weeks: Mar 9 - Jul 26, 2026 (Mon-Sun weeks)")
         print("Goal: Sub-24 hours")
     else:
         _print(result, True)
@@ -229,13 +229,19 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
                 effort=None, pace=None, notes="", source="cli", run_date=None,
                 skip_feedback=False, strava_activity_id=None, as_json=False,
                 pre_meal=None, during_fuel=None, during_hydration=None,
-                post_meal=None, nutrition_notes=None):
-    """Core run submission logic. Returns result dict."""
+                post_meal=None, nutrition_notes=None, scheduled_date=None):
+    """Core run submission logic. Returns result dict.
+
+    scheduled_date: if the run was prescribed for a different day, look up
+    that day's workout instead of run_date.
+    """
     if run_date is None:
         run_date = datetime.now().strftime("%Y-%m-%d")
 
     if pace is None and distance and duration:
         pace = duration / distance
+
+    lookup_date = scheduled_date or run_date
 
     with get_db() as conn:
         plan = _get_plan(conn)
@@ -244,7 +250,7 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
 
         daily = conn.execute(
             "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
-            (plan["id"], run_date),
+            (plan["id"], lookup_date),
         ).fetchone()
 
         cursor = conn.execute(
@@ -385,6 +391,7 @@ def cmd_submit(args):
         pre_meal=args.pre_meal, during_fuel=args.during_fuel,
         during_hydration=args.during_hydration, post_meal=args.post_meal,
         nutrition_notes=args.nutrition_notes,
+        scheduled_date=getattr(args, 'scheduled_date', None),
     )
 
     feedback = result.get("feedback", {}) or {}
@@ -1005,6 +1012,44 @@ def cmd_adapt(args):
 
 
 def cmd_targets(args):
+    from database import get_connection
+
+    if getattr(args, 'set', False):
+        # Manual target override mode
+        conn = get_connection()
+        try:
+            plan = conn.execute(
+                "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+            if not plan:
+                _err("No active BR100 plan", args.json, 2)
+
+            result = set_manual_targets(
+                conn, plan["id"],
+                easy=args.easy, long_run=args.long_run, tempo=args.tempo,
+                notes=args.notes or "Manual CLI override",
+            )
+            if not result:
+                _err("Failed to set targets", args.json)
+
+            updated = apply_targets_to_future_workouts(conn, plan["id"], result["targets"])
+            conn.commit()
+        except SystemExit:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+        output = {"targets": result["targets"], "workouts_updated": updated}
+        if args.json:
+            _print(output, True)
+        else:
+            t = result["targets"]
+            print("Targets updated:")
+            print(f"  Easy: {_fmt_pace(t['easy_pace'])} | Long: {_fmt_pace(t['long_run_pace'])} | Tempo: {_fmt_pace(t['tempo_pace'])}")
+            print(f"  Updated {updated} future workout(s)")
+        return
+
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
@@ -1091,6 +1136,31 @@ def cmd_nutrition(args):
         print(f"  Examples: {', '.join(g['post_run']['examples'])}")
 
 
+def cmd_export_md(args):
+    import os
+    from ultra_plan import generate_training_plan_markdown
+
+    with get_db() as conn:
+        plan = _get_plan(conn)
+        if not plan:
+            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+
+        md = generate_training_plan_markdown(conn, plan["id"])
+
+    if not md:
+        _err("Failed to generate markdown", args.json)
+
+    output_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "TRAINING_PLAN.md")
+    with open(output_path, "w") as f:
+        f.write(md)
+
+    result = {"path": output_path, "message": "TRAINING_PLAN.md regenerated"}
+    if args.json:
+        _print(result, True)
+    else:
+        print(f"Wrote {output_path}")
+
+
 def _fmt_pace(pace):
     if pace is None:
         return "N/A"
@@ -1136,6 +1206,7 @@ def main():
     submit_p.add_argument("--during-hydration", type=str, help="During-run hydration")
     submit_p.add_argument("--post-meal", type=str, help="Post-run meal description")
     submit_p.add_argument("--nutrition-notes", type=str, help="Nutrition observations (bonking, GI issues, etc)")
+    submit_p.add_argument("--scheduled-date", type=str, help="Date of the prescribed workout if different from --date")
     submit_p.add_argument("--json", action="store_true")
 
     # ultra feedback
@@ -1197,9 +1268,19 @@ def main():
     adapt_p.add_argument("--json", action="store_true")
 
     # ultra targets
-    tgt_p = ultra_sub.add_parser("targets", help="Show current pace/HR targets")
+    tgt_p = ultra_sub.add_parser("targets", help="Show or set pace/HR targets")
     tgt_p.add_argument("--history", action="store_true", help="Show full target timeline")
+    tgt_p.add_argument("--set", action="store_true", help="Set targets manually")
+    tgt_p.add_argument("--easy", type=float, help="Easy pace (min/mi, e.g. 10.25)")
+    tgt_p.add_argument("--long-run", type=float, help="Long run pace (min/mi)")
+    tgt_p.add_argument("--tempo", type=float, help="Tempo pace (min/mi)")
+    tgt_p.add_argument("--notes", type=str, help="Note for this target change")
     tgt_p.add_argument("--json", action="store_true")
+
+    # ultra plan
+    plan_p = ultra_sub.add_parser("plan", help="Export/manage the training plan")
+    plan_p.add_argument("--export-md", action="store_true", help="Regenerate TRAINING_PLAN.md from DB")
+    plan_p.add_argument("--json", action="store_true")
 
     # ultra nutrition
     nut_p = ultra_sub.add_parser("nutrition", help="Nutrition guidelines for a workout")
@@ -1280,6 +1361,7 @@ def main():
             "strava-import": cmd_strava_import,
             "adapt": cmd_adapt,
             "targets": cmd_targets,
+            "plan": cmd_export_md,
             "nutrition": cmd_nutrition,
         }
 
