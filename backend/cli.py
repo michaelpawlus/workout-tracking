@@ -25,6 +25,7 @@ from adapt import (
     find_unprocessed_benchmarks, set_manual_targets,
 )
 import strava
+import race_engine
 
 
 def _print(data, as_json=False, file=sys.stdout):
@@ -1136,6 +1137,336 @@ def cmd_nutrition(args):
         print(f"  Examples: {', '.join(g['post_run']['examples'])}")
 
 
+# ---------------------------------------------------------------------------
+# Race Day Engine commands
+# ---------------------------------------------------------------------------
+
+def cmd_race_load_course(args):
+    with get_db() as conn:
+        breaks = None
+        if args.segment_breaks:
+            breaks = [float(x.strip()) for x in args.segment_breaks.split(",")]
+
+        course_id, segments, total_dist, total_gain = race_engine.load_course(
+            conn, args.gpx_file, args.name, args.year, breaks,
+        )
+
+        result = {
+            "course_id": course_id,
+            "name": args.name,
+            "year": args.year,
+            "total_distance_miles": total_dist,
+            "total_elevation_gain_ft": total_gain,
+            "segments": len(segments),
+            "message": f"Loaded {len(segments)} segments from GPX",
+        }
+
+    if args.json:
+        _print(result, True)
+    else:
+        print(f"Course: {args.name} ({args.year})")
+        print(f"Distance: {total_dist} mi | Gain: {total_gain} ft")
+        print(f"Segments: {len(segments)}")
+        for s in segments:
+            print(f"  {s['segment_number']:2d}. "
+                  f"Mile {s['start_mile']:5.1f}-{s['end_mile']:5.1f} "
+                  f"({s['distance_miles']:.1f}mi) "
+                  f"+{s['elevation_gain_ft']:.0f}/-{s['elevation_loss_ft']:.0f}ft "
+                  f"avg {s['avg_grade_pct']:.1f}%")
+
+
+def cmd_race_import_results(args):
+    with get_db() as conn:
+        course = race_engine.get_course(conn, name=args.course_name)
+        if not course:
+            _err(f"No course found for '{args.course_name}'. Load a course first.",
+                 args.json, 2)
+
+        imported = race_engine.import_historical_results(
+            conn, course["id"], args.csv_file, args.year,
+        )
+
+        result = {
+            "course_id": course["id"],
+            "year": args.year,
+            "imported": imported,
+            "message": f"Imported {imported} results",
+        }
+
+    _print(result, args.json)
+
+
+def cmd_race_cohort(args):
+    goal_seconds = race_engine._parse_time(args.goal_time)
+    with get_db() as conn:
+        course = race_engine.get_course(conn, name=args.course_name)
+        if not course:
+            _err(f"No course found. Load a course first.", args.json, 2)
+
+        analysis = race_engine.analyze_cohort(conn, course["id"], goal_seconds)
+
+    if args.json:
+        _print(analysis, True)
+    else:
+        print(f"=== Peer Cohort Analysis ===")
+        print(f"Goal: {analysis['goal_time']} | Window: ±{analysis['window_hours']}hr")
+        print(f"Cohort size: {analysis['cohort_size']}")
+        if analysis["cohort_size"] > 0:
+            print(f"Median finish: {analysis['median_finish_time']}")
+            print(f"Range: {analysis['fastest_finish']} - {analysis['slowest_finish']}")
+            if analysis["slowdown_pct"] is not None:
+                print(f"Back-half slowdown: {analysis['slowdown_pct']}%")
+            if analysis["danger_zones"]:
+                print(f"Danger zones: {', '.join(analysis['danger_zones'])}")
+            print()
+            print(f"{'Seg':>3}  {'Name':<25} {'Dist':>5} {'Pace':>9} {'StdDev':>6} {'Danger'}")
+            print("-" * 65)
+            for s in analysis["segments"]:
+                danger = " ⚠" if s["danger_zone"] else ""
+                print(f"{s['segment_number']:3d}  {s['segment_name']:<25} "
+                      f"{s['distance_miles']:5.1f} {s['median_pace_display']:>9} "
+                      f"{s['pace_stdev_seconds'] or 0:6.0f}s{danger}")
+
+
+def cmd_race_plan(args):
+    goal_seconds = race_engine._parse_time(args.goal_time)
+    with get_db() as conn:
+        course = race_engine.get_course(conn)
+        if not course:
+            _err("No course loaded. Run: ultra race load-course", args.json, 2)
+
+        plan = _get_plan(conn)
+        plan_id = plan["id"] if plan else None
+
+        result = race_engine.generate_race_plan(
+            conn, course["id"], plan_id, goal_seconds,
+            weather_temp_f=args.weather_temp,
+            start_time=args.start_time or "05:00",
+        )
+
+        if args.save:
+            saved = race_engine.save_race_plan(
+                conn, course["id"], plan_id, goal_seconds,
+                args.weather_temp, result["plans"],
+            )
+            result["saved_plan_ids"] = saved
+
+    if args.json:
+        _print(result, True)
+    else:
+        print(f"=== Race Plan: {result['course']} ===")
+        print(f"Goal: {result['goal_time']} | Base pace: {result['base_pace_display']}")
+        if result["weather_temp_f"]:
+            print(f"Weather: {result['weather_temp_f']}°F")
+        if result["training_fade_pct"]:
+            print(f"Training fade: {result['training_fade_pct']}%")
+        if result["cohort_size"] > 0:
+            print(f"Cohort: {result['cohort_size']} runners "
+                  f"(slowdown: {result['cohort_slowdown_pct']}%)")
+        print()
+
+        for key in ("A", "B", "C"):
+            p = result["plans"][key]
+            print(f"--- {key}: {p['label']} (finish: {p['total_time_display']}) ---")
+            print(f"{'Seg':>3} {'Name':<20} {'Dist':>5} {'Gain':>6} "
+                  f"{'Pace':>9} {'SegTime':>8} {'Elapsed':>8} {'ETA':>7}")
+            print("-" * 80)
+            for s in p["segments"]:
+                print(f"{s['segment_number']:3d} {s['segment_name']:<20} "
+                      f"{s['distance_miles']:5.1f} {s['elevation_gain_ft']:+6.0f} "
+                      f"{s['target_pace_display']:>9} {s['estimated_time_display']:>8} "
+                      f"{s['cumulative_time_display']:>8} {s['aid_station_eta']:>7}")
+            print()
+
+
+def cmd_race_nutrition(args):
+    goal_seconds = race_engine._parse_time(args.goal_time)
+    with get_db() as conn:
+        course = race_engine.get_course(conn)
+        if not course:
+            _err("No course loaded.", args.json, 2)
+
+        plan = _get_plan(conn)
+        plan_id = plan["id"] if plan else None
+
+        race_plan = race_engine.generate_race_plan(
+            conn, course["id"], plan_id, goal_seconds,
+        )
+
+        # Use A plan for fueling
+        a_segments = race_plan["plans"]["A"]["segments"]
+        fueled = race_engine.generate_fueling_plan(
+            conn, course["id"], a_segments,
+            weight_lbs=args.weight or race_engine.DEFAULT_WEIGHT_LBS,
+        )
+
+    if args.json:
+        _print(fueled, True)
+    else:
+        print(f"=== Race Fueling Plan (A scenario) ===")
+        print(f"{'Seg':>3} {'Name':<20} {'Cal/hr':>6} {'CalTgt':>6} "
+              f"{'Na mg':>5} {'FlOz':>4} {'Deficit':>7} Notes")
+        print("-" * 90)
+        for s in fueled:
+            notes = s.get("fueling_notes") or ""
+            deficit = f"{s['deficit_pct']:.0f}%" if s["deficit_pct"] > 0 else "OK"
+            print(f"{s['segment_number']:3d} "
+                  f"{s['segment_name']:<20} "
+                  f"{s['cal_per_hr']:6d} {s['calories_target']:6d} "
+                  f"{s['sodium_mg_target']:5d} {s['fluid_oz_target']:4d} "
+                  f"{deficit:>7} {notes}")
+
+
+def cmd_race_crew_sheet(args):
+    with get_db() as conn:
+        course = race_engine.get_course(conn)
+        if not course:
+            _err("No course loaded.", args.json, 2)
+
+        plan = _get_plan(conn)
+        plan_id = plan["id"] if plan else None
+
+        goal_seconds = race_engine._parse_time(args.goal_time) if args.goal_time else 24 * 3600
+
+        race_plan = race_engine.generate_race_plan(
+            conn, course["id"], plan_id, goal_seconds,
+            start_time=args.start_time or "05:00",
+        )
+
+        crew_sheet = race_engine.generate_crew_sheet(
+            conn, course["id"], race_plan["plans"],
+            start_time=args.start_time or "05:00",
+        )
+
+    if args.json:
+        _print(crew_sheet, True)
+    else:
+        md = race_engine.crew_sheet_to_markdown(crew_sheet)
+        print(md)
+
+        # Save to file if requested
+        if args.output:
+            with open(args.output, "w") as f:
+                f.write(md)
+            print(f"\nSaved to {args.output}", file=sys.stderr)
+
+
+def cmd_race_checkin(args):
+    with get_db() as conn:
+        # Find the A-plan race_plan_id for the latest course
+        row = conn.execute(
+            """SELECT rp.id FROM race_plans rp
+               JOIN race_courses rc ON rc.id = rp.course_id
+               WHERE rp.scenario = 'A'
+               ORDER BY rp.id DESC LIMIT 1"""
+        ).fetchone()
+        if not row:
+            _err("No race plan found. Generate one first: ultra race plan --save",
+                 args.json, 2)
+        race_plan_id = row["id"]
+
+        # Find segment by station name or number
+        seg = None
+        if args.station.isdigit():
+            seg = conn.execute(
+                """SELECT rs.id FROM race_segments rs
+                   JOIN race_plans rp ON rp.course_id = rs.course_id
+                   WHERE rp.id = ? AND rs.segment_number = ?""",
+                (race_plan_id, int(args.station)),
+            ).fetchone()
+        else:
+            seg = conn.execute(
+                """SELECT rs.id FROM race_segments rs
+                   JOIN race_plans rp ON rp.course_id = rs.course_id
+                   WHERE rp.id = ? AND rs.name LIKE ?""",
+                (race_plan_id, f"%{args.station}%"),
+            ).fetchone()
+
+        if not seg:
+            _err(f"Segment not found: {args.station}", args.json, 2)
+
+        elapsed = race_engine._parse_time(args.time) if args.time else None
+
+        race_engine.race_checkin(
+            conn, race_plan_id, seg["id"],
+            args.clock_time, elapsed, args.notes,
+        )
+
+        result = {
+            "race_plan_id": race_plan_id,
+            "segment_id": seg["id"],
+            "station": args.station,
+            "message": "Check-in recorded",
+        }
+
+    _print(result, args.json)
+
+
+def cmd_race_status(args):
+    with get_db() as conn:
+        row = conn.execute(
+            """SELECT rp.id FROM race_plans rp
+               WHERE rp.scenario = 'A'
+               ORDER BY rp.id DESC LIMIT 1"""
+        ).fetchone()
+        if not row:
+            _err("No race plan found.", args.json, 2)
+
+        status = race_engine.get_race_status(conn, row["id"])
+
+    if args.json:
+        _print(status, True)
+    else:
+        print(f"=== Race Status: {status['status']} ===")
+        if status.get("overall_delta_display"):
+            print(f"Overall: {status['overall_delta_display']}")
+        print()
+        for c in status["checkins"]:
+            print(f"  Mile {c['mile']:5.1f} ({c['station']}): "
+                  f"planned {c['planned_elapsed']} | actual {c['actual_elapsed']} "
+                  f"| {c['delta_display']}")
+
+
+def cmd_race_segments(args):
+    with get_db() as conn:
+        course = race_engine.get_course(conn)
+        if not course:
+            _err("No course loaded.", args.json, 2)
+
+        segments = race_engine.get_segments(conn, course["id"])
+
+        if args.set_name and args.segment:
+            seg = next((s for s in segments if s["segment_number"] == args.segment), None)
+            if not seg:
+                _err(f"Segment {args.segment} not found", args.json, 2)
+            race_engine.update_segment_metadata(
+                conn, seg["id"],
+                name=args.set_name,
+                terrain_notes=args.terrain,
+                crew_accessible=args.crew if args.crew is not None else None,
+                drop_bag=args.drop_bag if args.drop_bag is not None else None,
+            )
+            result = {"segment": args.segment, "message": f"Updated segment {args.segment}"}
+            _print(result, args.json)
+            return
+
+    if args.json:
+        _print(segments, True)
+    else:
+        print(f"=== {course['name']} — Segments ===")
+        print(f"{'#':>3} {'Name':<25} {'Miles':>8} {'Gain':>7} {'Loss':>7} "
+              f"{'Grade':>6} {'Crew':>4} {'Drop':>4}")
+        print("-" * 75)
+        for s in segments:
+            name = s.get("name") or f"Mile {s['start_mile']}-{s['end_mile']}"
+            crew = "✓" if s["crew_accessible"] else ""
+            drop = "✓" if s["drop_bag"] else ""
+            print(f"{s['segment_number']:3d} {name:<25} "
+                  f"{s['start_mile']:3.1f}-{s['end_mile']:3.1f} "
+                  f"{s['elevation_gain_ft']:+7.0f} {s['elevation_loss_ft']:+7.0f} "
+                  f"{s['avg_grade_pct']:5.1f}% {crew:>4} {drop:>4}")
+
+
 def cmd_export_md(args):
     import os
     from ultra_plan import generate_training_plan_markdown
@@ -1290,6 +1621,83 @@ def main():
     nut_p.add_argument("--json", action="store_true")
 
     # -----------------------------------------------------------------------
+    # ultra race — Race Day Engine subcommands
+    # -----------------------------------------------------------------------
+    race_p = ultra_sub.add_parser("race", help="Race day planning & execution")
+    race_sub = race_p.add_subparsers(dest="race_command")
+
+    # ultra race load-course
+    rlc_p = race_sub.add_parser("load-course", help="Load a race course from GPX file")
+    rlc_p.add_argument("gpx_file", type=str, help="Path to GPX file")
+    rlc_p.add_argument("--name", type=str, required=True, help="Course name")
+    rlc_p.add_argument("--year", type=int, required=True, help="Race year")
+    rlc_p.add_argument("--segment-breaks", type=str,
+                       help="Comma-separated mile markers for segments (e.g. '5.2,12.8,20.1')")
+    rlc_p.add_argument("--json", action="store_true")
+
+    # ultra race import-results
+    rir_p = race_sub.add_parser("import-results", help="Import historical race results from CSV")
+    rir_p.add_argument("csv_file", type=str, help="Path to CSV file")
+    rir_p.add_argument("--year", type=int, required=True, help="Results year")
+    rir_p.add_argument("--course-name", type=str, default="Burning River 100",
+                       help="Course name to associate results with")
+    rir_p.add_argument("--json", action="store_true")
+
+    # ultra race cohort
+    rco_p = race_sub.add_parser("cohort", help="Analyze peer cohort from historical results")
+    rco_p.add_argument("--goal-time", type=str, required=True,
+                       help="Goal finish time (HH:MM:SS)")
+    rco_p.add_argument("--course-name", type=str, default="Burning River 100")
+    rco_p.add_argument("--json", action="store_true")
+
+    # ultra race plan
+    rpl_p = race_sub.add_parser("plan", help="Generate A/B/C race execution plans")
+    rpl_p.add_argument("--goal-time", type=str, required=True,
+                       help="Goal finish time (HH:MM:SS)")
+    rpl_p.add_argument("--weather-temp", type=float, help="Forecast temperature (°F)")
+    rpl_p.add_argument("--start-time", type=str, default="05:00",
+                       help="Race start time (HH:MM, default 05:00)")
+    rpl_p.add_argument("--save", action="store_true", help="Save plan to database")
+    rpl_p.add_argument("--json", action="store_true")
+
+    # ultra race nutrition
+    rnu_p = race_sub.add_parser("nutrition", help="Generate per-segment fueling plan")
+    rnu_p.add_argument("--goal-time", type=str, required=True,
+                       help="Goal finish time (HH:MM:SS)")
+    rnu_p.add_argument("--weight", type=int, help="Runner weight in lbs (default 170)")
+    rnu_p.add_argument("--json", action="store_true")
+
+    # ultra race crew-sheet
+    rcs_p = race_sub.add_parser("crew-sheet", help="Generate crew sheet with multi-scenario ETAs")
+    rcs_p.add_argument("--goal-time", type=str, help="Goal finish time (HH:MM:SS)")
+    rcs_p.add_argument("--start-time", type=str, default="05:00",
+                       help="Race start time (HH:MM)")
+    rcs_p.add_argument("--output", type=str, help="Save markdown to file path")
+    rcs_p.add_argument("--json", action="store_true")
+
+    # ultra race checkin
+    rci_p = race_sub.add_parser("checkin", help="Log arrival at an aid station during race")
+    rci_p.add_argument("--station", type=str, required=True,
+                       help="Station name or segment number")
+    rci_p.add_argument("--time", type=str, help="Elapsed time (HH:MM:SS)")
+    rci_p.add_argument("--clock-time", type=str, help="Actual clock time of arrival")
+    rci_p.add_argument("--notes", type=str)
+    rci_p.add_argument("--json", action="store_true")
+
+    # ultra race status
+    rst_p = race_sub.add_parser("status", help="Show current race status vs plan")
+    rst_p.add_argument("--json", action="store_true")
+
+    # ultra race segments
+    rsg_p = race_sub.add_parser("segments", help="View/edit course segments")
+    rsg_p.add_argument("--segment", type=int, help="Segment number to edit")
+    rsg_p.add_argument("--set-name", type=str, help="Set segment/aid station name")
+    rsg_p.add_argument("--terrain", type=str, help="Set terrain notes")
+    rsg_p.add_argument("--crew", type=int, choices=[0, 1], help="Set crew accessible (0/1)")
+    rsg_p.add_argument("--drop-bag", type=int, choices=[0, 1], help="Set drop bag available (0/1)")
+    rsg_p.add_argument("--json", action="store_true")
+
+    # -----------------------------------------------------------------------
     # gym subcommand — strength & gym workout tracking
     # -----------------------------------------------------------------------
     gym_parser = subparsers.add_parser("gym", help="Strength & gym workout tracking")
@@ -1344,6 +1752,31 @@ def main():
         if not getattr(args, "ultra_command", None):
             ultra_parser.print_help()
             sys.exit(1)
+
+        if args.ultra_command == "race":
+            if not getattr(args, "race_command", None):
+                race_p.print_help()
+                sys.exit(1)
+
+            race_commands = {
+                "load-course": cmd_race_load_course,
+                "import-results": cmd_race_import_results,
+                "cohort": cmd_race_cohort,
+                "plan": cmd_race_plan,
+                "nutrition": cmd_race_nutrition,
+                "crew-sheet": cmd_race_crew_sheet,
+                "checkin": cmd_race_checkin,
+                "status": cmd_race_status,
+                "segments": cmd_race_segments,
+            }
+
+            cmd = race_commands.get(args.race_command)
+            if cmd:
+                cmd(args)
+            else:
+                race_p.print_help()
+                sys.exit(1)
+            return
 
         ultra_commands = {
             "init": cmd_init,

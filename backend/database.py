@@ -209,6 +209,85 @@ def init_db():
                 notes TEXT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             );
+
+            -- Race Day Engine tables
+            CREATE TABLE IF NOT EXISTS race_courses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                year INTEGER,
+                total_distance_miles REAL,
+                total_elevation_gain_ft REAL,
+                gpx_file_path TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS race_segments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                course_id INTEGER NOT NULL REFERENCES race_courses(id) ON DELETE CASCADE,
+                segment_number INTEGER NOT NULL,
+                name TEXT,
+                start_mile REAL NOT NULL,
+                end_mile REAL NOT NULL,
+                distance_miles REAL NOT NULL,
+                elevation_gain_ft REAL NOT NULL DEFAULT 0,
+                elevation_loss_ft REAL NOT NULL DEFAULT 0,
+                avg_grade_pct REAL NOT NULL DEFAULT 0,
+                max_grade_pct REAL NOT NULL DEFAULT 0,
+                terrain_notes TEXT,
+                crew_accessible INTEGER NOT NULL DEFAULT 0,
+                drop_bag INTEGER NOT NULL DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS historical_results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                course_id INTEGER NOT NULL REFERENCES race_courses(id) ON DELETE CASCADE,
+                year INTEGER NOT NULL,
+                runner_name TEXT,
+                finish_time_seconds INTEGER,
+                dnf INTEGER NOT NULL DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS historical_splits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                result_id INTEGER NOT NULL REFERENCES historical_results(id) ON DELETE CASCADE,
+                segment_id INTEGER NOT NULL REFERENCES race_segments(id) ON DELETE CASCADE,
+                split_time_seconds INTEGER NOT NULL,
+                pace_per_mile_seconds INTEGER
+            );
+
+            CREATE TABLE IF NOT EXISTS race_plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                course_id INTEGER NOT NULL REFERENCES race_courses(id) ON DELETE CASCADE,
+                plan_id INTEGER REFERENCES training_plans(id),
+                goal_time_seconds INTEGER NOT NULL,
+                weather_temp_f REAL,
+                scenario TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS race_plan_segments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                race_plan_id INTEGER NOT NULL REFERENCES race_plans(id) ON DELETE CASCADE,
+                segment_id INTEGER NOT NULL REFERENCES race_segments(id) ON DELETE CASCADE,
+                target_pace_seconds INTEGER NOT NULL,
+                estimated_time_seconds INTEGER NOT NULL,
+                cumulative_time_seconds INTEGER NOT NULL,
+                aid_station_eta TEXT,
+                calories_target INTEGER,
+                sodium_mg_target INTEGER,
+                fluid_oz_target INTEGER,
+                fueling_notes TEXT,
+                crew_notes TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS race_checkins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                race_plan_id INTEGER NOT NULL REFERENCES race_plans(id) ON DELETE CASCADE,
+                segment_id INTEGER NOT NULL REFERENCES race_segments(id) ON DELETE CASCADE,
+                actual_arrival_time TEXT,
+                actual_elapsed_seconds INTEGER,
+                notes TEXT
+            );
         """)
 
         # Migrate CHECK constraints if DB predates ultra plan support

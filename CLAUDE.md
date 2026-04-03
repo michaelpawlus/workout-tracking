@@ -93,3 +93,42 @@ cd /home/michaelpawlus/projects/obsidian_journal
 source .venv/bin/activate
 oj --json journal -t free-form -q "content here"
 ```
+
+## Race Day Engine
+
+Generate segment-by-segment race execution plans by combining GPX course data, historical finisher splits, adaptive training targets, and weather. Produces A/B/C pace scenarios, fueling schedules, and printable crew sheets.
+
+### Race Day CLI Reference
+
+```bash
+cd /home/michaelpawlus/projects/workout-app/backend
+
+# Load a course from GPX file
+python3 cli.py ultra race load-course <gpx_file> --name "Burning River 100" --year 2026
+python3 cli.py ultra race load-course course.gpx --name "BR100" --year 2026 \
+  --segment-breaks "5.2,12.8,20.1,31.4,40.2,50.0,62.5,75.3,87.9" --json
+
+# View/edit course segments (set aid station names, crew access, drop bags)
+python3 cli.py ultra race segments --json
+python3 cli.py ultra race segments --segment 3 --set-name "Happy Days 1" --crew 1 --drop-bag 1
+
+# Import historical race results from CSV
+python3 cli.py ultra race import-results results.csv --year 2025 --json
+
+# Analyze peer cohort (finishers near your goal time)
+python3 cli.py ultra race cohort --goal-time "24:00:00" --json
+
+# Generate A/B/C race execution plans
+python3 cli.py ultra race plan --goal-time "24:00:00" --weather-temp 75 --json
+python3 cli.py ultra race plan --goal-time "24:00:00" --save  # persist to DB
+
+# Per-segment fueling plan
+python3 cli.py ultra race nutrition --goal-time "24:00:00" --json
+
+# Crew sheet with multi-scenario ETAs
+python3 cli.py ultra race crew-sheet --goal-time "24:00:00" --output crew_sheet.md
+
+# Live race tracking
+python3 cli.py ultra race checkin --station "Happy Days 2" --time "9:15:00" --json
+python3 cli.py ultra race status --json
+```
