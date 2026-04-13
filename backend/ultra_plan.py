@@ -5,8 +5,8 @@ Inserts day-by-day workouts, weekly structure, and benchmark schedule.
 """
 
 from datetime import datetime, timedelta
-from database import get_db
-from adapt import seed_initial_targets
+from .database import get_db
+from .adapt import seed_initial_targets
 
 
 # Week definitions: (week_num, phase/week_type, target_miles_low, target_miles_high, focus)

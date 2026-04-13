@@ -8,14 +8,14 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
-from database import init_db, get_db
-from llm import (
+from .database import init_db, get_db
+from .llm import (
     generate_workout, parse_workout_log, parse_workout_image,
     analyze_progress, generate_training_plan, analyze_plan_progress,
     analyze_run_feedback, analyze_strava_screenshot,
 )
-import strava
-from ultra_plan import create_br100_plan
+from . import strava
+from .ultra_plan import create_br100_plan
 
 
 @asynccontextmanager

@@ -6,3 +6,5 @@ dist/
 *.db
 .env
 backend/fit_exports/
+*.egg-info/
+build/

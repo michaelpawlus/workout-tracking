@@ -1,7 +1,7 @@
 import base64
 import json
 import anthropic
-from database import get_db
+from .database import get_db
 
 client = anthropic.Anthropic()
 MODEL = "claude-sonnet-4-5-20250929"

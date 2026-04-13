@@ -12,7 +12,7 @@ from pathlib import Path
 
 import gpxpy
 
-from adapt import get_current_targets
+from .adapt import get_current_targets
 
 
 # ---------------------------------------------------------------------------

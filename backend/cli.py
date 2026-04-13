@@ -14,18 +14,18 @@ import sys
 import time
 from datetime import datetime, timedelta
 
-from database import init_db, get_db
-from ultra_plan import create_br100_plan
-from llm import analyze_run_feedback, analyze_strava_screenshot
-from nutrition import get_nutrition_tier, get_guidelines_for_workout
-from adapt import (
+from .database import init_db, get_db
+from .ultra_plan import create_br100_plan
+from .llm import analyze_run_feedback, analyze_strava_screenshot
+from .nutrition import get_nutrition_tier, get_guidelines_for_workout
+from .adapt import (
     get_current_targets, get_targets_history, seed_initial_targets,
     adapt_from_maf, adapt_from_5k_tt, adapt_from_trends,
     apply_targets_to_future_workouts, format_adaptation_report,
     find_unprocessed_benchmarks, set_manual_targets,
 )
-import strava
-import race_engine
+from . import strava
+from . import race_engine
 
 
 def _print(data, as_json=False, file=sys.stdout):
@@ -753,7 +753,7 @@ def cmd_strava_import(args):
 
 def cmd_export_fit(args):
     import os
-    from fit_export import export_workout_fit, export_week_fits
+    from .fit_export import export_workout_fit, export_week_fits
 
     with get_db() as conn:
         plan = _get_plan(conn)
@@ -812,7 +812,7 @@ def cmd_export_fit(args):
 
 
 def cmd_icu_push(args):
-    from intervals_icu import create_event, create_events_bulk, workout_to_icu_description
+    from .intervals_icu import create_event, create_events_bulk, workout_to_icu_description
 
     with get_db() as conn:
         plan = _get_plan(conn)
@@ -1806,7 +1806,7 @@ def main():
             sys.exit(1)
 
     elif args.command == "gym":
-        from gym import cmd_gym_log, cmd_gym_pr, cmd_gym_suggest, cmd_gym_history, cmd_gym_exercises
+        from .gym import cmd_gym_log, cmd_gym_pr, cmd_gym_suggest, cmd_gym_history, cmd_gym_exercises
 
         if not getattr(args, "gym_command", None):
             gym_parser.print_help()

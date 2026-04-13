@@ -8,7 +8,7 @@ import json
 import sys
 from datetime import date
 
-from database import get_db, init_db
+from .database import get_db, init_db
 
 
 # ---------------------------------------------------------------------------

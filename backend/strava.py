@@ -1,7 +1,7 @@
 import os
 import time
 import requests
-from database import get_db
+from .database import get_db
 
 STRAVA_CLIENT_ID = os.environ.get("STRAVA_CLIENT_ID", "")
 STRAVA_CLIENT_SECRET = os.environ.get("STRAVA_CLIENT_SECRET", "")
