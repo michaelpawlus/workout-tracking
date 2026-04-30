@@ -10,6 +10,7 @@ load_dotenv()
 
 import argparse
 import json
+import re
 import sys
 import time
 from datetime import datetime, timedelta
@@ -26,6 +27,7 @@ from .adapt import (
 )
 from . import strava
 from . import race_engine
+from . import vault
 
 
 def _print(data, as_json=False, file=sys.stdout):
@@ -230,7 +232,8 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
                 effort=None, pace=None, notes="", source="cli", run_date=None,
                 skip_feedback=False, strava_activity_id=None, as_json=False,
                 pre_meal=None, during_fuel=None, during_hydration=None,
-                post_meal=None, nutrition_notes=None, scheduled_date=None):
+                post_meal=None, nutrition_notes=None, scheduled_date=None,
+                skip_vault=False):
     """Core run submission logic. Returns result dict.
 
     scheduled_date: if the run was prescribed for a different day, look up
@@ -372,7 +375,89 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
              pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes),
         )
 
-    return {"workout_id": workout_id, "feedback": feedback}
+    vault_result = None
+    if not skip_vault:
+        vault_result = _write_run_to_vault(
+            run_date=run_date,
+            prescribed=prescribed,
+            actual=actual,
+            feedback=feedback,
+            nutrition=nutrition_data,
+            weekly_context=weekly_context,
+            notes=notes or None,
+            as_json=as_json,
+        )
+
+    return {"workout_id": workout_id, "feedback": feedback, "vault": vault_result}
+
+
+def _summarize_for_product_log(prescribed, actual, feedback):
+    """Build a compact 'what happened' line from run data."""
+    title = (prescribed or {}).get("title") or "Run"
+    dist = (actual or {}).get("distance_miles")
+    dur = (actual or {}).get("duration_minutes")
+    hr = (actual or {}).get("avg_heart_rate")
+    score = (feedback or {}).get("compliance_score")
+
+    parts = [f"User logged {title.lower()}"]
+    if dist is not None:
+        parts.append(f"{dist}mi")
+    if dur is not None:
+        parts.append(f"{int(dur)}min")
+    if hr is not None:
+        parts.append(f"HR {hr}")
+    head = ", ".join(parts).rstrip(",") + "."
+    if score is not None:
+        head += f" Compliance {score}/100."
+    overall = (feedback or {}).get("overall_feedback") or ""
+    if overall:
+        # Take the first sentence to keep the entry compact.
+        first = re.split(r"(?<=[.!?])\s+", overall.strip(), maxsplit=1)[0]
+        head += f" Coach: {first}"
+    return head
+
+
+def _write_run_to_vault(*, run_date, prescribed, actual, feedback, nutrition,
+                        weekly_context, notes, as_json):
+    """Write the run report + product log entry, swallowing errors so DB writes succeed.
+
+    Returns a dict with status info, or None on hard failure (vault path unset, etc).
+    """
+    try:
+        result = vault.write_run_report_to_vault(
+            run_date=run_date,
+            prescribed=prescribed,
+            actual=actual,
+            feedback=feedback,
+            nutrition=nutrition,
+            weekly_context=weekly_context,
+            notes=notes,
+        )
+    except vault.VaultError as e:
+        if not as_json:
+            print(f"Vault write skipped: {e}", file=sys.stderr)
+        return {"error": str(e)}
+    except Exception as e:
+        if not as_json:
+            print(f"Vault write failed: {e}", file=sys.stderr)
+        return {"error": str(e)}
+
+    summary = _summarize_for_product_log(prescribed, actual, feedback)
+    insight = (
+        "Auto-generated stub — agent to refine with product observations from this "
+        "session before publishing."
+    )
+    title = (prescribed or {}).get("title") or "Run"
+    try:
+        log_result = vault.append_product_log_entry(
+            run_date=run_date, summary=summary, insight=insight, title=title,
+        )
+        result["product_log"] = log_result["path"]
+    except Exception as e:
+        result["product_log_error"] = str(e)
+        if not as_json:
+            print(f"PRODUCT_LOG.md append failed: {e}", file=sys.stderr)
+    return result
 
 
 def cmd_submit(args):
@@ -393,6 +478,7 @@ def cmd_submit(args):
         during_hydration=args.during_hydration, post_meal=args.post_meal,
         nutrition_notes=args.nutrition_notes,
         scheduled_date=getattr(args, 'scheduled_date', None),
+        skip_vault=getattr(args, 'no_vault', False),
     )
 
     feedback = result.get("feedback", {}) or {}
@@ -415,6 +501,11 @@ def cmd_submit(args):
                 print(f"  - {w}")
         if feedback.get("race_readiness"):
             print(f"\nRace Readiness: {feedback['race_readiness']}")
+        v = result.get("vault") or {}
+        if v.get("path"):
+            print(f"\nVault note: {v['path']}")
+        elif v.get("error"):
+            print(f"\nVault: {v['error']}")
 
 
 def _submit_image(args):
@@ -460,6 +551,10 @@ def _submit_image(args):
 
 
 def cmd_feedback(args):
+    if getattr(args, "save", False):
+        _save_feedback_to_vault(args)
+        return
+
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
@@ -498,6 +593,125 @@ def cmd_feedback(args):
             if fb.get("overall_feedback"):
                 print(fb["overall_feedback"])
             print()
+
+
+def _save_feedback_to_vault(args):
+    """Render an existing run_feedback row to the Obsidian vault."""
+    with get_db() as conn:
+        plan = _get_plan(conn)
+        if not plan:
+            _err("No active BR100 plan", args.json, 2)
+
+        if getattr(args, "id", None):
+            row = conn.execute(
+                """SELECT rf.*, w.date as run_date, w.notes as workout_notes,
+                          dw.title as dw_title, dw.description as dw_description,
+                          dw.workout_type as dw_workout_type, dw.intensity as dw_intensity,
+                          dw.target_distance_miles as dw_target_distance_miles,
+                          dw.target_duration_minutes as dw_target_duration_minutes,
+                          dw.target_pace_min_per_mile as dw_target_pace,
+                          dw.target_hr_zone as dw_target_hr_zone,
+                          dw.scheduled_date as dw_scheduled_date,
+                          tpw.week_number as week_number, tpw.week_type as week_type
+                   FROM run_feedback rf
+                   JOIN workouts w ON w.id = rf.workout_id
+                   LEFT JOIN daily_workouts dw ON dw.id = rf.daily_workout_id
+                   LEFT JOIN training_plan_weeks tpw ON tpw.id = dw.week_id
+                   WHERE rf.id = ? AND rf.plan_id = ?""",
+                (args.id, plan["id"]),
+            ).fetchone()
+            if not row:
+                _err(f"Feedback id {args.id} not found", args.json, 2)
+        else:
+            row = conn.execute(
+                """SELECT rf.*, w.date as run_date, w.notes as workout_notes,
+                          dw.title as dw_title, dw.description as dw_description,
+                          dw.workout_type as dw_workout_type, dw.intensity as dw_intensity,
+                          dw.target_distance_miles as dw_target_distance_miles,
+                          dw.target_duration_minutes as dw_target_duration_minutes,
+                          dw.target_pace_min_per_mile as dw_target_pace,
+                          dw.target_hr_zone as dw_target_hr_zone,
+                          dw.scheduled_date as dw_scheduled_date,
+                          tpw.week_number as week_number, tpw.week_type as week_type
+                   FROM run_feedback rf
+                   JOIN workouts w ON w.id = rf.workout_id
+                   LEFT JOIN daily_workouts dw ON dw.id = rf.daily_workout_id
+                   LEFT JOIN training_plan_weeks tpw ON tpw.id = dw.week_id
+                   WHERE rf.plan_id = ?
+                   ORDER BY rf.created_at DESC LIMIT 1""",
+                (plan["id"],),
+            ).fetchone()
+            if not row:
+                _err("No feedback recorded yet", args.json, 2)
+
+    fb_row = dict(row)
+    run_date = fb_row.get("run_date") or datetime.now().strftime("%Y-%m-%d")
+
+    prescribed = {
+        "title": fb_row.get("dw_title") or "Unscheduled run",
+        "description": fb_row.get("dw_description"),
+        "workout_type": fb_row.get("dw_workout_type"),
+        "intensity": fb_row.get("dw_intensity"),
+        "target_distance_miles": fb_row.get("dw_target_distance_miles") or fb_row.get("prescribed_distance_miles"),
+        "target_duration_minutes": fb_row.get("dw_target_duration_minutes"),
+        "target_pace_min_per_mile": fb_row.get("dw_target_pace") or fb_row.get("prescribed_pace"),
+        "target_hr_zone": fb_row.get("dw_target_hr_zone"),
+        "scheduled_date": fb_row.get("dw_scheduled_date") or run_date,
+    }
+    actual = {
+        "distance_miles": fb_row.get("actual_distance_miles"),
+        "duration_minutes": None,  # not stored on run_feedback; pulled from workouts table if needed
+        "avg_pace_min_per_mile": fb_row.get("actual_pace"),
+        "avg_heart_rate": fb_row.get("avg_heart_rate"),
+        "max_heart_rate": fb_row.get("max_heart_rate"),
+        "elevation_gain_ft": fb_row.get("elevation_gain_ft"),
+        "effort_rating": fb_row.get("effort_rating"),
+    }
+    warnings = fb_row.get("warnings")
+    if warnings:
+        try:
+            warnings = json.loads(warnings)
+        except (json.JSONDecodeError, TypeError):
+            warnings = [warnings] if isinstance(warnings, str) else []
+    feedback = {
+        "compliance_score": fb_row.get("compliance_score"),
+        "overall_feedback": fb_row.get("overall_feedback"),
+        "pace_feedback": fb_row.get("pace_feedback"),
+        "hr_feedback": fb_row.get("hr_feedback"),
+        "warnings": warnings or [],
+    }
+    nutrition = None
+    if any(fb_row.get(k) for k in ("pre_meal", "during_fuel", "during_hydration", "post_meal", "nutrition_notes")):
+        nutrition = {
+            "pre_meal": fb_row.get("pre_meal"),
+            "during_fuel": fb_row.get("during_fuel"),
+            "during_hydration": fb_row.get("during_hydration"),
+            "post_meal": fb_row.get("post_meal"),
+            "nutrition_notes": fb_row.get("nutrition_notes"),
+        }
+    weekly_context = None
+    if fb_row.get("week_number"):
+        weekly_context = {
+            "week_number": fb_row.get("week_number"),
+            "week_type": fb_row.get("week_type"),
+        }
+
+    result = _write_run_to_vault(
+        run_date=run_date, prescribed=prescribed, actual=actual,
+        feedback=feedback, nutrition=nutrition, weekly_context=weekly_context,
+        notes=fb_row.get("workout_notes") or None, as_json=args.json,
+    )
+
+    payload = {"feedback_id": fb_row.get("id"), "vault": result}
+    if args.json:
+        _print(payload, True)
+    else:
+        if result and result.get("path"):
+            print(f"Wrote vault note: {result['path']}")
+            if result.get("product_log"):
+                print(f"Appended PRODUCT_LOG: {result['product_log']}")
+        elif result and result.get("error"):
+            _err(result["error"], False)
 
 
 def cmd_progress(args):
@@ -730,6 +944,7 @@ def cmd_strava_import(args):
                 notes=a.get("name", ""), source="strava", run_date=run_date,
                 skip_feedback=args.no_feedback, strava_activity_id=activity_id,
                 as_json=args.json,
+                skip_vault=getattr(args, 'no_vault', False),
             )
             imported += 1
             if not args.json:
@@ -1538,10 +1753,14 @@ def main():
     submit_p.add_argument("--post-meal", type=str, help="Post-run meal description")
     submit_p.add_argument("--nutrition-notes", type=str, help="Nutrition observations (bonking, GI issues, etc)")
     submit_p.add_argument("--scheduled-date", type=str, help="Date of the prescribed workout if different from --date")
+    submit_p.add_argument("--no-vault", action="store_true", help="Skip writing the run report to Obsidian")
     submit_p.add_argument("--json", action="store_true")
 
     # ultra feedback
     fb_p = ultra_sub.add_parser("feedback", help="Recent run feedback")
+    fb_p.add_argument("--save", action="store_true",
+                      help="Render feedback to the Obsidian vault (use --id to pick a specific row)")
+    fb_p.add_argument("--id", type=int, help="run_feedback row id to render with --save")
     fb_p.add_argument("--json", action="store_true")
 
     # ultra progress
@@ -1591,6 +1810,7 @@ def main():
     si_p.add_argument("--list", action="store_true", help="List activities without importing")
     si_p.add_argument("--all-types", action="store_true", help="Include non-run activities")
     si_p.add_argument("--no-feedback", action="store_true", help="Skip LLM feedback")
+    si_p.add_argument("--no-vault", action="store_true", help="Skip writing run reports to Obsidian")
     si_p.add_argument("--json", action="store_true")
 
     # ultra adapt

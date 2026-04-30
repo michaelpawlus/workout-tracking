@@ -10,15 +10,14 @@ When the user asks for feedback on a run:
 
 1. **Fetch from Strava** — use `ultra strava-import --list` and `get_activity_detail()` to pull the activity
 2. **Analyze against the training plan** — compare actual pace, HR, distance to the day's prescription in `TRAINING_PLAN.md`
-3. **Save to Obsidian** — write the run report to the Obsidian vault under `workouts/`
-   - Use the Obsidian Journal CLI (`oj --json journal -t free-form -q "..."`)
-   - Then move the note from `Journal/` to `workouts/`
-   - Naming convention: `YYYY-MM-DD <Run Type> <Brief Description>.md`
-   - Vault path: `$OBSIDIAN_VAULT_PATH` (`/home/michaelpawlus/obsidian-vaults/Obsidian Vault`)
+3. **Submit the run** — `ultra ultra submit ...` writes the DB row, generates AI feedback, **and automatically writes the report to `$OBSIDIAN_VAULT_PATH/workouts/`** with naming `YYYY-MM-DD <Run Type> <Brief Description>.md`. It also appends a stub entry to `workouts/PRODUCT_LOG.md`.
+4. **Refine the vault note and PRODUCT_LOG entry** — the auto-generated note covers structured data (prescribed/actual/feedback/nutrition). For richer narrative analysis, edit the file in the vault directly.
 
-## Product Log (Post-Run Report)
+Use `--no-vault` on `submit` to skip the vault write (e.g., debugging, throwaway runs). To retroactively render an existing feedback row, use `ultra ultra feedback --save` (most recent) or `ultra ultra feedback --save --id N` (specific row).
 
-After saving each run report to Obsidian, append a session entry to `$OBSIDIAN_VAULT_PATH/workouts/PRODUCT_LOG.md`:
+## Product Log
+
+`workouts/PRODUCT_LOG.md` gets a stub entry appended on every `submit` (unless `--no-vault`). Each stub captures basic facts about the run; **rewrite it before publishing** with:
 
 1. **What happened** — one-sentence summary of the run and coaching interaction
 2. **Product insight** — what this session revealed about the product's strengths, gaps, or differentiation. Focus on moments where the AI coaching did something a rules engine or static plan couldn't. Also note friction points, missing features, or things that would need to change for a real multi-user product.
@@ -88,10 +87,14 @@ python3 cli.py ultra nutrition --json
 # Nutrition for a specific distance
 python3 cli.py ultra nutrition --distance 15 --json
 
-# Obsidian Journal CLI
-cd /home/michaelpawlus/projects/obsidian_journal
-source .venv/bin/activate
-oj --json journal -t free-form -q "content here"
+# Skip vault write on submit (debugging / throwaway runs)
+python3 cli.py ultra submit --distance 4 --duration 40 --hr 138 --no-vault
+
+# Retroactively write the most recent feedback row to the vault
+python3 cli.py ultra feedback --save
+
+# Retroactively write a specific feedback row (by run_feedback.id)
+python3 cli.py ultra feedback --save --id 42 --json
 ```
 
 ## Race Day Engine
