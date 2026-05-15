@@ -1027,7 +1027,7 @@ def cmd_export_fit(args):
 
 
 def cmd_icu_push(args):
-    from .intervals_icu import create_event, create_events_bulk, workout_to_icu_description
+    from .intervals_icu import create_event, create_events_bulk, workout_to_icu_description, list_events, delete_event
 
     with get_db() as conn:
         plan = _get_plan(conn)
@@ -1075,6 +1075,11 @@ def cmd_icu_push(args):
                 _err(f"Rest day on {target_date} — nothing to push", args.json, 2)
             workout_list = [w]
 
+    if getattr(args, "as_date", None):
+        if len(workout_list) != 1:
+            _err("--as-date requires a single workout (use with --date)", args.json, 2)
+        workout_list[0]["scheduled_date"] = args.as_date
+
     # Fetch adaptive targets for ICU descriptions
     with get_db() as conn:
         plan = _get_plan(conn)
@@ -1101,6 +1106,18 @@ def cmd_icu_push(args):
                 print()
             print(f"{len(results)} workout(s) would be pushed")
         return
+
+    if not getattr(args, "no_replace", False):
+        push_dates = sorted({w["scheduled_date"] for w in workout_list
+                             if w.get("workout_type") not in ("rest", "cross_train")})
+        if push_dates:
+            existing = list_events(push_dates[0], push_dates[-1])
+            to_drop = [e for e in existing if e.get("start_date_local", "")[:10] in set(push_dates)]
+            for e in to_drop:
+                try:
+                    delete_event(e["id"])
+                except Exception:
+                    pass
 
     results = create_events_bulk(workout_list)
     created = sum(1 for r in results if r["status"] == "created")
@@ -1782,6 +1799,10 @@ def main():
     icu_p.add_argument("--date", type=str, help="Push workout for specific date (YYYY-MM-DD)")
     icu_p.add_argument("--upcoming", type=int, metavar="DAYS", help="Push next N days of workouts")
     icu_p.add_argument("--all", action="store_true", help="Push entire plan")
+    icu_p.add_argument("--as-date", dest="as_date", type=str, metavar="YYYY-MM-DD",
+                       help="Override scheduled date when pushing (use with --date to reschedule a workout)")
+    icu_p.add_argument("--no-replace", dest="no_replace", action="store_true",
+                       help="Append events instead of replacing existing events on the same dates")
     icu_p.add_argument("--dry-run", action="store_true", help="Show what would be pushed without calling API")
     icu_p.add_argument("--json", action="store_true")
 

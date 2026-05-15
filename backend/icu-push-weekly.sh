@@ -4,4 +4,4 @@ cd /home/michaelpawlus/projects/workout-app/backend
 set -a
 source .env
 set +a
-/usr/bin/python3 cli.py ultra icu-push --upcoming 8
+"$HOME/.local/bin/ultra" ultra icu-push --upcoming 8
