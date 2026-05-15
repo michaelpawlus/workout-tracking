@@ -94,7 +94,7 @@ Target: 35-40 miles
 | 2026-03-26 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
 | 2026-03-27 | Rest Day | — | — | easy |
 | 2026-03-28 | 12mi Long Run | 12.0mi | 10:45/mi | easy |
-| 2026-03-29 | 4mi Recovery Run | 4.0mi | 10:45/mi | easy |
+| 2026-03-29 | 4mi Recovery Run | 4.0mi | 10:15/mi | easy |
 
 **2026-03-24 — 5mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
@@ -122,7 +122,7 @@ Target: 25-28 miles
 |------|---------|----------|------|-----------|
 | 2026-03-30 | Rest Day | — | — | easy |
 | 2026-03-31 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
-| 2026-04-01 | 4mi Easy + Strides | 4.0mi | — | easy |
+| 2026-04-01 | 4mi Easy + Strides | 4.0mi | 10:15/mi | easy |
 | 2026-04-02 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
 | 2026-04-03 | Rest Day | — | — | easy |
 | 2026-04-04 | 8mi Long Run | 8.0mi | 10:45/mi | easy |
@@ -151,11 +151,11 @@ Target: 40-45 miles
 |------|---------|----------|------|-----------|
 | 2026-04-06 | Rest / Cross-Train | — | — | easy |
 | 2026-04-07 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-04-08 | Hill Repeats: 8x90sec | 7.0mi | — | hard |
+| 2026-04-08 | Hill Repeats: 8x90sec | 7.0mi | 9:15/mi | hard |
 | 2026-04-09 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
-| 2026-04-10 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-04-10 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
 | 2026-04-11 | 14mi Long Run | 14.0mi | 10:45/mi | easy |
-| 2026-04-12 | 5mi Recovery Run | 5.0mi | 10:45/mi | easy |
+| 2026-04-12 | 5mi Recovery Run | 5.0mi | 10:15/mi | easy |
 
 **2026-04-07 — 6mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
@@ -188,9 +188,9 @@ Target: 45-50 miles
 | 2026-04-14 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
 | 2026-04-15 | Tempo Run: 4mi | 7.0mi | 9:15/mi | threshold |
 | 2026-04-16 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
-| 2026-04-17 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-04-17 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
 | 2026-04-18 | 16mi Long Run | 16.0mi | 10:45/mi | moderate |
-| 2026-04-19 | 8mi B2B Long Run | 8.0mi | 10:45/mi | moderate |
+| 2026-04-19 | 8mi B2B Long Run | 8.0mi | 10:15/mi | moderate |
 
 **2026-04-14 — 6mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
@@ -223,9 +223,9 @@ Target: 45-50 miles
 | 2026-04-21 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
 | 2026-04-22 | MAF Test #2 | — | — | easy |
 | 2026-04-23 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
-| 2026-04-24 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-04-24 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
 | 2026-04-25 | 18mi Long Run | 18.0mi | 10:45/mi | moderate |
-| 2026-04-26 | 5mi Recovery Run | 5.0mi | 10:45/mi | easy |
+| 2026-04-26 | 5mi Recovery Run | 5.0mi | 10:15/mi | easy |
 
 **2026-04-21 — 6mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
@@ -256,7 +256,7 @@ Target: 30-35 miles
 |------|---------|----------|------|-----------|
 | 2026-04-27 | Rest Day | — | — | easy |
 | 2026-04-28 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
-| 2026-04-29 | 5mi Easy + Light Strides | 5.0mi | — | easy |
+| 2026-04-29 | 5mi Easy + Light Strides | 5.0mi | 10:15/mi | easy |
 | 2026-04-30 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
 | 2026-05-01 | Rest Day | — | — | easy |
 | 2026-05-02 | 10mi Long Run | 10.0mi | 10:45/mi | easy |
@@ -287,9 +287,9 @@ Target: 50-55 miles
 | 2026-05-05 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
 | 2026-05-06 | Tempo Run: 5mi | 8.0mi | 9:15/mi | threshold |
 | 2026-05-07 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
-| 2026-05-08 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-05-08 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
 | 2026-05-09 | 20mi Long Run | 20.0mi | 10:45/mi | moderate |
-| 2026-05-10 | 8mi B2B Long Run | 8.0mi | 10:45/mi | moderate |
+| 2026-05-10 | 8mi B2B Long Run | 8.0mi | 10:15/mi | moderate |
 
 **2026-05-05 — 6mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
@@ -320,11 +320,11 @@ Target: 55-60 miles
 |------|---------|----------|------|-----------|
 | 2026-05-11 | Rest / Cross-Train | — | — | easy |
 | 2026-05-12 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-05-13 | Hill Workout: 10x90sec | 8.0mi | — | hard |
+| 2026-05-13 | Hill Workout: 10x90sec | 8.0mi | 9:15/mi | hard |
 | 2026-05-14 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
-| 2026-05-15 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-05-15 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
 | 2026-05-16 | 22mi Long Run | 22.0mi | 10:45/mi | moderate |
-| 2026-05-17 | 5mi Recovery Run | 5.0mi | 10:45/mi | easy |
+| 2026-05-17 | 5mi Recovery Run | 5.0mi | 10:15/mi | easy |
 
 **2026-05-12 — 6mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
@@ -355,11 +355,11 @@ Target: 55-65 miles
 |------|---------|----------|------|-----------|
 | 2026-05-18 | Rest / Cross-Train | — | — | easy |
 | 2026-05-19 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-05-20 | 5mi Easy (Pre-Race) | 5.0mi | — | easy |
+| 2026-05-20 | 5mi Easy (Pre-Race) | 5.0mi | 10:15/mi | easy |
 | 2026-05-21 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
-| 2026-05-22 | 3mi Shakeout | 3.0mi | — | easy |
+| 2026-05-22 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
 | 2026-05-23 | 31mi Long Run | 31.0mi | 10:45/mi | moderate |
-| 2026-05-24 | 5mi Recovery Run | 5.0mi | 10:45/mi | easy |
+| 2026-05-24 | Rest (Travel/Conflict) | — | — | easy |
 
 **2026-05-19 — 6mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
@@ -375,9 +375,6 @@ Target: 55-65 miles
 
 **2026-05-23 — 31mi Long Run**
 > 31mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
-
-**2026-05-24 — 5mi Recovery Run**
-> Easy recovery run. If legs are trashed from yesterday, walk instead.
 
 ---
 
@@ -412,78 +409,57 @@ Target: 35-40 miles
 
 ## Week 13 (PEAK) — 2026-06-01 to 2026-06-07
 
-**Focus:** B2B: 26/10. Night running practice
-Target: 65-70 miles
+**Focus:** Adjusted (Jun 5-12 conflict): consolidated 22mi long run on Thu Jun 4. Jun 5-7 = rest.
+Target: 30-35 miles (reduced from 65-70). 26mi long run dropped; long-run stimulus captured Thu Jun 4. Peak (30mi) shifted to Week 15.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-06-01 | Rest / Cross-Train | — | — | easy |
 | 2026-06-02 | 7mi Easy Run | 7.0mi | 10:15/mi | easy |
-| 2026-06-03 | Tempo: 4mi + Trail Segments | 7.0mi | 9:15/mi | threshold |
-| 2026-06-04 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-06-05 | 3mi Shakeout | 3.0mi | — | easy |
-| 2026-06-06 | 26mi Long Run | 26.0mi | 10:45/mi | moderate |
-| 2026-06-07 | 10mi B2B Long Run | 10.0mi | 10:45/mi | moderate |
+| 2026-06-03 | 6mi Easy + Strides | 6.0mi | 10:15/mi | easy |
+| 2026-06-04 | 22mi Long Run (Pre-Conflict) | 22.0mi | 10:45/mi | moderate |
+| 2026-06-05 | Rest (Travel/Conflict) | — | — | easy |
+| 2026-06-06 | Rest (Travel/Conflict) | — | — | easy |
+| 2026-06-07 | Rest (Travel/Conflict) | — | — | easy |
 
 **2026-06-02 — 7mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
 
-**2026-06-03 — Tempo: 4mi + Trail Segments**
-> 2mi warmup, 4mi at current tempo target on trails if possible, 1mi cooldown.
+**2026-06-03 — 6mi Easy + Strides**
+> Pre-long-run day. Easy 6mi with 4x100m strides. Save legs for Thursday long run.
 
-**2026-06-04 — 6mi Easy Run**
-> Easy pace (10:00-10:30/mi). Recovery focus.
-
-**2026-06-05 — 3mi Shakeout**
-> Very short, very easy. Loosening up before tomorrow's long run.
-
-**2026-06-06 — 26mi Long Run**
-> 26mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
-
-**2026-06-07 — 10mi B2B Long Run**
-> Back-to-back run on tired legs. 10mi easy. This simulates late-race fatigue. Keep effort easy.
+**2026-06-04 — 22mi Long Run (Pre-Conflict)**
+> Long run moved to Thursday. 22mi steady. Carry full nutrition (~200 cal/hr after 60 min). Last quality session before 8-day conflict break.
 
 ---
 
 ## Week 14 (PEAK) — 2026-06-08 to 2026-06-14
 
-**Focus:** Peak week. Longest run
-Target: 70-80 miles
+**Focus:** Adjusted (Jun 5-12 conflict): forced deload Mon-Fri. Re-entry long run Sat Jun 13.
+Target: 28 miles (reduced from 70-80). Mid-week quality dropped; Sat long run reduced 30mi -> 22mi for safe re-entry. Peak shifted to Week 15.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
-| 2026-06-08 | Rest / Cross-Train | — | — | easy |
-| 2026-06-09 | 7mi Easy Run | 7.0mi | 10:15/mi | easy |
-| 2026-06-10 | Tempo: 5mi | 8.0mi | 9:15/mi | threshold |
-| 2026-06-11 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-06-12 | 3mi Shakeout | 3.0mi | — | easy |
-| 2026-06-13 | 30mi Long Run | 30.0mi | 10:45/mi | moderate |
-| 2026-06-14 | 6mi Recovery Run | 6.0mi | 10:45/mi | easy |
+| 2026-06-08 | Rest (Travel/Conflict) | — | — | easy |
+| 2026-06-09 | Rest (Travel/Conflict) | — | — | easy |
+| 2026-06-10 | Rest (Travel/Conflict) | — | — | easy |
+| 2026-06-11 | Rest (Travel/Conflict) | — | — | easy |
+| 2026-06-12 | Rest (Travel/Conflict) | — | — | easy |
+| 2026-06-13 | 22mi Long Run (Re-Entry) | 22.0mi | 10:45/mi | moderate |
+| 2026-06-14 | 6mi Recovery Run | 6.0mi | 10:15/mi | easy |
 
-**2026-06-09 — 7mi Easy Run**
-> Easy pace (10:00-10:30/mi). Keep HR under 145.
-
-**2026-06-10 — Tempo: 5mi**
-> Peak week quality. 2mi warmup, 5mi at current tempo target, 1mi cooldown.
-
-**2026-06-11 — 6mi Easy Run**
-> Easy pace (10:00-10:30/mi). Recovery focus.
-
-**2026-06-12 — 3mi Shakeout**
-> Very short, very easy. Loosening up before tomorrow's long run.
-
-**2026-06-13 — 30mi Long Run**
-> 30mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+**2026-06-13 — 22mi Long Run (Re-Entry)**
+> Re-entry long run after 8-day conflict break. 22mi steady — DO NOT push to 30mi cold. Run by effort, expect slower pace. Peak (30mi) shifted to Jun 20.
 
 **2026-06-14 — 6mi Recovery Run**
-> Easy recovery run. If legs are trashed from yesterday, walk instead.
+> Easy recovery run after Saturday re-entry long run. Walk breaks fine if legs feel rough.
 
 ---
 
 ## Week 15 (PEAK) — 2026-06-15 to 2026-06-21
 
-**Focus:** B2B: 24/12. Race logistics practice
-Target: 65-70 miles
+**Focus:** Peak weekend (shifted +1 wk): 30mi + 12mi B2B. Race logistics practice.
+Target: 70-75 miles. Peak long run moved here from Week 14 due to Jun 5-12 conflict.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
@@ -491,9 +467,9 @@ Target: 65-70 miles
 | 2026-06-16 | 7mi Easy Run | 7.0mi | 10:15/mi | easy |
 | 2026-06-17 | Tempo: 3mi | 6.0mi | 9:15/mi | threshold |
 | 2026-06-18 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-06-19 | 3mi Shakeout | 3.0mi | — | easy |
-| 2026-06-20 | 24mi Long Run | 24.0mi | 10:45/mi | moderate |
-| 2026-06-21 | 12mi B2B Long Run | 12.0mi | 10:45/mi | moderate |
+| 2026-06-19 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
+| 2026-06-20 | 30mi Long Run (Peak) | 30.0mi | 10:45/mi | moderate |
+| 2026-06-21 | 12mi B2B Long Run | 12.0mi | 10:15/mi | moderate |
 
 **2026-06-16 — 7mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
@@ -507,11 +483,11 @@ Target: 65-70 miles
 **2026-06-19 — 3mi Shakeout**
 > Very short, very easy. Loosening up before tomorrow's long run.
 
-**2026-06-20 — 24mi Long Run**
-> 24mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+**2026-06-20 — 30mi Long Run (Peak)**
+> PEAK long run — shifted here from Jun 13 due to conflict. 30mi steady. Carry full nutrition (~200 cal/hr after 60 min). Run by effort. Walk hills. This is your longest run of the cycle.
 
 **2026-06-21 — 12mi B2B Long Run**
-> Back-to-back run on tired legs. 12mi easy. This simulates late-race fatigue. Keep effort easy.
+> Back-to-back on tired legs after 30mi peak. 12mi easy — this is the late-race fatigue simulation. Effort is everything; pace is irrelevant.
 
 ---
 
@@ -582,7 +558,7 @@ Target: 35-40 miles
 |------|---------|----------|------|-----------|
 | 2026-07-06 | Rest Day | — | — | easy |
 | 2026-07-07 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
-| 2026-07-08 | 5mi Easy + 4 Strides | 5.0mi | — | easy |
+| 2026-07-08 | 5mi Easy + 4 Strides | 5.0mi | 10:15/mi | easy |
 | 2026-07-09 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
 | 2026-07-10 | Rest Day | — | — | easy |
 | 2026-07-11 | 13mi Long Run | 13.0mi | 10:45/mi | easy |
@@ -611,7 +587,7 @@ Target: 20-25 miles
 |------|---------|----------|------|-----------|
 | 2026-07-13 | Rest Day | — | — | easy |
 | 2026-07-14 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
-| 2026-07-15 | 3mi Easy Shakeout | 3.0mi | — | easy |
+| 2026-07-15 | 3mi Easy Shakeout | 3.0mi | 10:15/mi | easy |
 | 2026-07-16 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
 | 2026-07-17 | Rest Day | — | — | easy |
 | 2026-07-18 | 9mi Long Run | 9.0mi | 10:45/mi | easy |
@@ -638,10 +614,10 @@ Target: 10-110 miles
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
-| 2026-07-20 | 2mi Shakeout | 2.0mi | — | easy |
-| 2026-07-21 | 2mi Shakeout | 2.0mi | — | easy |
-| 2026-07-22 | 2mi Shakeout | 2.0mi | — | easy |
-| 2026-07-23 | 2mi Shakeout | 2.0mi | — | easy |
+| 2026-07-20 | 2mi Shakeout | 2.0mi | 10:15/mi | easy |
+| 2026-07-21 | 2mi Shakeout | 2.0mi | 10:15/mi | easy |
+| 2026-07-22 | 2mi Shakeout | 2.0mi | 10:15/mi | easy |
+| 2026-07-23 | 2mi Shakeout | 2.0mi | 10:15/mi | easy |
 | 2026-07-24 | Rest — Race Eve | — | — | easy |
 | 2026-07-25 | BURNING RIVER 100 | 100.0mi | — | hard |
 | 2026-07-26 | Post-Race Recovery | — | — | easy |

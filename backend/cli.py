@@ -1701,7 +1701,7 @@ def cmd_race_segments(args):
 
 def cmd_export_md(args):
     import os
-    from ultra_plan import generate_training_plan_markdown
+    from .ultra_plan import generate_training_plan_markdown
 
     with get_db() as conn:
         plan = _get_plan(conn)

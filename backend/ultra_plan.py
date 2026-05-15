@@ -538,7 +538,7 @@ def _fmt_pace(pace):
 
 def generate_training_plan_markdown(conn, plan_id):
     """Generate TRAINING_PLAN.md content from the database with current targets."""
-    from adapt import get_current_targets
+    from .adapt import get_current_targets
 
     plan = conn.execute("SELECT * FROM training_plans WHERE id = ?", (plan_id,)).fetchone()
     if not plan:
