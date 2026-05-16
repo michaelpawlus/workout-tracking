@@ -348,24 +348,24 @@ Target: 55-60 miles
 
 ## Week 11 (BUILD) — 2026-05-18 to 2026-05-24
 
-**Focus:** Benchmark: 50K training race
-Target: 55-65 miles
+**Focus:** Adjusted: 50K removed (May 23-25 conflict). Pre-Mohican mini-taper week.
+Target: 18-20 miles. 50K relocated to Buckeye Trail 50K on Jun 28; this week now serves as Mohican Marathon taper.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-05-18 | Rest / Cross-Train | — | — | easy |
 | 2026-05-19 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-05-20 | 5mi Easy (Pre-Race) | 5.0mi | 10:15/mi | easy |
+| 2026-05-20 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
 | 2026-05-21 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
 | 2026-05-22 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
-| 2026-05-23 | 31mi Long Run | 31.0mi | 10:45/mi | moderate |
+| 2026-05-23 | Easy Run (Travel) or Rest | 4.0mi | 10:15/mi | easy |
 | 2026-05-24 | Rest (Travel/Conflict) | — | — | easy |
 
 **2026-05-19 — 6mi Easy Run**
 > Easy pace (10:00-10:30/mi). Keep HR under 145.
 
-**2026-05-20 — 5mi Easy (Pre-Race)**
-> Easy shakeout before Saturday 50K. Stay loose, don't push.
+**2026-05-20 — 5mi Easy Run**
+> Easy aerobic. Beginning of Mohican Marathon taper week.
 
 **2026-05-21 — 5mi Easy Run**
 > Easy pace (10:00-10:30/mi). Recovery focus.
@@ -373,70 +373,70 @@ Target: 55-65 miles
 **2026-05-22 — 3mi Shakeout**
 > Very short, very easy. Loosening up before tomorrow's long run.
 
-**2026-05-23 — 31mi Long Run**
-> 31mi long run. Carry nutrition — practice race-day fueling (~200 cal/hr after 60 min). Run by effort, not pace. Allow walking on hills.
+**2026-05-23 — Easy Run (Travel) or Rest**
+> Travel day. 3-4mi easy if logistics allow, otherwise rest. No long run — saving legs for Mohican Marathon next Saturday.
 
 ---
 
 ## Week 12 (RECOVERY) — 2026-05-25 to 2026-05-31
 
-**Focus:** MAF test #3. Recovery/absorb
-Target: 35-40 miles
+**Focus:** RACE WEEK: Mohican Marathon (May 30). First of two race-effort tune-ups for BR100.
+Target: 35-40 miles. MAF Test #3 dropped (too close to race). Marathon replaces 12mi long run.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-05-25 | Rest Day | — | — | easy |
 | 2026-05-26 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
-| 2026-05-27 | MAF Test #3 | — | — | easy |
+| 2026-05-27 | 3mi Easy Shakeout | 3.0mi | 10:15/mi | easy |
 | 2026-05-28 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
-| 2026-05-29 | Rest Day | — | — | easy |
-| 2026-05-30 | 12mi Long Run | 12.0mi | 10:45/mi | easy |
-| 2026-05-31 | Rest / Easy Walk | — | — | easy |
+| 2026-05-29 | Rest / Race-Eve Travel | — | — | easy |
+| 2026-05-30 | Mohican Marathon (26.2mi) | 26.2mi | — | hard |
+| 2026-05-31 | Rest / Easy Walk (Post-Marathon) | — | — | easy |
 
 **2026-05-26 — 4mi Easy Run**
-> Easy pace (10:00-10:30/mi). Keep HR under 145.
+> Mohican Marathon week. Easy 4mi shakeout.
 
-**2026-05-27 — MAF Test #3**
-> 30 min at HR ~137 bpm. Compare to previous tests.
+**2026-05-27 — 3mi Easy Shakeout**
+> Pre-race week. Very easy 3mi. Saving everything for Mohican Saturday.
 
 **2026-05-28 — 3mi Easy Run**
-> Easy pace (10:00-10:30/mi). Recovery focus.
+> Easy 3mi. Race-week taper. Stay loose.
 
-**2026-05-30 — 12mi Long Run**
-> 12mi long run. Comfortable, conversational pace. Build your aerobic base.
+**2026-05-30 — Mohican Marathon (26.2mi)**
+> MOHICAN MARATHON — race-effort training day. 26.2mi. Run by effort, not pace; treat as a controlled marathon (not all-out). Practice race-day nutrition (~250 cal/hr after 60 min, full electrolytes). This is one of your two peak training stimuli for BR100. Bail to walk-run if anything feels wrong — this is training, not a goal race.
 
 ---
 
 ## Week 13 (PEAK) — 2026-06-01 to 2026-06-07
 
-**Focus:** Adjusted (Jun 5-12 conflict): consolidated 22mi long run on Thu Jun 4. Jun 5-7 = rest.
-Target: 30-35 miles (reduced from 65-70). 26mi long run dropped; long-run stimulus captured Thu Jun 4. Peak (30mi) shifted to Week 15.
+**Focus:** Recovery: post-Mohican + conflict. Light volume Jun 2-4, then rest Jun 5-7.
+Target: 12-15 miles. Thu Jun 4 22mi long run REMOVED (5 days post-marathon = too soon).
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-06-01 | Rest / Cross-Train | — | — | easy |
-| 2026-06-02 | 7mi Easy Run | 7.0mi | 10:15/mi | easy |
-| 2026-06-03 | 6mi Easy + Strides | 6.0mi | 10:15/mi | easy |
-| 2026-06-04 | 22mi Long Run (Pre-Conflict) | 22.0mi | 10:45/mi | moderate |
+| 2026-06-02 | 3mi Easy Shakeout | 3.0mi | 10:15/mi | easy |
+| 2026-06-03 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-06-04 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
 | 2026-06-05 | Rest (Travel/Conflict) | — | — | easy |
 | 2026-06-06 | Rest (Travel/Conflict) | — | — | easy |
 | 2026-06-07 | Rest (Travel/Conflict) | — | — | easy |
 
-**2026-06-02 — 7mi Easy Run**
-> Easy pace (10:00-10:30/mi). Keep HR under 145.
+**2026-06-02 — 3mi Easy Shakeout**
+> 2 days post-Mohican. Very easy 3mi or walk-run. Test how legs feel.
 
-**2026-06-03 — 6mi Easy + Strides**
-> Pre-long-run day. Easy 6mi with 4x100m strides. Save legs for Thursday long run.
+**2026-06-03 — 4mi Easy Run**
+> 3 days post-Mohican. Easy aerobic 4mi. Recovery focus.
 
-**2026-06-04 — 22mi Long Run (Pre-Conflict)**
-> Long run moved to Thursday. 22mi steady. Carry full nutrition (~200 cal/hr after 60 min). Last quality session before 8-day conflict break.
+**2026-06-04 — 5mi Easy Run**
+> 4 days post-Mohican. Easy 5mi. Building back gently. Skip if legs are dead.
 
 ---
 
 ## Week 14 (PEAK) — 2026-06-08 to 2026-06-14
 
-**Focus:** Adjusted (Jun 5-12 conflict): forced deload Mon-Fri. Re-entry long run Sat Jun 13.
-Target: 28 miles (reduced from 70-80). Mid-week quality dropped; Sat long run reduced 30mi -> 22mi for safe re-entry. Peak shifted to Week 15.
+**Focus:** Restart from conflict. Bridge long run between Mohican and Buckeye Trail 50K.
+Target: 24 miles. Sat Jun 13 18mi (reduced from 22mi) bridges between two race efforts.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
@@ -445,11 +445,11 @@ Target: 28 miles (reduced from 70-80). Mid-week quality dropped; Sat long run re
 | 2026-06-10 | Rest (Travel/Conflict) | — | — | easy |
 | 2026-06-11 | Rest (Travel/Conflict) | — | — | easy |
 | 2026-06-12 | Rest (Travel/Conflict) | — | — | easy |
-| 2026-06-13 | 22mi Long Run (Re-Entry) | 22.0mi | 10:45/mi | moderate |
+| 2026-06-13 | 18mi Long Run (Bridge) | 18.0mi | 10:45/mi | moderate |
 | 2026-06-14 | 6mi Recovery Run | 6.0mi | 10:15/mi | easy |
 
-**2026-06-13 — 22mi Long Run (Re-Entry)**
-> Re-entry long run after 8-day conflict break. 22mi steady — DO NOT push to 30mi cold. Run by effort, expect slower pace. Peak (30mi) shifted to Jun 20.
+**2026-06-13 — 18mi Long Run (Bridge)**
+> Bridge long run between Mohican (May 30) and Buckeye Trail 50K (Jun 28). 18mi steady — run by effort, expect slower pace after 8-day layoff. Bail to 14mi if legs feel rough. Carry full nutrition (~200 cal/hr after 60 min).
 
 **2026-06-14 — 6mi Recovery Run**
 > Easy recovery run after Saturday re-entry long run. Walk breaks fine if legs feel rough.
@@ -458,43 +458,43 @@ Target: 28 miles (reduced from 70-80). Mid-week quality dropped; Sat long run re
 
 ## Week 15 (PEAK) — 2026-06-15 to 2026-06-21
 
-**Focus:** Peak weekend (shifted +1 wk): 30mi + 12mi B2B. Race logistics practice.
-Target: 70-75 miles. Peak long run moved here from Week 14 due to Jun 5-12 conflict.
+**Focus:** Restoration + soft-conflict weekend (Jun 19-21). No peak long run; saving legs for 50K.
+Target: 14-18 miles. 30mi peak REMOVED; replaced by Buckeye Trail 50K next week. Weekend = run what you can.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-06-15 | Rest / Cross-Train | — | — | easy |
-| 2026-06-16 | 7mi Easy Run | 7.0mi | 10:15/mi | easy |
-| 2026-06-17 | Tempo: 3mi | 6.0mi | 9:15/mi | threshold |
-| 2026-06-18 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-06-19 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
-| 2026-06-20 | 30mi Long Run (Peak) | 30.0mi | 10:45/mi | moderate |
-| 2026-06-21 | 12mi B2B Long Run | 12.0mi | 10:15/mi | moderate |
+| 2026-06-16 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-06-17 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-06-18 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-06-19 | Easy by Feel (Soft Conflict) | — | — | easy |
+| 2026-06-20 | Easy by Feel (Soft Conflict) | — | — | easy |
+| 2026-06-21 | Easy by Feel (Soft Conflict) | — | — | easy |
 
-**2026-06-16 — 7mi Easy Run**
-> Easy pace (10:00-10:30/mi). Keep HR under 145.
+**2026-06-16 — 4mi Easy Run**
+> Easy 4mi. Restoration week before 50K race week.
 
-**2026-06-17 — Tempo: 3mi**
-> Reduced quality volume. 2mi warmup, 3mi at current tempo target, 1mi cooldown.
+**2026-06-17 — 5mi Easy Run**
+> Easy 5mi. Tempo dropped this week — still restoring after Mohican + conflict.
 
-**2026-06-18 — 6mi Easy Run**
-> Easy pace (10:00-10:30/mi). Recovery focus.
+**2026-06-18 — 5mi Easy Run**
+> Easy 5mi. Last quality day before soft-conflict weekend.
 
-**2026-06-19 — 3mi Shakeout**
-> Very short, very easy. Loosening up before tomorrow's long run.
+**2026-06-19 — Easy by Feel (Soft Conflict)**
+> Conflict weekend begins — run what you can. 3-5mi easy if logistics allow, otherwise rest. No prescribed structure.
 
-**2026-06-20 — 30mi Long Run (Peak)**
-> PEAK long run — shifted here from Jun 13 due to conflict. 30mi steady. Carry full nutrition (~200 cal/hr after 60 min). Run by effort. Walk hills. This is your longest run of the cycle.
+**2026-06-20 — Easy by Feel (Soft Conflict)**
+> Soft conflict weekend. Run what you can — 4-8mi by feel ideally, but no commitment. NOT a long run. Saving legs for Buckeye Trail 50K next Sunday.
 
-**2026-06-21 — 12mi B2B Long Run**
-> Back-to-back on tired legs after 30mi peak. 12mi easy — this is the late-race fatigue simulation. Effort is everything; pace is irrelevant.
+**2026-06-21 — Easy by Feel (Soft Conflict)**
+> Soft conflict day. 3-6mi easy by feel, or rest. End of restoration week.
 
 ---
 
 ## Week 16 (RECOVERY) — 2026-06-22 to 2026-06-28
 
-**Focus:** Final benchmarks: MAF #4, 5K TT #2
-Target: 40-45 miles
+**Focus:** RACE WEEK: Buckeye Trail 50K (Sun Jun 28). Peak race-effort tune-up; ~15mi of course overlaps BR100 final miles.
+Target: ~45 miles (race-inclusive). MAF Test #4 kept Wed. 50K is the peak stimulus, replacing solo 30mi.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
@@ -503,49 +503,52 @@ Target: 40-45 miles
 | 2026-06-24 | MAF Test #4 | — | — | easy |
 | 2026-06-25 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
 | 2026-06-26 | Rest Day | — | — | easy |
-| 2026-06-27 | 14mi Long Run | 14.0mi | 10:45/mi | easy |
-| 2026-06-28 | Rest / Easy Walk | — | — | easy |
+| 2026-06-27 | 2mi Shakeout (Race Eve) | 2.0mi | 10:15/mi | easy |
+| 2026-06-28 | Buckeye Trail 50K (31mi) | 31.0mi | — | hard |
 
 **2026-06-23 — 4mi Easy Run**
-> Easy pace (10:00-10:30/mi). Keep HR under 145.
+> BT 50K race week. Easy 4mi shakeout.
 
 **2026-06-24 — MAF Test #4**
-> Final MAF test. 30 min at HR ~137 bpm. Compare all 4 tests.
+> Final MAF test. 30 min at HR ~137 bpm. Light effort — fine 4 days pre-50K. Compare all 4 tests for plan-cycle fitness trend.
 
 **2026-06-25 — 3mi Easy Run**
-> Easy pace (10:00-10:30/mi). Recovery focus.
+> Easy 3mi. Race-week taper continues.
 
-**2026-06-27 — 14mi Long Run**
-> 14mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
+**2026-06-27 — 2mi Shakeout (Race Eve)**
+> Very easy 2mi to stay loose. Travel to race, gear check, lay out kit. Eat carbs, hydrate, early bedtime.
+
+**2026-06-28 — Buckeye Trail 50K (31mi)**
+> BUCKEYE TRAIL 50K — race-effort training day. ~31mi on Buckeye Trail singletrack (Oak Grove <-> Pine Lane out-and-back through Brecksville Reservation / CVNP). HUGE BR100 specificity: ~15mi of this course is shared with BR100 closing miles. Practice: race nutrition (~250 cal/hr), hydration discipline, downshifting on tired legs, aid station efficiency. Run by effort. Save something for the second half. This is the peak training stimulus.
 
 ---
 
 ## Week 17 (TAPER) — 2026-06-29 to 2026-07-05
 
-**Focus:** Last hard tempo. Begin taper
-Target: 45-50 miles
+**Focus:** Post-50K recovery + taper begin. Last Tempo dropped; long run reduced to 13mi.
+Target: 25-30 miles. Reduced from original ~45mi to absorb 50K. 4 weeks to BR100.
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
-| 2026-06-29 | Rest Day | — | — | easy |
-| 2026-06-30 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
-| 2026-07-01 | Last Tempo: 3mi | 6.0mi | 9:15/mi | threshold |
+| 2026-06-29 | Rest Day (Post-50K) | — | — | easy |
+| 2026-06-30 | 3mi Easy Recovery | 3.0mi | 10:15/mi | easy |
+| 2026-07-01 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
 | 2026-07-02 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
 | 2026-07-03 | Rest Day | — | — | easy |
-| 2026-07-04 | 18mi Long Run | 18.0mi | 10:45/mi | moderate |
+| 2026-07-04 | 13mi Long Run (Post-50K) | 13.0mi | 10:45/mi | moderate |
 | 2026-07-05 | Rest / Easy Walk | — | — | easy |
 
-**2026-06-30 — 4mi Easy Run**
-> Easy pace (10:00-10:30/mi). Keep HR under 145.
+**2026-06-30 — 3mi Easy Recovery**
+> 2 days post-50K. Very easy 3mi or walk-run. Test how legs feel.
 
-**2026-07-01 — Last Tempo: 3mi**
-> Final hard session. 2mi warmup, 3mi at current tempo target, 1mi cooldown. After this, all easy.
+**2026-07-01 — 4mi Easy Run**
+> 3 days post-50K. Easy 4mi aerobic. Tempo dropped — recovery first.
 
 **2026-07-02 — 3mi Easy Run**
-> Easy pace (10:00-10:30/mi). Recovery focus.
+> Easy 3mi. Building back from 50K.
 
-**2026-07-04 — 18mi Long Run**
-> 18mi long run. Steady effort. Practice carrying water/nutrition. Keep HR in Zone 2-3.
+**2026-07-04 — 13mi Long Run (Post-50K)**
+> 6 days post-50K. 13mi easy long run — REDUCED from 18mi due to 50K race effort. Run by effort, walk hills, carry nutrition. If legs feel trashed, bail to 10mi.
 
 ---
 
