@@ -121,6 +121,16 @@ python3 cli.py ultra race import-results results.csv --year 2025 --json
 # Analyze peer cohort (finishers near your goal time)
 python3 cli.py ultra race cohort --goal-time "24:00:00" --json
 
+# Race-report aggregator (issue #15): build a research brief for course/strategy intel.
+# The CLI emits the "research order" (sources + queries + output sections); the Claude
+# Code session runs the deep research and files the synthesized guide to race-prep/.
+python3 cli.py ultra race aggregate-reports --json          # structured research brief
+python3 cli.py ultra race aggregate-reports --skeleton      # fillable markdown scaffold
+# After synthesizing, persist the guide to $OBSIDIAN_VAULT_PATH/race-prep/ (stdin or file):
+cat guide.md | python3 cli.py ultra race aggregate-reports --save-guide - \
+  --title "Burning River 100 Course & Strategy Guide" --json
+python3 cli.py ultra race aggregate-reports --save-guide guide.md --date-prefix  # dated snapshot
+
 # Generate A/B/C race execution plans
 python3 cli.py ultra race plan --goal-time "24:00:00" --weather-temp 75 --json
 python3 cli.py ultra race plan --goal-time "24:00:00" --save  # persist to DB

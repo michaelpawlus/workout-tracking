@@ -27,6 +27,7 @@ from .adapt import (
 )
 from . import strava
 from . import race_engine
+from . import race_research
 from . import vault
 
 
@@ -1699,6 +1700,96 @@ def cmd_race_segments(args):
                   f"{s['avg_grade_pct']:5.1f}% {crew:>4} {drop:>4}")
 
 
+def cmd_race_aggregate_reports(args):
+    """Emit a research brief for BR100 course intel, or persist an agent-synthesized guide.
+
+    Default: print/emit the structured research brief (the "research order"). The
+    deep-research synthesis is performed by the Claude Code session, not here.
+    ``--save-guide PATH|-`` reads a finished markdown guide (file or stdin) and writes it
+    to ``race-prep/`` in the Obsidian vault. ``--skeleton`` emits a fillable markdown
+    scaffold of the output sections.
+    """
+    # --save-guide: persist an agent-produced guide to the vault (no course needed).
+    if args.save_guide:
+        if args.save_guide == "-":
+            body = sys.stdin.read()
+        else:
+            try:
+                with open(args.save_guide, "r", encoding="utf-8") as f:
+                    body = f.read()
+            except OSError as e:
+                _err(f"Could not read guide: {e}", args.json, 2)
+        if not body.strip():
+            _err("Guide is empty — nothing to save.", args.json)
+        try:
+            res = vault.write_race_intel_to_vault(
+                title=args.title or "Burning River 100 Course & Strategy Guide",
+                body=body,
+                doc_type="course-guide",
+                date_prefix=args.date_prefix,
+            )
+        except vault.VaultError as e:
+            _err(str(e), args.json)
+        res["message"] = f"Guide written to {res['path']}"
+        _print(res, args.json)
+        return
+
+    with get_db() as conn:
+        course = race_engine.get_course(conn)
+        if not course:
+            _err("No course loaded. Run: ultra race load-course <gpx> --name ... --year ...",
+                 args.json, 2)
+        course = dict(course)
+        segments = race_engine.get_segments(conn, course["id"])
+        segments_named = any(s.get("name") for s in segments)
+
+    brief = race_research.build_research_brief(
+        course,
+        target_finish=args.goal_time or race_research.DEFAULT_TARGET_FINISH,
+        segments_named=segments_named,
+    )
+
+    if args.skeleton:
+        skeleton = race_research.render_guide_skeleton(brief)
+        if args.json:
+            _print({"skeleton": skeleton}, True)
+        else:
+            print(skeleton)
+        return
+
+    if args.json:
+        _print(brief, True)
+    else:
+        race = brief["race"]
+        print(f"=== {race['name']} ({race['year']}) — Research Brief ===")
+        print(f"{race.get('distance_miles')} mi · {race.get('elevation_gain_ft'):,.0f} ft · "
+              f"{race['race_date']} · target {race['target_finish']}")
+        print()
+        print(brief["objective"])
+        if brief.get("feed_forward"):
+            print()
+            print(f"Feed-forward: {brief['feed_forward']}")
+        print()
+        print("Method:")
+        for i, step in enumerate(brief["method"], 1):
+            print(f"  {i}. {step}")
+        print()
+        print("Sources & queries:")
+        for src in brief["sources"]:
+            print(f"\n  ▸ {src['category']}")
+            print(f"    {src['why']}")
+            print(f"    where: {', '.join(src['where'])}")
+            for query in src["queries"]:
+                print(f"      - {query}")
+        print()
+        print("Output sections:")
+        for section in brief["output_sections"]:
+            print(f"  ▸ {section['heading']} — {section['what']}")
+        print()
+        print("Next: run the research, then "
+              "`ultra race aggregate-reports --save-guide -` to file the guide.")
+
+
 def cmd_export_md(args):
     import os
     from .ultra_plan import generate_training_plan_markdown
@@ -1929,6 +2020,22 @@ def main():
     rst_p = race_sub.add_parser("status", help="Show current race status vs plan")
     rst_p.add_argument("--json", action="store_true")
 
+    # ultra race aggregate-reports
+    rar_p = race_sub.add_parser(
+        "aggregate-reports",
+        help="Build a research brief for BR100 course intel, or save a synthesized guide")
+    rar_p.add_argument("--goal-time", type=str,
+                       help="Target finish time for framing (HH:MM:SS, default 26:00:00)")
+    rar_p.add_argument("--skeleton", action="store_true",
+                       help="Emit a fillable markdown skeleton of the guide sections")
+    rar_p.add_argument("--save-guide", type=str, metavar="PATH",
+                       help="Persist a finished markdown guide to the vault ('-' for stdin)")
+    rar_p.add_argument("--title", type=str,
+                       help="Title for the saved guide (used as the vault filename)")
+    rar_p.add_argument("--date-prefix", action="store_true",
+                       help="Prefix the saved filename with today's date (snapshot mode)")
+    rar_p.add_argument("--json", action="store_true")
+
     # ultra race segments
     rsg_p = race_sub.add_parser("segments", help="View/edit course segments")
     rsg_p.add_argument("--segment", type=int, help="Segment number to edit")
@@ -2009,6 +2116,7 @@ def main():
                 "checkin": cmd_race_checkin,
                 "status": cmd_race_status,
                 "segments": cmd_race_segments,
+                "aggregate-reports": cmd_race_aggregate_reports,
             }
 
             cmd = race_commands.get(args.race_command)
