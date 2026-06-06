@@ -115,8 +115,21 @@ python3 cli.py ultra race load-course course.gpx --name "BR100" --year 2026 \
 python3 cli.py ultra race segments --json
 python3 cli.py ultra race segments --segment 3 --set-name "Happy Days 1" --crew 1 --drop-bag 1
 
-# Import historical race results from CSV
+# Import historical race results from CSV (peer finishers on this course)
 python3 cli.py ultra race import-results results.csv --year 2025 --json
+
+# Historical analysis of the athlete's OWN prior races at the same distance.
+# Extracts late fade / positive split / HR drift / stoppage and feeds the
+# lessons into coaching (run reports), programming (training implications),
+# and race reports (late-race fade biases the Race Day Engine pace plan).
+python3 cli.py ultra race history --seed              # seed known prior 100s
+python3 cli.py ultra race history --json              # analyze all prior races
+python3 cli.py ultra race history --distance-filter 100   # only same-distance efforts
+python3 cli.py ultra race history --md                # markdown report (for the vault)
+# Add a race manually, optionally enriching from Strava when connected:
+python3 cli.py ultra race history --add --name "Tunnel Hill 100" --date 2021-11-13 \
+  --distance 101.1 --finish 25:23:00 --moving 23:34:00 \
+  --first-half 13:03:00 --second-half 14:56:00 --strava-id 6257195830
 
 # Analyze peer cohort (finishers near your goal time)
 python3 cli.py ultra race cohort --goal-time "24:00:00" --json

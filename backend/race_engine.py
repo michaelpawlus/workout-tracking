@@ -407,11 +407,13 @@ def grade_adjusted_pace(base_pace_seconds, grade_pct):
     return base_pace_seconds + adjustment
 
 
-def fatigue_multiplier(mile, total_miles, training_fade=None, cohort_slowdown_pct=None):
+def fatigue_multiplier(mile, total_miles, training_fade=None, cohort_slowdown_pct=None,
+                       historical_fade_pct=None):
     """Calculate fatigue-based pace multiplier at a given point in the race.
 
-    Blends training data (B2B fade) with peer cohort slowdown curve.
-    Returns multiplier > 1.0 (e.g., 1.15 = 15% slower than fresh pace).
+    Blends training data (B2B fade), peer cohort slowdown curve, and the
+    athlete's own prior-race late fade. Returns multiplier > 1.0 (e.g., 1.15 =
+    15% slower than fresh pace).
     """
     progress = mile / total_miles if total_miles > 0 else 0
 
@@ -436,6 +438,13 @@ def fatigue_multiplier(mile, total_miles, training_fade=None, cohort_slowdown_pc
         # Apply training fade influence in middle miles
         if 0.3 < progress < 0.8:
             base_fatigue *= (1.0 + fade_factor * 0.3)
+
+    # Bias the late race toward the athlete's documented prior-race fade.
+    # Bounded and back-loaded so a ~20% historical positive split adds only a
+    # few percent at the very end, where the athlete has historically collapsed.
+    if historical_fade_pct is not None and historical_fade_pct > 0 and progress > 0.5:
+        hist_factor = historical_fade_pct / 100
+        base_fatigue *= (1.0 + hist_factor * 0.15 * progress)
 
     return round(base_fatigue, 4)
 
@@ -512,6 +521,13 @@ def generate_race_plan(conn, course_id, plan_id, goal_time_seconds,
     # Get training fade
     training_fade = get_training_fade(conn, plan_id) if plan_id else None
 
+    # Get the athlete's own prior-race late fade (same-distance efforts).
+    from . import historical  # lazy: historical imports race_engine helpers
+    try:
+        historical_fade = historical.get_historical_fade(conn, target_distance=total_miles)
+    except Exception:
+        historical_fade = None
+
     # Generate three scenarios
     scenarios = {
         "A": {"label": "Goal Pace", "multiplier": 1.0},
@@ -535,7 +551,8 @@ def generate_race_plan(conn, course_id, plan_id, goal_time_seconds,
 
             # Apply fatigue curve
             fatigue = fatigue_multiplier(
-                mid_mile, total_miles, training_fade, cohort_slowdown
+                mid_mile, total_miles, training_fade, cohort_slowdown,
+                historical_fade,
             )
             seg_pace *= fatigue
 
@@ -600,6 +617,7 @@ def generate_race_plan(conn, course_id, plan_id, goal_time_seconds,
         "start_time": start_time,
         "base_pace_display": _format_pace(base_pace_sec),
         "training_fade_pct": training_fade,
+        "historical_fade_pct": historical_fade,
         "cohort_slowdown_pct": cohort_slowdown,
         "cohort_size": cohort_data.get("cohort_size", 0),
         "plans": plans,

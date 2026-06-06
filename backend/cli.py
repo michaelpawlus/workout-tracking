@@ -332,6 +332,23 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
         current_targets = get_current_targets(conn, plan["id"])
         targets_dict = dict(current_targets) if current_targets else None
 
+        # Prior-race lessons (athlete's own 100s) to calibrate coaching.
+        historical_summary = None
+        try:
+            from . import historical
+            hist = historical.analyze_history(conn, target_distance=100)
+            if hist.get("count"):
+                historical_summary = {
+                    "prior_races": hist["count"],
+                    "failure_mode": hist.get("failure_mode"),
+                    "avg_fade_pct": hist.get("avg_fade_pct"),
+                    "positive_split_count": hist.get("positive_split_count"),
+                    "lessons": hist.get("lessons"),
+                    "training_implications": hist.get("training_implications"),
+                }
+        except Exception:
+            historical_summary = None
+
     nutrition_data = None
     if any(v is not None for v in (pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes)):
         nutrition_data = {
@@ -345,7 +362,7 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
     try:
         if not as_json:
             print("Analyzing run...", file=sys.stderr)
-        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info, athlete_targets=targets_dict, nutrition_data=nutrition_data)
+        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info, athlete_targets=targets_dict, nutrition_data=nutrition_data, historical_data=historical_summary)
     except Exception as e:
         feedback = {
             "compliance_score": None,
@@ -1460,6 +1477,105 @@ def cmd_race_cohort(args):
                       f"{s['pace_stdev_seconds'] or 0:6.0f}s{danger}")
 
 
+def cmd_race_history(args):
+    """Ingest & analyze the athlete's own prior races at a given distance."""
+    from . import historical
+
+    with get_db() as conn:
+        # --- mutations ---------------------------------------------------
+        if args.seed:
+            n = historical.seed_known_races(conn)
+            if not (args.json or args.add or args.strava_id):
+                print(f"Seeded {n} known prior races.", file=sys.stderr)
+
+        if args.add:
+            if not args.name or not args.date:
+                _err("--add requires --name and --date", args.json, 2)
+            race_id = historical.add_race(
+                conn,
+                name=args.name,
+                race_date=args.date,
+                distance_miles=args.distance,
+                elevation_gain_ft=args.elevation,
+                finish_time_seconds=race_engine._parse_time(args.finish) if args.finish else None,
+                moving_time_seconds=race_engine._parse_time(args.moving) if args.moving else None,
+                first_half_seconds=race_engine._parse_time(args.first_half) if args.first_half else None,
+                second_half_seconds=race_engine._parse_time(args.second_half) if args.second_half else None,
+                avg_hr=args.avg_hr,
+                terrain=args.terrain,
+                dnf=args.dnf,
+                strava_activity_id=args.strava_id,
+                notes=args.notes,
+            )
+            if not args.json:
+                print(f"Saved race id {race_id}: {args.name}", file=sys.stderr)
+            if args.strava_id:
+                try:
+                    filled = historical.enrich_from_strava(conn, race_id, args.strava_id)
+                    if not args.json:
+                        print(f"Enriched from Strava: {', '.join(filled)}", file=sys.stderr)
+                except Exception as e:
+                    if not args.json:
+                        print(f"Strava enrich skipped: {e}", file=sys.stderr)
+
+        elif args.strava_id and args.race_id:
+            try:
+                filled = historical.enrich_from_strava(conn, args.race_id, args.strava_id)
+                if not args.json:
+                    print(f"Enriched race {args.race_id}: {', '.join(filled)}", file=sys.stderr)
+            except Exception as e:
+                _err(f"Strava enrich failed: {e}", args.json, 1)
+
+        # --- analysis ----------------------------------------------------
+        analysis = historical.analyze_history(
+            conn, target_distance=args.distance_filter,
+            tolerance_pct=args.tolerance,
+        )
+
+        if args.output or args.md:
+            md = historical.history_to_markdown(analysis)
+            if args.output:
+                with open(args.output, "w") as f:
+                    f.write(md)
+                if not args.json:
+                    print(f"Wrote report to {args.output}", file=sys.stderr)
+            else:
+                print(md)
+                return
+
+    if args.json:
+        _print(analysis, True)
+        return
+
+    if not analysis.get("count"):
+        print(analysis.get("message", "No prior races on file."))
+        return
+
+    print("=== Historical Race Analysis ===")
+    if analysis.get("failure_mode"):
+        print(f"Dominant failure mode: {analysis['failure_mode']}")
+    if analysis.get("avg_fade_pct") is not None:
+        print(f"Average late-race fade: {analysis['avg_fade_pct']}%  "
+              f"({analysis['positive_split_count']}/{analysis['count']} positive splits)")
+    print()
+    print(f"{'Race':<22} {'Date':<11} {'Dist':>5} {'Finish':>9} {'Fade':>6} {'Pace':>9}")
+    print("-" * 70)
+    for r in analysis["races"]:
+        fade = f"+{r['fade_pct']}%" if r.get("fade_pct") is not None else "—"
+        finish = r.get("finish_time") or ("DNF" if r["dnf"] else "—")
+        pace = r.get("avg_pace_display") or "—"
+        print(f"{r['name']:<22} {r['race_date']:<11} {r['distance_miles'] or 0:5.1f} "
+              f"{finish:>9} {fade:>6} {pace:>9}")
+    if analysis.get("lessons"):
+        print("\nLessons:")
+        for l in analysis["lessons"]:
+            print(f"  • {l}")
+    if analysis.get("training_implications"):
+        print("\nTraining implications:")
+        for i in analysis["training_implications"]:
+            print(f"  • {i}")
+
+
 def cmd_race_plan(args):
     goal_seconds = race_engine._parse_time(args.goal_time)
     with get_db() as conn:
@@ -1884,6 +2000,37 @@ def main():
                        help="Course name to associate results with")
     rir_p.add_argument("--json", action="store_true")
 
+    # ultra race history
+    rhi_p = race_sub.add_parser(
+        "history",
+        help="Ingest & analyze the athlete's own prior races (same-distance lessons)")
+    rhi_p.add_argument("--seed", action="store_true",
+                       help="Seed the known prior 100s (idempotent)")
+    rhi_p.add_argument("--add", action="store_true", help="Add/update a race")
+    rhi_p.add_argument("--name", type=str, help="Race name (with --add)")
+    rhi_p.add_argument("--date", type=str, help="Race date YYYY-MM-DD (with --add)")
+    rhi_p.add_argument("--distance", type=float, help="Distance in miles (with --add)")
+    rhi_p.add_argument("--elevation", type=float, help="Elevation gain in feet (with --add)")
+    rhi_p.add_argument("--finish", type=str, help="Finish (elapsed) time HH:MM:SS (with --add)")
+    rhi_p.add_argument("--moving", type=str, help="Moving time HH:MM:SS (with --add)")
+    rhi_p.add_argument("--first-half", type=str, help="First-half split HH:MM:SS (with --add)")
+    rhi_p.add_argument("--second-half", type=str, help="Second-half split HH:MM:SS (with --add)")
+    rhi_p.add_argument("--avg-hr", type=int, help="Average heart rate (with --add)")
+    rhi_p.add_argument("--terrain", type=str, help="Terrain notes (with --add)")
+    rhi_p.add_argument("--dnf", action="store_true", help="Mark as DNF (with --add)")
+    rhi_p.add_argument("--notes", type=str, help="Notes (with --add)")
+    rhi_p.add_argument("--strava-id", type=int,
+                       help="Strava activity id to enrich from (with --add, or --race-id)")
+    rhi_p.add_argument("--race-id", type=int,
+                       help="Existing athlete_races id to enrich via --strava-id")
+    rhi_p.add_argument("--distance-filter", type=float,
+                       help="Only analyze races near this distance (miles)")
+    rhi_p.add_argument("--tolerance", type=float, default=15.0,
+                       help="Distance match tolerance percent (default 15)")
+    rhi_p.add_argument("--md", action="store_true", help="Print markdown report")
+    rhi_p.add_argument("--output", type=str, help="Write markdown report to a file path")
+    rhi_p.add_argument("--json", action="store_true")
+
     # ultra race cohort
     rco_p = race_sub.add_parser("cohort", help="Analyze peer cohort from historical results")
     rco_p.add_argument("--goal-time", type=str, required=True,
@@ -2002,6 +2149,7 @@ def main():
             race_commands = {
                 "load-course": cmd_race_load_course,
                 "import-results": cmd_race_import_results,
+                "history": cmd_race_history,
                 "cohort": cmd_race_cohort,
                 "plan": cmd_race_plan,
                 "nutrition": cmd_race_nutrition,
