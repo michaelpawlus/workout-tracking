@@ -288,6 +288,30 @@ def init_db():
                 actual_elapsed_seconds INTEGER,
                 notes TEXT
             );
+
+            -- Athlete's OWN prior races (benchmark efforts across courses),
+            -- used by historical analysis to calibrate the plan. Distinct from
+            -- historical_results, which holds peer finishers on a single course.
+            CREATE TABLE IF NOT EXISTS athlete_races (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                race_date TEXT NOT NULL,
+                distance_miles REAL,
+                elevation_gain_ft REAL,
+                finish_time_seconds INTEGER,
+                moving_time_seconds INTEGER,
+                first_half_seconds INTEGER,
+                second_half_seconds INTEGER,
+                avg_hr INTEGER,
+                first_half_hr INTEGER,
+                second_half_hr INTEGER,
+                terrain TEXT,
+                dnf INTEGER NOT NULL DEFAULT 0,
+                strava_activity_id INTEGER,
+                notes TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(name, race_date)
+            );
         """)
 
         # Migrate CHECK constraints if DB predates ultra plan support

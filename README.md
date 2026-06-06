@@ -126,7 +126,7 @@ DEVICE SYNC      ▶  strava-{connect, status, import}
 
 RACE DAY         ▶  race {load-course, cohort, plan, nutrition,
                           crew-sheet, checkin, status, segments,
-                          import-results}
+                          import-results, history}
 
 EXPORT           ▶  plan --export-md
 
@@ -194,12 +194,13 @@ Every command in `backend/cli.py` appears in exactly one block below. Examples u
 </details>
 
 <details>
-<summary><b>Race day</b> · load-course  import-results  cohort  plan  nutrition  crew-sheet  checkin  status  segments</summary>
+<summary><b>Race day</b> · load-course  import-results  history  cohort  plan  nutrition  crew-sheet  checkin  status  segments</summary>
 
 | Command | What it does | Example |
 |---|---|---|
 | `ultra ultra race load-course` | Load a race course from a GPX file. Optionally pass `--segment-breaks` to define aid-station mile markers. | `ultra ultra race load-course course.gpx --name "BR100" --year 2026` |
 | `ultra ultra race import-results` | Import historical finisher splits from CSV for peer-cohort analysis. | `ultra ultra race import-results results.csv --year 2025` |
+| `ultra ultra race history` | Ingest & analyze the athlete's *own* prior races at the same distance (late fade, positive split, HR drift, stoppage). Feeds coaching, training implications, and the Race Day Engine's late-race fade. `--seed`, `--add`, `--json`, `--md`. | `ultra ultra race history --seed && ultra ultra race history --distance-filter 100` |
 | `ultra ultra race cohort` | Build a peer cohort of historical finishers near a goal time. | `ultra ultra race cohort --goal-time 24:00:00 --json` |
 | `ultra ultra race plan` | Generate A / B / C race execution plans (pace + fueling) given a goal time and weather. `--save` persists to the DB. | `ultra ultra race plan --goal-time 24:00:00 --weather-temp 75 --save` |
 | `ultra ultra race nutrition` | Per-segment fueling plan (carbs/hr, sodium/hr, what goes in each drop bag). | `ultra ultra race nutrition --goal-time 24:00:00` |

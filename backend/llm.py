@@ -359,7 +359,8 @@ def analyze_run_feedback(prescribed: dict, actual: dict,
                          benchmarks: list[dict] | None = None,
                          race_info: dict | None = None,
                          athlete_targets: dict | None = None,
-                         nutrition_data: dict | None = None) -> dict:
+                         nutrition_data: dict | None = None,
+                         historical_data: dict | None = None) -> dict:
     """Analyze a completed run against the prescribed workout and return structured feedback."""
 
     system_prompt = """You are an experienced ultramarathon coach analyzing a training run for an athlete preparing for a 100-mile race (Burning River 100, July 25, 2026, sub-24hr goal).
@@ -373,6 +374,10 @@ COACHING PRINCIPLES:
 - During taper: feeling flat/sluggish is NORMAL and expected. Don't panic.
 - MAF test improvement (more distance at same HR) = aerobic fitness improving
 - Pace decay in long runs should decrease over training cycle
+- If the athlete's prior-race history is provided, coach against their documented
+  failure mode (e.g. late-race fade / positive split). Reinforce pacing discipline
+  and negative-split execution when a run echoes that pattern, and call out progress
+  when a run shows the opposite (e.g. HR or pace holding/falling in the back half).
 
 NUTRITION COACHING:
 - <60 min runs: water only, no fuel needed
@@ -414,6 +419,11 @@ Respond with JSON only:
         user_msg_parts.append(f"\n## Current Athlete Targets\n{json.dumps(athlete_targets, indent=2, default=str)}")
     if nutrition_data:
         user_msg_parts.append(f"\n## Nutrition Report\n{json.dumps(nutrition_data, indent=2, default=str)}")
+    if historical_data:
+        user_msg_parts.append(
+            "\n## Historical Race Analysis (athlete's own prior efforts)\n"
+            + json.dumps(historical_data, indent=2, default=str)
+        )
 
     user_msg_parts.append("\nAnalyze this run and provide structured feedback.")
 
