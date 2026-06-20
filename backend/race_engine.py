@@ -223,6 +223,172 @@ def get_segments(conn, course_id):
 
 
 # ---------------------------------------------------------------------------
+# 1b. Aid-Station Import (segment breaks + names + crew/drop-bag flags)
+# ---------------------------------------------------------------------------
+
+def _truthy(value):
+    """Interpret a CSV cell as a boolean flag.
+
+    Accepts 1/0, yes/no, true/false, x, and crew-style codes like ``50/100``
+    or ``100`` (any non-empty, non-falsey value counts as set).
+    """
+    if value is None:
+        return False
+    s = str(value).strip().lower()
+    if s in ("", "0", "no", "false", "n", "-"):
+        return False
+    return True
+
+
+def read_aid_stations_csv(csv_file_path):
+    """Read an aid-station file into normalized station dicts.
+
+    Expected columns: ``mile``, ``name`` (required); ``crew``, ``drop_bag``,
+    ``notes`` (optional). Lines beginning with ``#`` and blank lines are skipped
+    so the file can carry provenance/comments. Returns a list sorted by mile.
+    """
+    stations = []
+    with open(csv_file_path, "r") as f:
+        rows = [ln for ln in f if ln.strip() and not ln.lstrip().startswith("#")]
+        reader = csv.DictReader(rows)
+        for row in reader:
+            mile_raw = (row.get("mile") or "").strip()
+            name = (row.get("name") or "").strip()
+            if not mile_raw or not name:
+                continue
+            stations.append({
+                "mile": round(float(mile_raw), 2),
+                "name": name,
+                "crew": _truthy(row.get("crew")),
+                "drop_bag": _truthy(row.get("drop_bag")),
+                "notes": (row.get("notes") or "").strip() or None,
+            })
+    return sorted(stations, key=lambda s: s["mile"])
+
+
+def build_aid_station_segments(points, stations):
+    """Re-derive segments from GPX trackpoints using aid stations as breaks.
+
+    Each station's mile becomes a segment-end break; the resulting segment is
+    named after the station at its end and inherits its crew/drop-bag flags and
+    notes. Returns ``(segments, total_distance_miles, total_gain_ft)``.
+    """
+    stations = sorted(stations, key=lambda s: s["mile"])
+    breaks = [s["mile"] for s in stations]
+
+    # The guide's aid miles and the GPX distance rarely match exactly (issue #18
+    # flags ~100.7 guide mi vs ~101.8 GPX mi). The last station is the finish, so
+    # snap its break to the true course end — otherwise build_segments_from_gpx
+    # appends an unnamed tail segment that would mislabel as a duplicate finish.
+    if points and breaks:
+        total_miles = points[-1]["cumulative_distance_m"] * METERS_TO_MILES
+        breaks[-1] = max(breaks[-1], round(total_miles, 2))
+
+    segments, total_dist, total_gain = build_segments_from_gpx(points, breaks)
+
+    for seg in segments:
+        # Match each rebuilt segment to the station nearest its end mile. Index
+        # matching is fragile if a sparse segment gets skipped, so match by mile.
+        station = min(stations, key=lambda s: abs(s["mile"] - seg["end_mile"]))
+        seg["name"] = station["name"]
+        seg["crew_accessible"] = 1 if station["crew"] else 0
+        seg["drop_bag"] = 1 if station["drop_bag"] else 0
+        seg["terrain_notes"] = station["notes"]
+
+    return segments, total_dist, total_gain
+
+
+def _course_dependents(conn, course_id):
+    """Count saved rows that reference this course's segments and would be lost
+    on a rebuild (FK ON DELETE CASCADE clears them when segments are replaced)."""
+    return {
+        "historical_splits": conn.execute(
+            """SELECT COUNT(*) FROM historical_splits
+               WHERE segment_id IN (SELECT id FROM race_segments WHERE course_id = ?)""",
+            (course_id,),
+        ).fetchone()[0],
+        "race_plan_segments": conn.execute(
+            """SELECT COUNT(*) FROM race_plan_segments
+               WHERE segment_id IN (SELECT id FROM race_segments WHERE course_id = ?)""",
+            (course_id,),
+        ).fetchone()[0],
+        "race_checkins": conn.execute(
+            """SELECT COUNT(*) FROM race_checkins
+               WHERE segment_id IN (SELECT id FROM race_segments WHERE course_id = ?)""",
+            (course_id,),
+        ).fetchone()[0],
+    }
+
+
+def import_aid_stations(conn, stations, course_id=None, dry_run=False):
+    """Rebuild a loaded course's segments from an aid-station list.
+
+    Re-parses the course's stored GPX, breaks it at the aid-station miles, names
+    each segment after the station at its end, and sets crew/drop-bag flags —
+    replacing the course's segments in place (no duplicate course row). Pass
+    ``dry_run=True`` to preview without writing.
+
+    Returns a result dict with the rebuilt segments, totals, and a ``dependents``
+    count of saved splits/plans/check-ins that a write would cascade-delete.
+    """
+    course = get_course(conn, course_id=course_id)
+    if not course:
+        raise ValueError("No course loaded. Run `ultra race load-course` first.")
+
+    gpx_path = course.get("gpx_file_path")
+    if not gpx_path or not Path(gpx_path).exists():
+        raise FileNotFoundError(
+            f"Course GPX not found at {gpx_path!r}. The aid-station import "
+            "recomputes per-segment elevation from the original GPX, so the "
+            "file referenced by the loaded course must be present."
+        )
+
+    points = parse_gpx(gpx_path)
+    segments, total_dist, total_gain = build_aid_station_segments(points, stations)
+    dependents = _course_dependents(conn, course["id"])
+
+    result = {
+        "course_id": course["id"],
+        "course": course["name"],
+        "total_distance_miles": total_dist,
+        "total_elevation_gain_ft": total_gain,
+        "segment_count": len(segments),
+        "crew_stations": [s["name"] for s in segments if s["crew_accessible"]],
+        "drop_bag_stations": [s["name"] for s in segments if s["drop_bag"]],
+        "dependents": dependents,
+        "segments": segments,
+        "applied": False,
+    }
+
+    if dry_run:
+        return result
+
+    conn.execute("DELETE FROM race_segments WHERE course_id = ?", (course["id"],))
+    for seg in segments:
+        conn.execute(
+            """INSERT INTO race_segments
+               (course_id, segment_number, name, start_mile, end_mile, distance_miles,
+                elevation_gain_ft, elevation_loss_ft, avg_grade_pct, max_grade_pct,
+                terrain_notes, crew_accessible, drop_bag)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (course["id"], seg["segment_number"], seg["name"], seg["start_mile"],
+             seg["end_mile"], seg["distance_miles"], seg["elevation_gain_ft"],
+             seg["elevation_loss_ft"], seg["avg_grade_pct"], seg["max_grade_pct"],
+             seg["terrain_notes"], seg["crew_accessible"], seg["drop_bag"]),
+        )
+
+    # Keep the course totals consistent with the new segmentation.
+    conn.execute(
+        """UPDATE race_courses SET total_distance_miles = ?,
+           total_elevation_gain_ft = ? WHERE id = ?""",
+        (total_dist, total_gain, course["id"]),
+    )
+
+    result["applied"] = True
+    return result
+
+
+# ---------------------------------------------------------------------------
 # 2. Historical Finisher Analysis
 # ---------------------------------------------------------------------------
 

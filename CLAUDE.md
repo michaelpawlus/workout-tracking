@@ -111,7 +111,16 @@ python3 cli.py ultra race load-course <gpx_file> --name "Burning River 100" --ye
 python3 cli.py ultra race load-course course.gpx --name "BR100" --year 2026 \
   --segment-breaks "5.2,12.8,20.1,31.4,40.2,50.0,62.5,75.3,87.9" --json
 
-# View/edit course segments (set aid station names, crew access, drop bags)
+# Populate ALL segments at once from an aid-station chart (names + crew/drop-bag).
+# Re-derives segments at the real aid-station miles (recomputing elevation from
+# the loaded course's GPX) and replaces them in place — no duplicate course row.
+# BR100's chart is committed at backend/data/br100_aid_stations_2026.csv.
+python3 cli.py ultra race load-aid-stations backend/data/br100_aid_stations_2026.csv --dry-run
+python3 cli.py ultra race load-aid-stations backend/data/br100_aid_stations_2026.csv --json
+# CSV columns: mile,name,crew,drop_bag,notes (lines starting with # are ignored).
+# Re-pull the participant guide and re-run if mile markers shift year to year.
+
+# View/edit individual course segments (one-off tweaks after a bulk load)
 python3 cli.py ultra race segments --json
 python3 cli.py ultra race segments --segment 3 --set-name "Happy Days 1" --crew 1 --drop-bag 1
 

@@ -1424,6 +1424,56 @@ def cmd_race_load_course(args):
                   f"avg {s['avg_grade_pct']:.1f}%")
 
 
+def cmd_race_load_aid_stations(args):
+    with get_db() as conn:
+        try:
+            stations = race_engine.read_aid_stations_csv(args.csv_file)
+        except FileNotFoundError:
+            _err(f"Aid-station file not found: {args.csv_file}", args.json, 2)
+        if not stations:
+            _err(f"No aid stations parsed from {args.csv_file}", args.json, 2)
+
+        try:
+            result = race_engine.import_aid_stations(
+                conn, stations, course_id=args.course_id, dry_run=args.dry_run,
+            )
+        except (ValueError, FileNotFoundError) as e:
+            _err(str(e), args.json, 2)
+
+    segments = result["segments"]
+    if args.json:
+        _print(result, True)
+        return
+
+    verb = "Would rebuild" if args.dry_run else "Rebuilt"
+    print(f"{verb} {result['course']} from {len(stations)} aid stations")
+    print(f"Distance: {result['total_distance_miles']} mi | "
+          f"Gain: {result['total_elevation_gain_ft']} ft | "
+          f"Segments: {result['segment_count']}")
+    for s in segments:
+        flags = []
+        if s["crew_accessible"]:
+            flags.append("crew")
+        if s["drop_bag"]:
+            flags.append("drop")
+        tag = f" [{'+'.join(flags)}]" if flags else ""
+        print(f"  {s['segment_number']:2d}. {s['name']:<22} "
+              f"mile {s['end_mile']:5.1f} "
+              f"(+{s['elevation_gain_ft']:.0f}/-{s['elevation_loss_ft']:.0f}ft){tag}")
+
+    dep = result["dependents"]
+    lost = sum(dep.values())
+    if lost and not args.dry_run:
+        print(f"\nNote: removed {lost} saved row(s) tied to the old segments "
+              f"({dep}). Regenerate race plans with `ultra race plan --save`.")
+    elif lost and args.dry_run:
+        print(f"\nWarning: applying this would cascade-delete {lost} saved row(s) "
+              f"({dep}). Regenerate race plans afterward.")
+
+    if args.dry_run:
+        print("\nDry run — no changes written. Re-run without --dry-run to apply.")
+
+
 def cmd_race_import_results(args):
     with get_db() as conn:
         course = race_engine.get_course(conn, name=args.course_name)
@@ -1992,6 +2042,18 @@ def main():
                        help="Comma-separated mile markers for segments (e.g. '5.2,12.8,20.1')")
     rlc_p.add_argument("--json", action="store_true")
 
+    # ultra race load-aid-stations
+    rla_p = race_sub.add_parser(
+        "load-aid-stations",
+        help="Populate course segments from an aid-station CSV (names + crew/drop-bag)")
+    rla_p.add_argument("csv_file", type=str,
+                       help="Aid-station CSV (columns: mile,name,crew,drop_bag,notes)")
+    rla_p.add_argument("--course-id", type=int,
+                       help="Course id to rebuild (default: latest loaded course)")
+    rla_p.add_argument("--dry-run", action="store_true",
+                       help="Preview the rebuilt segments without writing")
+    rla_p.add_argument("--json", action="store_true")
+
     # ultra race import-results
     rir_p = race_sub.add_parser("import-results", help="Import historical race results from CSV")
     rir_p.add_argument("csv_file", type=str, help="Path to CSV file")
@@ -2148,6 +2210,7 @@ def main():
 
             race_commands = {
                 "load-course": cmd_race_load_course,
+                "load-aid-stations": cmd_race_load_aid_stations,
                 "import-results": cmd_race_import_results,
                 "history": cmd_race_history,
                 "cohort": cmd_race_cohort,
