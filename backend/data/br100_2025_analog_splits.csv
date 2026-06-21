@@ -1,0 +1,17 @@
+# Burning River 100 — 2025 finisher split skeleton (pacing analog for the crew manual, #12/#14).
+# Source: 2025 BR100 results (Western Reserve Racing), a M40-44 finisher in 26:39:43 (15:53/mi,
+#   35/185 overall, 6/13 age group) — a close analog for the athlete's ~26h governor target.
+# Used as a peer-split PACING SKELETON: `ultra race crew-manual --splits` scales this curve to
+#   the governor goal so ETAs follow the real positive-split fade instead of an even split.
+# The 2025 course measured 100.5 mi; the skeleton is mapped by course FRACTION, so it transfers
+#   cleanly onto the 2026 ~101.8 mi course. Replace/extend when official 2026 splits land (#14).
+# Columns: mile = cumulative race mile of the timing mat; elapsed = cumulative time (HH:MM:SS).
+mile,name,elapsed
+12.1,Chestnut 1,2:29:13
+26.5,Valley Picnic (out),5:21:59
+40.3,Kendall Lake,8:34:50
+50.3,Silver Springs (turn),11:05:24
+74.2,Valley Picnic (return),17:31:14
+88.6,Chestnut Shelter (return),22:11:30
+96.3,Schumacher (return),25:18:24
+100.5,Front Street (finish),26:39:43

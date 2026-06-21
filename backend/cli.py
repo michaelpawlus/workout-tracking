@@ -1749,6 +1749,66 @@ def cmd_race_crew_sheet(args):
             print(f"\nSaved to {args.output}", file=sys.stderr)
 
 
+def cmd_race_crew_manual(args):
+    from pathlib import Path
+    data_dir = Path(__file__).resolve().parent / "data"
+
+    protocol_path = args.profile or str(data_dir / "br100_crew_protocol.yaml")
+    try:
+        protocol = race_engine.load_crew_protocol(protocol_path)
+    except (FileNotFoundError, ValueError) as e:
+        _err(str(e), args.json, 2)
+
+    # Pacing skeleton: explicit --splits, else the bundled analog, unless --no-splits.
+    skeleton = None
+    splits_path = None
+    if not args.no_splits:
+        if args.splits:
+            splits_path = args.splits
+        else:
+            cand = data_dir / "br100_2025_analog_splits.csv"
+            if cand.exists():
+                splits_path = str(cand)
+    if splits_path:
+        try:
+            skeleton = race_engine.load_split_skeleton(splits_path)
+        except (FileNotFoundError, ValueError) as e:
+            _err(str(e), args.json, 2)
+
+    with get_db() as conn:
+        course = race_engine.get_course(conn)
+        if not course:
+            _err("No course loaded. Run: ultra race load-course "
+                 "(then load-aid-stations).", args.json, 2)
+
+        manual = race_engine.generate_crew_manual(
+            conn, course["id"], protocol,
+            goal_time_seconds=race_engine._parse_time(args.goal_time) if args.goal_time else None,
+            start_time=args.start_time,
+            weather_temp_f=args.weather_temp,
+            skeleton=skeleton,
+        )
+
+    if args.json:
+        _print(manual, True)
+        return
+
+    md = race_engine.crew_manual_to_markdown(manual)
+    print(md)
+
+    if args.output:
+        with open(args.output, "w") as f:
+            f.write(md)
+        print(f"\nSaved to {args.output}", file=sys.stderr)
+
+    if args.vault:
+        try:
+            res = vault.write_crew_manual_to_vault(md, manual["course"])
+            print(f"Wrote crew manual to {res['path']}", file=sys.stderr)
+        except vault.VaultError as e:
+            print(f"Vault write skipped: {e}", file=sys.stderr)
+
+
 def cmd_race_checkin(args):
     with get_db() as conn:
         # Find the A-plan race_plan_id for the latest course
@@ -2125,6 +2185,25 @@ def main():
     rcs_p.add_argument("--output", type=str, help="Save markdown to file path")
     rcs_p.add_argument("--json", action="store_true")
 
+    # ultra race crew-manual
+    rcm_p = race_sub.add_parser("crew-manual",
+                                help="Generate the full crew manual (governor ETAs + fuel + cooling/chafing protocol)")
+    rcm_p.add_argument("--goal-time", type=str,
+                       help="Governor finish time (HH:MM:SS); default from the profile")
+    rcm_p.add_argument("--start-time", type=str,
+                       help="Race start time (HH:MM); default from the profile")
+    rcm_p.add_argument("--weather-temp", type=float,
+                       help="Forecast temperature (°F); escalates cooling + sodium when hot")
+    rcm_p.add_argument("--profile", type=str,
+                       help="Path to the crew protocol YAML (default backend/data/br100_crew_protocol.yaml)")
+    rcm_p.add_argument("--splits", type=str,
+                       help="Peer-split skeleton CSV to pace ETAs (default: bundled 2025 analog)")
+    rcm_p.add_argument("--no-splits", action="store_true",
+                       help="Ignore the peer skeleton; use the engine's grade+fade model")
+    rcm_p.add_argument("--output", type=str, help="Save markdown to a file path")
+    rcm_p.add_argument("--vault", action="store_true", help="Write the manual into the Obsidian vault")
+    rcm_p.add_argument("--json", action="store_true")
+
     # ultra race checkin
     rci_p = race_sub.add_parser("checkin", help="Log arrival at an aid station during race")
     rci_p.add_argument("--station", type=str, required=True,
@@ -2217,6 +2296,7 @@ def main():
                 "plan": cmd_race_plan,
                 "nutrition": cmd_race_nutrition,
                 "crew-sheet": cmd_race_crew_sheet,
+                "crew-manual": cmd_race_crew_manual,
                 "checkin": cmd_race_checkin,
                 "status": cmd_race_status,
                 "segments": cmd_race_segments,

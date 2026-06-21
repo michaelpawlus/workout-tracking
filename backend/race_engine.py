@@ -1061,6 +1061,481 @@ def crew_sheet_to_markdown(crew_sheet):
 
 
 # ---------------------------------------------------------------------------
+# 5b. Crew Manual Generator (issue #12)
+#
+# A governor-based crew manual: pace to a realistic target (26h for BR100, not
+# the 24h stretch goal) and render, per crew-accessible aid station, the ETA,
+# fuel to hand for the next leg, and the athlete's cooling / chafing / kit
+# protocol. Everything race- or athlete-specific lives in a checked-in YAML
+# profile (backend/data/br100_crew_protocol.yaml) so a second race is a second
+# profile, not a code change.
+#
+# ETAs come from one of two sources, in priority order:
+#   1. a peer-split skeleton (a real finisher's cumulative splits, scaled to the
+#      governor goal) — captures the late-race fade shape (issue #14), OR
+#   2. the engine's grade+fade race plan (the goal-pace "A" scenario).
+# ---------------------------------------------------------------------------
+
+# Required keys validated on load so a half-filled profile fails loudly.
+_PROTOCOL_REQUIRED = {
+    "meta": ("start_time", "governor_goal_time"),
+    "fueling": ("carb_g_per_hr", "gel_carb_g", "sodium_mg_per_hr"),
+}
+
+
+def load_crew_protocol(path):
+    """Load and validate a crew/race-execution protocol profile (YAML).
+
+    Returns the parsed dict. Raises ``FileNotFoundError`` if the file is missing
+    and ``ValueError`` if required keys are absent, so a malformed profile fails
+    with a clear message rather than rendering a broken manual.
+    """
+    try:
+        import yaml
+    except ImportError as exc:  # pragma: no cover - dep declared in requirements
+        raise ValueError(
+            "PyYAML is required to read crew protocol profiles "
+            "(`pip install pyyaml`)."
+        ) from exc
+
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"Crew protocol profile not found: {path}")
+
+    with p.open(encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+
+    if not isinstance(data, dict):
+        raise ValueError(f"Crew protocol profile is not a mapping: {path}")
+
+    missing = []
+    for section, keys in _PROTOCOL_REQUIRED.items():
+        if section not in data or not isinstance(data[section], dict):
+            missing.append(section)
+            continue
+        for key in keys:
+            if data[section].get(key) is None:
+                missing.append(f"{section}.{key}")
+    if missing:
+        raise ValueError(
+            f"Crew protocol profile {path} is missing required keys: "
+            + ", ".join(missing)
+        )
+
+    return data
+
+
+def load_split_skeleton(path):
+    """Load a peer finisher's cumulative splits to use as a pacing skeleton.
+
+    CSV columns: ``mile`` and ``elapsed`` (HH:MM:SS) are required; ``name`` is
+    optional. Lines starting with ``#`` are ignored. Returns a dict with the
+    total distance/time and an ascending list of ``(mile, seconds)`` points
+    anchored at ``(0, 0)``. The shape (not the absolute times) is what matters —
+    callers scale it to the governor goal via ``eta_seconds_from_skeleton``.
+    """
+    points = []
+    names = {}
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(row for row in f if not row.lstrip().startswith("#"))
+        for row in reader:
+            if not row.get("mile") or not row.get("elapsed"):
+                continue
+            mile = float(row["mile"])
+            secs = _parse_time(row["elapsed"])
+            points.append((mile, secs))
+            if row.get("name"):
+                names[mile] = row["name"].strip()
+
+    points.sort(key=lambda p: p[0])
+    if not points:
+        raise ValueError(f"No usable split rows in skeleton CSV: {path}")
+    if points[0][0] > 0:
+        points.insert(0, (0.0, 0))
+
+    return {
+        "total_miles": points[-1][0],
+        "total_seconds": points[-1][1],
+        "points": points,
+        "names": names,
+    }
+
+
+def eta_seconds_from_skeleton(skeleton, mile, course_total_miles, goal_seconds):
+    """Scaled, fade-shaped elapsed seconds at ``mile`` for the governor goal.
+
+    Maps the target mile to the same *fraction* of the skeleton's course (so a
+    100.5 mi analog maps cleanly onto a 101.8 mi course), interpolates the
+    finisher's cumulative time at that fraction, then scales the whole curve so
+    the finish lands exactly on ``goal_seconds``. Preserves the positive-split
+    shape instead of assuming even pacing.
+    """
+    total_m = skeleton["total_miles"]
+    total_s = skeleton["total_seconds"]
+    if total_m <= 0 or total_s <= 0:
+        return 0.0
+    frac = mile / course_total_miles if course_total_miles else 0
+    target_mile = min(max(frac * total_m, 0), total_m)
+
+    pts = skeleton["points"]
+    raw = pts[-1][1]
+    for (m0, s0), (m1, s1) in zip(pts, pts[1:]):
+        if target_mile <= m1:
+            span = (m1 - m0) or 1
+            raw = s0 + (s1 - s0) * (target_mile - m0) / span
+            break
+
+    return raw * (goal_seconds / total_s)
+
+
+def _sodium_per_hr(protocol, hot):
+    """Resolve the working sodium rate (mg/hr) from the profile, hot-aware."""
+    fueling = protocol.get("fueling", {})
+    if hot and fueling.get("sodium_mg_per_hr_hot"):
+        return fueling["sodium_mg_per_hr_hot"]
+    rate = fueling.get("sodium_mg_per_hr")
+    if isinstance(rate, (list, tuple)) and rate:
+        return rate[-1]  # top of the range as the working target
+    return rate
+
+
+def _avg_rate(value):
+    """Mean of a [lo, hi] range, or the scalar itself."""
+    if isinstance(value, (list, tuple)) and value:
+        return sum(value) / len(value)
+    return value
+
+
+def generate_crew_manual(conn, course_id, protocol, goal_time_seconds=None,
+                         start_time=None, weather_temp_f=None, skeleton=None,
+                         weight_lbs=DEFAULT_WEIGHT_LBS):
+    """Build a structured crew manual paced to the governor target.
+
+    ETAs come from ``skeleton`` (a peer-split pacing skeleton) when provided,
+    otherwise from the engine's goal-pace race plan. Per-leg fuel is computed
+    from the athlete's protocol rates (carb g/hr, sodium mg/hr) so the numbers
+    match the documented plan. Returns a dict ready for ``crew_manual_to_markdown``.
+    """
+    meta = protocol.get("meta", {})
+    fueling = protocol.get("fueling", {})
+
+    if goal_time_seconds is None:
+        goal_time_seconds = _parse_time(meta.get("governor_goal_time", "26:00:00"))
+    if start_time is None:
+        start_time = meta.get("start_time", "05:00")
+
+    course = get_course(conn, course_id)
+    segments = get_segments(conn, course_id)
+    total_miles = course["total_distance_miles"] if course else 0
+
+    # Cumulative elapsed seconds at each segment's end mile, from either source.
+    if skeleton:
+        cum_by_num = {
+            s["segment_number"]: eta_seconds_from_skeleton(
+                skeleton, s["end_mile"], total_miles, goal_time_seconds)
+            for s in segments
+        }
+        eta_source = "peer-split skeleton"
+        gov_finish_display = _format_time(goal_time_seconds)
+    else:
+        plan = _get_active_plan_id(conn)
+        race_plan = generate_race_plan(
+            conn, course_id, plan, goal_time_seconds,
+            weather_temp_f=weather_temp_f, start_time=start_time,
+        )
+        gov = race_plan["plans"]["A"]["segments"]
+        cum_by_num = {s["segment_number"]: s["cumulative_time_seconds"] for s in gov}
+        eta_source = "engine model (grade + fade)"
+        gov_finish_display = race_plan["plans"]["A"]["total_time_display"]
+
+    hot_threshold = (protocol.get("cooling") or {}).get("hot_threshold_f")
+    hot = (weather_temp_f is not None and hot_threshold is not None
+           and weather_temp_f >= hot_threshold)
+
+    carb_per_hr = fueling.get("carb_g_per_hr", 60)
+    gel_carb = fueling.get("gel_carb_g") or 30
+    sodium_hr = _sodium_per_hr(protocol, hot)
+    fluid_hr = _avg_rate(fueling.get("fluid_oz_per_hr", 22))
+
+    start_dt = datetime.strptime(start_time, "%H:%M")
+    sunset_dt = _clock_on_day(meta.get("sunset"), start_dt)
+
+    crew_segs = [s for s in segments if s.get("crew_accessible")]
+
+    crew_stops = []
+    for idx, seg in enumerate(crew_segs):
+        cumulative = cum_by_num.get(seg["segment_number"], 0)
+        eta_dt = start_dt + timedelta(seconds=cumulative)
+        cutoff, aid_notes = _split_aid_notes(seg.get("terrain_notes"))
+
+        next_leg = None
+        night_handoff = False
+        if idx + 1 < len(crew_segs):
+            nxt = crew_segs[idx + 1]
+            nxt_cum = cum_by_num.get(nxt["segment_number"], cumulative)
+            leg_secs = max(0, nxt_cum - cumulative)
+            leg_hours = leg_secs / 3600 if leg_secs else 0
+            leg_miles = round(nxt["end_mile"] - seg["end_mile"], 1)
+            gels = round(carb_per_hr * leg_hours / gel_carb) if leg_hours else 0
+            next_leg = {
+                "to": nxt.get("name") or f"Mile {nxt['end_mile']}",
+                "miles": leg_miles,
+                "time_display": _format_time(leg_secs),
+                "gels": gels,
+                "gels_with_spare": gels + 1,
+                "sodium_mg": round(sodium_hr * leg_hours) if sodium_hr else None,
+                "fluid_oz": round(fluid_hr * leg_hours) if fluid_hr else None,
+            }
+            # Night-kit handoff: last daylight crew stop whose next leg crosses sunset.
+            if sunset_dt:
+                nxt_eta = start_dt + timedelta(seconds=nxt_cum)
+                if eta_dt < sunset_dt <= nxt_eta:
+                    night_handoff = True
+
+        crew_stops.append({
+            "segment_number": seg["segment_number"],
+            "station_name": seg.get("name") or f"Mile {seg['end_mile']}",
+            "mile": seg["end_mile"],
+            "drop_bag": bool(seg.get("drop_bag")),
+            "eta_clock": _eta_clock(eta_dt, start_dt),
+            "eta_elapsed": _format_time(cumulative),
+            "cutoff": cutoff,
+            "aid_notes": aid_notes,
+            "next_leg": next_leg,
+            "night_kit_handoff": night_handoff,
+        })
+
+    return {
+        "course": course["name"] if course else "Unknown",
+        "total_miles": total_miles,
+        "start_time": start_time,
+        "eta_source": eta_source,
+        "governor_goal_display": _format_time(goal_time_seconds),
+        "governor_finish_display": gov_finish_display,
+        "weather_temp_f": weather_temp_f,
+        "hot": hot,
+        "fueling_summary": {
+            "carb_g_per_hr": carb_per_hr,
+            "gel": fueling.get("primary_carb", f"gels ({gel_carb} g each)"),
+            "gel_carb_g": gel_carb,
+            "sodium_mg_per_hr": fueling.get("sodium_mg_per_hr"),
+            "sodium_mg_per_hr_working": sodium_hr,
+            "fluid_oz_per_hr": fueling.get("fluid_oz_per_hr"),
+            "electrolyte": fueling.get("electrolyte"),
+            "savory_switch_hour": fueling.get("savory_switch_hour"),
+        },
+        "priorities": protocol.get("priorities") or [],
+        "cooling": protocol.get("cooling") or {},
+        "chafing": protocol.get("chafing") or {},
+        "drop_bags": protocol.get("drop_bags") or {},
+        "night_kit": protocol.get("night_kit") or {},
+        "per_stop_workflow": protocol.get("per_stop_workflow") or {},
+        "crew": protocol.get("crew") or {},
+        "research": protocol.get("research") or {},
+        "meta": meta,
+        "crew_stops": crew_stops,
+    }
+
+
+def _get_active_plan_id(conn):
+    """Best-effort lookup of the active training plan id (for pace targets)."""
+    row = conn.execute(
+        "SELECT id FROM training_plans WHERE status = 'active' "
+        "ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    return row["id"] if row else None
+
+
+def _clock_on_day(clock_str, start_dt):
+    """Parse 'HH:MM' to a datetime on the same notional day as start_dt."""
+    if not clock_str:
+        return None
+    try:
+        t = datetime.strptime(str(clock_str), "%H:%M")
+    except ValueError:
+        return None
+    return start_dt.replace(hour=t.hour, minute=t.minute)
+
+
+def _eta_clock(eta_dt, start_dt):
+    """Format an ETA as a 12-hour clock, tagging the next day."""
+    label = eta_dt.strftime("%I:%M %p").lstrip("0")
+    if (eta_dt - start_dt).days >= 1:
+        label += " (+1d)"
+    return label
+
+
+def _split_aid_notes(terrain_notes):
+    """Split 'close 9:21 AM; full aid; PB&J' into (cutoff, rest)."""
+    if not terrain_notes:
+        return None, None
+    parts = [p.strip() for p in str(terrain_notes).split(";")]
+    cutoff = None
+    rest = parts
+    if parts and parts[0].lower().startswith("close"):
+        cutoff = parts[0][len("close"):].strip()
+        rest = parts[1:]
+    return cutoff, "; ".join(r for r in rest if r) or None
+
+
+def crew_manual_to_markdown(manual):
+    """Render a crew manual dict as printable / vault markdown."""
+    m = manual
+    L = []
+
+    L.append(f"# {m['course']} — Crew Manual "
+             f"({m['governor_goal_display']} governor)")
+    L.append("")
+    L.append(f"**Start:** {m['start_time']} · **Target finish:** "
+             f"~{m['governor_finish_display']} elapsed · "
+             f"**Total:** {m['total_miles']} miles")
+    if m["weather_temp_f"] is not None:
+        heat = " — HOT, escalate all cooling" if m["hot"] else ""
+        L.append(f"**Forecast:** {m['weather_temp_f']}°F{heat}")
+    L.append(f"*ETAs from: {m['eta_source']}.*")
+    L.append("")
+    L.append("> Pace to these times to bank **confidence**, not chase the stretch "
+             "goal. Arriving *before* each ETA means everything is working. "
+             "Don't push past the plan; don't panic if a stop runs long.")
+    L.append("")
+
+    if m["priorities"]:
+        L.append("## Why this manual exists (his limiters)")
+        L.append("")
+        for p in m["priorities"]:
+            L.append(f"1. {p}")
+        L.append("")
+
+    fs = m["fueling_summary"]
+    L.append("## Fueling target")
+    L.append("")
+    L.append(f"- **~{fs['carb_g_per_hr']} g carb/hr** via {fs['gel']}")
+    na = fs["sodium_mg_per_hr"]
+    na_disp = f"{na[0]}–{na[1]}" if isinstance(na, list) else na
+    L.append(f"- **~{na_disp} mg sodium/hr** "
+             f"(working target {fs['sodium_mg_per_hr_working']} mg/hr)"
+             + (f" via {fs['electrolyte']}" if fs.get("electrolyte") else ""))
+    fl = fs["fluid_oz_per_hr"]
+    if fl:
+        fl_disp = f"{fl[0]}–{fl[1]}" if isinstance(fl, list) else fl
+        L.append(f"- **~{fl_disp} oz fluid/hr**")
+    if fs.get("savory_switch_hour"):
+        L.append(f"- After ~{fs['savory_switch_hour']} h / dark, shift to **savory** "
+                 f"(broth, ramen, potatoes).")
+    L.append("- Hand the exact gel count per leg **+1 spare**. Keep the carb mix cold.")
+    L.append("")
+
+    wf = m["per_stop_workflow"]
+    if wf:
+        L.append("## What to do at EVERY crew stop")
+        L.append("")
+        for phase, title in (("before_arrival", "Before he arrives"),
+                             ("on_arrival", "On arrival"),
+                             ("out_the_door", "Out the door"),
+                             ("log", "Log")):
+            items = wf.get(phase)
+            if items:
+                L.append(f"**{title}**")
+                for it in items:
+                    L.append(f"- {it}")
+                L.append("")
+
+    cooling = m["cooling"]
+    if cooling.get("methods"):
+        L.append("## Cooling playbook"
+                 + (" — ESCALATE (hot forecast)" if m["hot"] else ""))
+        L.append("")
+        for meth in cooling["methods"]:
+            L.append(f"- {meth}")
+        if cooling.get("ice_available_aid"):
+            L.append(f"- **Top up ice between crew stops at:** "
+                     f"{', '.join(cooling['ice_available_aid'])}")
+        if cooling.get("interaction_warning"):
+            L.append("")
+            L.append(f"> ⚠️ {cooling['interaction_warning']}")
+        L.append("")
+
+    chafing = m["chafing"]
+    if chafing.get("prevention"):
+        L.append("## Chafing playbook")
+        L.append("")
+        for it in chafing["prevention"]:
+            L.append(f"- {it}")
+        if chafing.get("blister_kit"):
+            L.append(f"- Blister kit: {', '.join(chafing['blister_kit'])}")
+        L.append("")
+
+    db = m["drop_bags"]
+    if db.get("contents"):
+        L.append("## Drop bags")
+        L.append("")
+        L.append("Standard: " + ", ".join(db["contents"]) + ".")
+        if db.get("night_bag_extras"):
+            L.append("")
+            L.append("Night bags add: " + ", ".join(db["night_bag_extras"]) + ".")
+        L.append("")
+    nk = m["night_kit"]
+    if nk.get("contents"):
+        L.append("## Night kit")
+        L.append("")
+        L.append("Contents: " + ", ".join(nk["contents"]) + ".")
+        if nk.get("pacer_pickup"):
+            L.append(f"Pacer pickup: **{nk['pacer_pickup']}**.")
+        L.append("")
+
+    if m["crew"].get("cooler_plan"):
+        L.append("## Cooler & ice plan")
+        L.append("")
+        for it in m["crew"]["cooler_plan"]:
+            L.append(f"- {it}")
+        L.append("")
+
+    if m["research"]:
+        L.append("## Race research notes")
+        L.append("")
+        for k, v in m["research"].items():
+            L.append(f"- **{k}:** {v}")
+        L.append("")
+
+    L.append("---")
+    L.append("")
+    L.append("## Crew-accessible stops")
+    L.append("")
+    for i, stop in enumerate(m["crew_stops"], 1):
+        tags = []
+        if stop["drop_bag"]:
+            tags.append("DROP BAG")
+        if stop["night_kit_handoff"]:
+            tags.append("HAND OFF NIGHT KIT")
+        tag_str = f"  · **{' · '.join(tags)}**" if tags else ""
+        L.append(f"### {i} · {stop['station_name']} — Mile {stop['mile']}{tag_str}")
+        line = (f"- **On pace if in before {stop['eta_clock']}** "
+                f"(elapsed {stop['eta_elapsed']})")
+        if stop["cutoff"]:
+            line += f" · cutoff {stop['cutoff']}"
+        L.append(line)
+        if stop["aid_notes"]:
+            L.append(f"- Aid: {stop['aid_notes']}")
+        nl = stop["next_leg"]
+        if nl:
+            extra = []
+            if nl["sodium_mg"]:
+                extra.append(f"~{nl['sodium_mg']} mg Na")
+            if nl["fluid_oz"]:
+                extra.append(f"~{nl['fluid_oz']} oz")
+            extra_str = (" + " + ", ".join(extra)) if extra else ""
+            L.append(f"- **Next → {nl['to']}, {nl['miles']} mi ({nl['time_display']}):** "
+                     f"hand **{nl['gels']} gels +1**{extra_str}.")
+        else:
+            L.append("- **FINISH** — dry clothes, warm layer, fluids + sodium, real food.")
+        if stop["night_kit_handoff"]:
+            L.append("- 🔦 **Hand the night kit here** — he hits the dark before the next crew stop.")
+        L.append("")
+
+    return "\n".join(L).rstrip() + "\n"
+
+
+# ---------------------------------------------------------------------------
 # 6. Live Race Tracking
 # ---------------------------------------------------------------------------
 

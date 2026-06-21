@@ -194,7 +194,7 @@ Every command in `backend/cli.py` appears in exactly one block below. Examples u
 </details>
 
 <details>
-<summary><b>Race day</b> · load-course  load-aid-stations  import-results  history  cohort  plan  nutrition  crew-sheet  checkin  status  segments</summary>
+<summary><b>Race day</b> · load-course  load-aid-stations  import-results  history  cohort  plan  nutrition  crew-sheet  crew-manual  checkin  status  segments</summary>
 
 | Command | What it does | Example |
 |---|---|---|
@@ -206,6 +206,7 @@ Every command in `backend/cli.py` appears in exactly one block below. Examples u
 | `ultra ultra race plan` | Generate A / B / C race execution plans (pace + fueling) given a goal time and weather. `--save` persists to the DB. | `ultra ultra race plan --goal-time 24:00:00 --weather-temp 75 --save` |
 | `ultra ultra race nutrition` | Per-segment fueling plan (carbs/hr, sodium/hr, what goes in each drop bag). | `ultra ultra race nutrition --goal-time 24:00:00` |
 | `ultra ultra race crew-sheet` | Printable crew sheet with multi-scenario ETAs, aid-station notes, and drop-bag contents. | `ultra ultra race crew-sheet --goal-time 24:00:00 --output crew_sheet.md` |
+| `ultra ultra race crew-manual` | Full crew manual paced to the **26h governor** (from `backend/data/br100_crew_protocol.yaml`): per crew-stop ETA + per-leg fuel + cooling/chafing/kit protocol. ETAs follow a real finisher's split shape scaled to the goal (`--splits`, or `--no-splits` for the engine model); `--weather-temp` escalates cooling; `--output`/`--vault` to save. | `ultra ultra race crew-manual --weather-temp 82 --output crew_manual.md` |
 | `ultra ultra race checkin` | Log arrival at an aid station during the race. | `ultra ultra race checkin --station "Happy Days 2" --time 9:15:00` |
 | `ultra ultra race status` | Show current race status vs plan (ahead / behind, projected finish). | `ultra ultra race status --json` |
 | `ultra ultra race segments` | View course segments. Edit aid-station names, crew access, drop-bag flags. | `ultra ultra race segments --segment 3 --set-name "Happy Days 1" --crew 1` |

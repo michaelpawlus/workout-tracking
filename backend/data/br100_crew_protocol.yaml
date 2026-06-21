@@ -34,8 +34,8 @@ fueling:
   sodium_mg_per_hr: [500, 700]   # range; push toward the top in heat
   sodium_mg_per_hr_hot: 800
   fluid_oz_per_hr: [20, 24]
-  primary_carb: "gels (~24 g carb each)"
-  gel_carb_g: 24
+  primary_carb: "NeverSecond C30 gels (30 g carb each)"
+  gel_carb_g: 30
   electrolyte: "Flash IV"
   salt_backup: "salt capsules"
   savory_switch_hour: 12         # after ~12 h / dark, shift to broth, ramen, potatoes

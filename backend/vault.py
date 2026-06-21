@@ -374,6 +374,21 @@ def write_run_report_to_vault(
     return {"path": str(target), "method": "direct", "filename": filename}
 
 
+def write_crew_manual_to_vault(markdown: str, race: str, *, subdir: str = "race") -> dict:
+    """Write a generated crew manual into ``<vault>/race/`` as ``<Race> Crew Manual.md``.
+
+    Direct write (the manual owns its own markdown + frontmatter); raises ``VaultError``
+    if ``OBSIDIAN_VAULT_PATH`` is unusable. Returns ``{"path": <absolute md path>}``.
+    """
+    out = _vault_root() / subdir
+    out.mkdir(parents=True, exist_ok=True)
+    safe = re.sub(r"\s+", " ", f"{race} Crew Manual").strip()
+    safe = re.sub(r'[\\/:*?"<>|]', "", safe)
+    target = out / f"{safe}.md"
+    target.write_text(markdown, encoding="utf-8")
+    return {"path": str(target)}
+
+
 def append_product_log_entry(
     *,
     run_date: str,

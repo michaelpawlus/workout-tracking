@@ -2,9 +2,15 @@
 
 Design for `ultra race crew-manual`: a **governor-based crew manual** that turns the
 loaded course + a reusable protocol profile into a printable, durable race-day document.
-This doc is the "think it through first" deliverable; the draft manual lives at
-`docs/race/BR100_crew_manual_draft.md` and the protocol data at
-`backend/data/br100_crew_protocol.yaml`.
+The draft manual lives at `docs/race/BR100_crew_manual_draft.md`, the protocol data at
+`backend/data/br100_crew_protocol.yaml`, and the peer-split skeleton at
+`backend/data/br100_2025_analog_splits.csv`.
+
+**Status:** first pass **implemented** — `load_crew_protocol`, `load_split_skeleton`,
+`eta_seconds_from_skeleton`, `generate_crew_manual`, `crew_manual_to_markdown`
+(`race_engine.py`), `cmd_race_crew_manual` (`cli.py`), `write_crew_manual_to_vault`
+(`vault.py`), tests in `tests/test_crew_manual.py`. Remaining: load the real BR100 GPX
+for grade-aware ETAs and swap in official 2026 splits (#14); `--interview` / `--research`.
 
 ## 1. What it is (and how it differs from `crew-sheet`)
 
@@ -103,9 +109,13 @@ profile's (currently empty) `research:` block, which the manual renders if prese
 - **Athlete's own history** (`historical.py`, already built): surface his documented
   limiters — late positive split, heat/weather DNFs — in the manual intro and bias the
   governor's back-half ETAs (already wired into `generate_race_plan`'s fade).
-- **Peer splits** (issue #14, in progress): once finishers near 26h are imported
-  (`historical_results`/`historical_splits`, `race cohort`), use their real per-aid-station
-  split shape as the **pacing skeleton**, replacing the even-split model in the draft.
+- **Peer splits** (issue #14): **built as the default ETA source.** A finisher's
+  cumulative splits load via `load_split_skeleton` and scale to the governor goal
+  (`eta_seconds_from_skeleton`), so ETAs follow the real positive-split fade instead of an
+  even split. The bundled `br100_2025_analog_splits.csv` (a 26:39:43 M40-44 finisher) is the
+  current skeleton; `--splits PATH` overrides it and `--no-splits` falls back to the engine
+  model. The skeleton is mapped by course *fraction*, so a 100.5 mi analog transfers onto the
+  101.8 mi course. Swap in official 2026 splits / `race cohort` output when available.
 
 ## 5. Build order (after this draft is approved)
 1. `load_crew_protocol` + schema validation + tests.
