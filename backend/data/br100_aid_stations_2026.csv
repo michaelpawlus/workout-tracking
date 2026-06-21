@@ -1,0 +1,32 @@
+# Burning River 100 — aid station chart, 2026 Participant Guide (Aid Station Overview, REV 1/16/26).
+# Out-and-back, 4:00 AM start, 30-hour cutoff. Total ~101.8 mi (matches V2 GPX 101.77 mi).
+# Columns: mile = cumulative race mile of the aid station (= segment END mile);
+#          crew/drop_bag = 1 if allowed for the 100-miler (CREW column non-blank / DROP BAGS = X);
+#          notes = cutoff (CLOSE) time, aid type, and food offering for the crew manual (#12).
+# Each physical station appears twice (outbound + return) except the turnaround and finish.
+# Source of truth for `ultra race load-aid-stations`. Re-pull the guide and re-run if miles shift.
+mile,name,crew,drop_bag,notes
+4.7,Schumacher,0,0,close 8:14 AM; water/ice only
+8.9,North Hawkins,1,0,close 9:21 AM; full aid; PB&J/bacon
+12.4,Chestnut Shelter,0,1,close 10:16 AM; full aid; PB&J/bacon
+14.0,Botzum,1,0,close 10:42 AM; Skratch + water/ice
+19.5,Indigo Lake,0,0,close 12:10 PM; self-serve gallon jugs
+22.9,Oak Hill,1,1,close 1:04 PM; full aid; grilled cheese/potatoes
+26.7,Valley Picnic,0,0,close 2:04 PM; full aid; deli sandwiches
+30.3,Robinson Field,0,0,close 3:01 PM; Skratch + water/ice
+34.5,Pine Hollow,1,0,close 4:08 PM; full aid; pierogies/PB&J
+40.4,Kendall Lake,0,1,close 5:43 PM; full aid; veg fried rice (wheat/soy)
+45.7,Rt. 8 (Bike & Hike),0,0,close 7:08 PM; full aid; deli sandwiches
+50.7,Silver Springs,1,1,50M turnaround; pacers allowed from here; close 8:30 PM; ground beef/mashed potatoes
+55.9,Rt. 8 (Bike & Hike),0,0,close 9:49 PM; full aid; deli sandwiches
+61.2,Kendall Lake,0,1,close 11:14 PM; full aid; veg fried rice (wheat/soy)
+67.2,Pine Hollow,1,0,close 12:49 AM; full aid; pierogies/PB&J/broth/ramen
+71.4,Robinson Field,0,0,close 1:56 AM; full aid; deli sandwiches/broth/ramen
+75.0,Valley Picnic,0,0,close 2:54 AM; full aid; pierogies/PB&J/broth/ramen
+78.2,Oak Hill,1,1,close 3:54 AM; full aid; pierogies/mashed potatoes/soup/broth
+82.2,Indigo Lake,0,0,close 4:48 AM; self-serve gallon jugs
+87.7,Botzum,1,0,close 6:15 AM; Skratch + water/ice
+89.4,Chestnut Shelter,0,1,close 6:43 AM; full aid; veg fried rice (wheat/soy)
+92.9,North Hawkins,1,0,close 7:38 AM; full aid; deli sandwiches/broth/ramen
+97.1,Schumacher,1,0,close 8:44 AM; full aid; pierogies/PB&J/bacon/broth/ramen
+101.8,Finish,1,1,close 10:00 AM (30-hr cutoff); pancakes/syrup/veg soup
