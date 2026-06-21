@@ -111,7 +111,7 @@ Pacer pickup: **Silver Springs (mile 50.7)**.
 ### 2 · Botzum — Mile 14.0
 - **On pace if in before 6:45 AM** (elapsed 2:45:38) · cutoff 10:42 AM
 - Aid: Skratch + water/ice
-- **Next → Oak Hill, 8.9 mi (1:42:47):** hand **3 gels +1** + ~1199 mg Na, ~38 oz.
+- **Next → Oak Hill, 8.9 mi (1:42:47):** hand **4 gels +1** + ~1199 mg Na, ~38 oz.
 
 ### 3 · Oak Hill — Mile 22.9  · **DROP BAG**
 - **On pace if in before 8:28 AM** (elapsed 4:28:26) · cutoff 1:04 PM
@@ -124,14 +124,14 @@ Pacer pickup: **Silver Springs (mile 50.7)**.
 - **Next → Silver Springs, 16.2 mi (3:48:14):** hand **8 gels +1** + ~2663 mg Na, ~84 oz.
 
 ### 5 · Silver Springs — Mile 50.7  · **DROP BAG**
-- **On pace if in before 2:45 PM** (elapsed 10:45:14)
-- Aid: 50M turnaround; pacers allowed from here; close 8:30 PM; ground beef/mashed potatoes
+- **On pace if in before 2:45 PM** (elapsed 10:45:14) · cutoff 8:30 PM
+- Aid: 50M turnaround; pacers allowed from here; ground beef/mashed potatoes
 - **Next → Pine Hollow, 16.5 mi (4:16:10):** hand **9 gels +1** + ~2989 mg Na, ~94 oz.
 
 ### 6 · Pine Hollow — Mile 67.2  · **HAND OFF NIGHT KIT**
 - **On pace if in before 7:01 PM** (elapsed 15:01:25) · cutoff 12:49 AM
 - Aid: full aid; pierogies/PB&J/broth/ramen
-- **Next → Oak Hill, 11.0 mi (3:00:40):** hand **6 gels +1** + ~2108 mg Na, ~66 oz.
+- **Next → Oak Hill, 11.0 mi (3:00:40):** hand **7 gels +1** + ~2108 mg Na, ~66 oz.
 - 🔦 **Hand the night kit here** — he hits the dark before the next crew stop.
 
 ### 7 · Oak Hill — Mile 78.2  · **DROP BAG**
@@ -147,7 +147,7 @@ Pacer pickup: **Silver Springs (mile 50.7)**.
 ### 9 · North Hawkins — Mile 92.9
 - **On pace if in before 2:52 AM** (elapsed 22:52:08) · cutoff 7:38 AM
 - Aid: full aid; deli sandwiches/broth/ramen
-- **Next → Schumacher, 4.2 mi (1:38:08):** hand **3 gels +1** + ~1145 mg Na, ~36 oz.
+- **Next → Schumacher, 4.2 mi (1:38:08):** hand **4 gels +1** + ~1145 mg Na, ~36 oz.
 
 ### 10 · Schumacher — Mile 97.1
 - **On pace if in before 4:30 AM (+1d)** (elapsed 24:30:17) · cutoff 8:44 AM

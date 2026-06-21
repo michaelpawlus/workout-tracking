@@ -1276,7 +1276,9 @@ def generate_crew_manual(conn, course_id, protocol, goal_time_seconds=None,
             leg_secs = max(0, nxt_cum - cumulative)
             leg_hours = leg_secs / 3600 if leg_secs else 0
             leg_miles = round(nxt["end_mile"] - seg["end_mile"], 1)
-            gels = round(carb_per_hr * leg_hours / gel_carb) if leg_hours else 0
+            # Ceil so the planned handoff actually covers the leg's carb target;
+            # the +1 below is then a genuine spare, not making up a shortfall.
+            gels = math.ceil(carb_per_hr * leg_hours / gel_carb) if leg_hours else 0
             next_leg = {
                 "to": nxt.get("name") or f"Mile {nxt['end_mile']}",
                 "miles": leg_miles,
@@ -1366,16 +1368,24 @@ def _eta_clock(eta_dt, start_dt):
 
 
 def _split_aid_notes(terrain_notes):
-    """Split 'close 9:21 AM; full aid; PB&J' into (cutoff, rest)."""
+    """Split aid notes into (cutoff, rest).
+
+    Pulls the first ``close ...`` token from *anywhere* in the semicolon-delimited
+    notes (e.g. Silver Springs is ``50M turnaround; pacers allowed; close 8:30 PM;
+    ...``), not just the leading part, so the cutoff field is never left buried in
+    the aid text.
+    """
     if not terrain_notes:
         return None, None
     parts = [p.strip() for p in str(terrain_notes).split(";")]
     cutoff = None
-    rest = parts
-    if parts and parts[0].lower().startswith("close"):
-        cutoff = parts[0][len("close"):].strip()
-        rest = parts[1:]
-    return cutoff, "; ".join(r for r in rest if r) or None
+    rest = []
+    for part in parts:
+        if cutoff is None and part.lower().startswith("close"):
+            cutoff = part[len("close"):].strip()
+        elif part:
+            rest.append(part)
+    return cutoff, "; ".join(rest) or None
 
 
 def crew_manual_to_markdown(manual):

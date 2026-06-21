@@ -193,6 +193,26 @@ class CrewManualTestCase(unittest.TestCase):
         self.assertEqual(hot["fueling_summary"]["sodium_mg_per_hr_working"], 800)
         self.assertEqual(cool["fueling_summary"]["sodium_mg_per_hr_working"], 700)
 
+    def test_cutoff_parsed_when_not_first_note(self):
+        # Mirrors real BR100 Silver Springs data: cutoff buried mid-notes.
+        cutoff, rest = self.race_engine._split_aid_notes(
+            "50M turnaround; pacers allowed from here; close 8:30 PM; mashed potatoes")
+        self.assertEqual(cutoff, "8:30 PM")
+        self.assertEqual(rest, "50M turnaround; pacers allowed from here; mashed potatoes")
+
+    def test_planned_gels_meet_carb_target(self):
+        # Each leg's planned gels (before the +1 spare) must cover the carb target.
+        sk = self.race_engine.load_split_skeleton(self._splits_file.name)
+        m = self._gen(skeleton=sk)
+        carb_hr = m["fueling_summary"]["carb_g_per_hr"]
+        gel_g = m["fueling_summary"]["gel_carb_g"]
+        for stop in m["crew_stops"]:
+            nl = stop["next_leg"]
+            if not nl:
+                continue
+            leg_hours = self.race_engine._parse_time(nl["time_display"]) / 3600
+            self.assertGreaterEqual(nl["gels"] * gel_g, carb_hr * leg_hours - 1e-9)
+
     def test_markdown_renders_key_sections(self):
         sk = self.race_engine.load_split_skeleton(self._splits_file.name)
         md = self.race_engine.crew_manual_to_markdown(self._gen(skeleton=sk))
