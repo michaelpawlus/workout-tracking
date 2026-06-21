@@ -1248,9 +1248,16 @@ def generate_crew_manual(conn, course_id, protocol, goal_time_seconds=None,
             weather_temp_f=weather_temp_f, start_time=start_time,
         )
         gov = race_plan["plans"]["A"]["segments"]
-        cum_by_num = {s["segment_number"]: s["cumulative_time_seconds"] for s in gov}
-        eta_source = "engine model (grade + fade)"
-        gov_finish_display = race_plan["plans"]["A"]["total_time_display"]
+        raw_cum = {s["segment_number"]: s["cumulative_time_seconds"] for s in gov}
+        # generate_race_plan starts from goal pace but layers grade/fatigue/heat
+        # multipliers, so its total drifts past the goal. Normalize the curve to
+        # the governor — keep the grade+fade SHAPE, pin the finish to goal — so the
+        # fallback honors the advertised governor just like the skeleton path.
+        engine_total = race_plan["plans"]["A"]["total_time_seconds"]
+        scale = goal_time_seconds / engine_total if engine_total else 1.0
+        cum_by_num = {num: secs * scale for num, secs in raw_cum.items()}
+        eta_source = "engine model (grade + fade), scaled to governor"
+        gov_finish_display = _format_time(goal_time_seconds)
 
     hot_threshold = (protocol.get("cooling") or {}).get("hot_threshold_f")
     hot = (weather_temp_f is not None and hot_threshold is not None

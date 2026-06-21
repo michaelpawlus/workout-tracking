@@ -209,9 +209,16 @@ class CrewManualTestCase(unittest.TestCase):
         m = self._gen(goal_time_seconds=goal)  # no skeleton -> engine path
         self.assertIn("engine", m["eta_source"])
         finish = self.race_engine._parse_time(m["crew_stops"][-1]["eta_elapsed"])
-        # Goal-based pace over this short course => a many-hours finish; an 8:00/mi
-        # training pace would finish in well under an hour. Assert it tracks the goal.
-        self.assertGreater(finish, goal * 0.7)
+        # Engine fallback is normalized to the governor: the finish lands on the
+        # goal (an 8:00/mi training pace would instead finish in well under an hour).
+        self.assertAlmostEqual(finish, goal, delta=2)
+
+    def test_engine_finish_pinned_to_governor(self):
+        # The fallback curve (grade+fade) is scaled so total == governor goal.
+        for goal in (24 * 3600, 26 * 3600):
+            m = self._gen(goal_time_seconds=goal)
+            finish = self.race_engine._parse_time(m["crew_stops"][-1]["eta_elapsed"])
+            self.assertAlmostEqual(finish, goal, delta=2)
 
     def test_cutoff_parsed_when_not_first_note(self):
         # Mirrors real BR100 Silver Springs data: cutoff buried mid-notes.
