@@ -1238,9 +1238,13 @@ def generate_crew_manual(conn, course_id, protocol, goal_time_seconds=None,
         eta_source = "peer-split skeleton"
         gov_finish_display = _format_time(goal_time_seconds)
     else:
-        plan = _get_active_plan_id(conn)
+        # Engine fallback: force GOAL-based pacing so the manual's ETAs honor the
+        # governor. Passing the active plan id would make generate_race_plan base
+        # pace on the athlete's *current training* targets (long_run_pace) instead,
+        # letting ETAs/fuel/night-kit timing drift off the advertised governor.
+        # (The skeleton path above already scales the curve to the goal.)
         race_plan = generate_race_plan(
-            conn, course_id, plan, goal_time_seconds,
+            conn, course_id, None, goal_time_seconds,
             weather_temp_f=weather_temp_f, start_time=start_time,
         )
         gov = race_plan["plans"]["A"]["segments"]
@@ -1337,15 +1341,6 @@ def generate_crew_manual(conn, course_id, protocol, goal_time_seconds=None,
         "meta": meta,
         "crew_stops": crew_stops,
     }
-
-
-def _get_active_plan_id(conn):
-    """Best-effort lookup of the active training plan id (for pace targets)."""
-    row = conn.execute(
-        "SELECT id FROM training_plans WHERE status = 'active' "
-        "ORDER BY id DESC LIMIT 1"
-    ).fetchone()
-    return row["id"] if row else None
 
 
 def _clock_on_day(clock_str, start_dt):

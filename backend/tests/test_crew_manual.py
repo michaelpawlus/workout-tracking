@@ -193,6 +193,26 @@ class CrewManualTestCase(unittest.TestCase):
         self.assertEqual(hot["fueling_summary"]["sodium_mg_per_hr_working"], 800)
         self.assertEqual(cool["fueling_summary"]["sodium_mg_per_hr_working"], 700)
 
+    def test_engine_path_honors_governor_not_training_pace(self):
+        # An active plan with a deliberately FAST long_run_pace must NOT pull the
+        # engine-path ETAs off the governor: pacing should derive from the goal.
+        with database.get_db() as conn:
+            cur = conn.execute(
+                "INSERT INTO training_plans(name,goal,start_date,total_weeks,status) "
+                "VALUES('P','sub-26','2026-03-09',20,'active')")
+            pid = cur.lastrowid
+            conn.execute(
+                "INSERT INTO athlete_targets(plan_id,effective_date,easy_pace,"
+                "long_run_pace,tempo_pace,source) VALUES(?,?,?,?,?,?)",
+                (pid, "2026-03-09", 8.0, 8.0, 7.0, "test"))
+        goal = 20 * 3600
+        m = self._gen(goal_time_seconds=goal)  # no skeleton -> engine path
+        self.assertIn("engine", m["eta_source"])
+        finish = self.race_engine._parse_time(m["crew_stops"][-1]["eta_elapsed"])
+        # Goal-based pace over this short course => a many-hours finish; an 8:00/mi
+        # training pace would finish in well under an hour. Assert it tracks the goal.
+        self.assertGreater(finish, goal * 0.7)
+
     def test_cutoff_parsed_when_not_first_note(self):
         # Mirrors real BR100 Silver Springs data: cutoff buried mid-notes.
         cutoff, rest = self.race_engine._split_aid_notes(

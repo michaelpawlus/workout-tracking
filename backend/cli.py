@@ -1789,24 +1789,36 @@ def cmd_race_crew_manual(args):
             skeleton=skeleton,
         )
 
-    if args.json:
-        _print(manual, True)
-        return
-
+    # Render + perform any requested writes regardless of output mode, so
+    # `--json --output` / `--json --vault` still write (and report the paths).
     md = race_engine.crew_manual_to_markdown(manual)
-    print(md)
 
+    saved = {}
     if args.output:
         with open(args.output, "w") as f:
             f.write(md)
-        print(f"\nSaved to {args.output}", file=sys.stderr)
-
+        saved["output_path"] = args.output
     if args.vault:
         try:
             res = vault.write_crew_manual_to_vault(md, manual["course"])
-            print(f"Wrote crew manual to {res['path']}", file=sys.stderr)
+            saved["vault_path"] = res["path"]
         except vault.VaultError as e:
-            print(f"Vault write skipped: {e}", file=sys.stderr)
+            saved["vault_error"] = str(e)
+
+    if args.json:
+        out = dict(manual)
+        if saved:
+            out["saved"] = saved
+        _print(out, True)
+        return
+
+    print(md)
+    if "output_path" in saved:
+        print(f"\nSaved to {saved['output_path']}", file=sys.stderr)
+    if "vault_path" in saved:
+        print(f"Wrote crew manual to {saved['vault_path']}", file=sys.stderr)
+    if "vault_error" in saved:
+        print(f"Vault write skipped: {saved['vault_error']}", file=sys.stderr)
 
 
 def cmd_race_checkin(args):
