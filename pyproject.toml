@@ -25,3 +25,9 @@ ultra = "backend.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["backend*"]
+
+[tool.setuptools.package-data]
+# Ship the bundled race data (crew protocol profile + peer-split skeleton +
+# aid-station chart) so the documented `race crew-manual` defaults resolve on a
+# non-editable wheel install, not just `pip install -e .`.
+backend = ["data/*.yaml", "data/*.csv"]
