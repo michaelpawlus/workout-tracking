@@ -1,0 +1,128 @@
+# Burning River 100 — crew & race-execution protocol profile (2026).
+#
+# Reusable, hand-editable data layer for the `ultra race crew-manual` generator
+# (issue #12). The manual renders FROM this file merged with the loaded course
+# (segments + aid-station notes) and the engine's pace/fueling model — nothing
+# race-specific is hardcoded in Python, so a second race = a second profile.
+#
+# Populate/refresh this either by hand or via the planned `crew-manual --interview`
+# step (see docs/race/CREW_MANUAL_DESIGN.md). Keep it diff-able and committed.
+
+meta:
+  race: Burning River 100
+  year: 2026
+  athlete: Michael Pawlus
+  distance_miles: 101.8
+  start_time: "04:00"            # 4:00 AM gun (2026 participant guide). NOTE: the
+                                 # engine currently defaults to 05:00 — the command
+                                 # must read start_time from here, not the default.
+  governor_goal_time: "26:00:00" # Pace the manual to THIS, not the 24h stretch goal.
+                                 # Beating these ETAs = confidence; chasing 24 = stress.
+  cutoff_time: "30:00:00"
+  sunset: "20:50"                # Akron, late July. Drives night-kit handoff (no astral dep).
+  sunrise: "06:15"
+
+# Athlete's documented limiters — surfaced in the manual intro so the crew knows WHY
+# the protocol is what it is. (Heat + late fade have ended prior 100s — see race history.)
+priorities:
+  - "Core temperature control is the #1 race challenge — heat has ended prior 100s."
+  - "Cold water at every handoff, all the time."
+  - "Aggressive, proactive chafing prevention — reapply lube at every crew stop."
+
+fueling:
+  carb_g_per_hr: 60
+  sodium_mg_per_hr: [500, 700]   # range; push toward the top in heat
+  sodium_mg_per_hr_hot: 800
+  fluid_oz_per_hr: [20, 24]
+  primary_carb: "NeverSecond C30 gels (30 g carb each)"
+  gel_carb_g: 30
+  electrolyte: "Flash IV"
+  salt_backup: "salt capsules"
+  savory_switch_hour: 12         # after ~12 h / dark, shift to broth, ramen, potatoes
+  notes:
+    - "Hand exactly the gels needed for the next leg + 1 spare."
+    - "Keep the carb mix cold too, not just the water."
+    - "Eat before hungry; walk while eating on climbs."
+
+# The heart of this athlete's race. Every item escalates in heat (see hot_threshold_f).
+cooling:
+  ice_bandana: true
+  ice_bandana_refresh: "every crew stop; top up ice at any aid station with ice between stops"
+  cold_water_priority: true
+  hot_threshold_f: 75
+  methods:
+    - "Ice bandana (ice in a buff/bandana over the neck/carotids) — refresh every stop"
+    - "One bottle ALWAYS cold water — crew keeps bottles on ice in a cooler"
+    - "Ice in the hat / under the cap; wet the cap"
+    - "Ice in arm / cooling sleeves held against the forearms"
+    - "Ice in the hands to hold and let melt (palmar cooling — very effective)"
+    - "Douse head/neck/back with cold water at every aid + creek crossing"
+    - "Cooling towel (PVA chamois) around the neck"
+    - "Ice to wrists, neck, armpits, groin (cools the major vessels)"
+    - "Light, loose, white wicking clothing; wettable sun sleeves"
+    - "Walk the climbs and ease pace through the 10am-4pm heat window"
+  ice_available_aid:             # from the aid-station chart notes — resupply points between crew stops
+    - Schumacher
+    - Botzum
+    - Robinson Field
+    - Indigo Lake (self-serve jugs)
+  interaction_warning: "Dousing wets the skin, which raises chafing risk — reapply lube after dousing."
+
+chafing:
+  lube: "Squirrel's Nut Butter / BodyGlide"
+  reapply_every_crew_stop: true
+  hotspots: [thighs/groin, underarms, nipples, waistband, between toes]
+  prevention:
+    - "Pre-race: lube all hotspots; tape nipples"
+    - "Seamless, well-fitted, wicking apparel — no cotton"
+    - "Crew reapplies lube at every stop (more critical once wet from sweat/dousing/rain)"
+    - "Sock + foot-powder change at drop-bag stops"
+    - "Fix hotspots before they blister — leukotape on first contact"
+  blister_kit: [leukotape, needle, alcohol wipes, foot powder, spare socks]
+
+drop_bags:                       # staged at stations flagged drop_bag = 1 in the course data
+  contents:
+    - Spare socks x2
+    - Spare shorts + shirt
+    - Lube stick
+    - Blister / foot kit
+    - Gel resupply
+    - Salt capsules
+  night_bag_extras:              # added to drop bags reached after sunset
+    - Headlamp + spare batteries
+    - Warm dry layer
+
+night_kit:
+  hand_off_before: "20:50"       # = sunset; hand at the last crew stop before this
+  contents: [headlamp, spare batteries, backup light, reflective vest, dry warm shirt]
+  pacer_pickup: "Silver Springs (mile 50.7)"
+
+# The repeatable checklist rendered at EVERY crew stop — this is "what I do at every stop."
+per_stop_workflow:
+  before_arrival:
+    - "Stage 2 cold bottles (1 carb + 1 water) from the cooler"
+    - "Fresh ice bandana + a ziploc of ice to carry out"
+    - "Count gels for the next leg (+1 spare); salt caps; Flash IV"
+    - "Dry / night kit ready if the next leg runs past sunset"
+  on_arrival:
+    - "Swap (don't refill) both bottles — cold"
+    - "Refresh the ice bandana; ice in hat / sleeves"
+    - "Hand fuel; restock the pack"
+    - "Reapply lube to hotspots"
+    - "Run the 4 checks: stomach, feet/chafing, mood, urine color"
+  out_the_door:
+    - "Confirm: fuel to the next stop, both bottles cold, fresh ice, lube done"
+    - "Headlamp if the leg runs into the dark"
+    - "Tell him the next-stop ETA + 'you're on pace if you're in before X'"
+  log:
+    - "Record arrival time + delta vs the 26h target"
+
+crew:
+  cooler_plan:
+    - "Large cooler with ice + pre-filled water bottles at every crew stop"
+    - "A dedicated ice bag for bandana / hat refills at each stop"
+    - "Insulated soft flasks keep the water cold between stops"
+
+# Optional enrichment block, populated by the planned research step (see design doc).
+# Left empty for now; the manual renders it if present.
+research: {}

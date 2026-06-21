@@ -153,6 +153,17 @@ python3 cli.py ultra race nutrition --goal-time "24:00:00" --json
 # Crew sheet with multi-scenario ETAs
 python3 cli.py ultra race crew-sheet --goal-time "24:00:00" --output crew_sheet.md
 
+# Full crew MANUAL (issue #12): per crew-stop ETA + fuel + cooling/chafing protocol.
+# Paces to the 26h GOVERNOR (from the profile, not the 24h stretch goal) and uses a
+# peer-split skeleton (a real finisher scaled to the goal) so ETAs follow the real fade.
+# Everything athlete-specific lives in backend/data/br100_crew_protocol.yaml.
+python3 cli.py ultra race crew-manual --weather-temp 82 --output crew_manual.md
+python3 cli.py ultra race crew-manual --vault --json          # write into the Obsidian vault
+python3 cli.py ultra race crew-manual --splits backend/data/br100_2025_analog_splits.csv
+python3 cli.py ultra race crew-manual --no-splits             # use the engine's grade+fade model
+# Defaults: --profile backend/data/br100_crew_protocol.yaml; goal/start from that profile;
+# splits from the bundled 2025 analog. Load the BR100 GPX first for grade-aware ETAs.
+
 # Live race tracking
 python3 cli.py ultra race checkin --station "Happy Days 2" --time "9:15:00" --json
 python3 cli.py ultra race status --json
