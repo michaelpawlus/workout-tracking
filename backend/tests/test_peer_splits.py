@@ -205,6 +205,22 @@ class PeerSplitsTestCase(unittest.TestCase):
         paces = [s["pace_per_mile_seconds"] for s in cohort[0]["splits"]]
         self.assertTrue(all(p > 0 for p in paces))
 
+    def test_finish_time_disagreeing_with_finish_mat_is_skipped(self):
+        # finish_time says 4:00:00 but the finish mat says 5:00:00 — contradictory, skip.
+        half = round(self.total * 0.50, 2)
+        full = round(self.total, 2)
+        csv = self._write_csv(
+            "runner_name,finish_time,dnf,mat_mile,mat_name,elapsed,year,source\n"
+            f"A,4:00:00,0,{half},Turn,1:30:00,2025,ultrasignup\n"
+            f"A,4:00:00,0,{full},Finish,5:00:00,2025,ultrasignup\n"
+        )
+        with database.get_db() as conn:
+            res = peer_splits.import_peer_splits_long(conn, self.course_id, csv, default_year=2025)
+            n = conn.execute("SELECT COUNT(*) FROM historical_results").fetchone()[0]
+        self.assertEqual(res["imported"], 0)
+        self.assertEqual(n, 0)
+        self.assertTrue(any("disagrees" in w for w in res["warnings"]))
+
     # --- research order -----------------------------------------------------
     def test_research_order_maps_mats_and_lists_schema(self):
         course = {"name": "Test Course", "year": 2026, "total_distance_miles": self.total}

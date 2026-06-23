@@ -39,6 +39,9 @@ from .race_engine import _format_pace, _format_time, _parse_time
 DEFAULT_TARGET_FINISH = "26:00:00"
 # ±30 min around the governor → the issue's ~25:30–26:30 finisher band.
 DEFAULT_WINDOW_SECONDS = 30 * 60
+# A finish mat and a separately-listed finish_time should agree; allow a little slack
+# (mat vs chip-time rounding) before treating the row as contradictory.
+FINISH_MATCH_TOL_SECONDS = 120
 
 # BR100's official timing mats (per the 2025 participant guide: Chestnut, Valley Picnic,
 # Kendall Lake, Silver Springs, Front Street — read out & back). Miles are 2025-guide
@@ -323,6 +326,13 @@ def import_peer_splits_long(
         if not finish and not has_finish_mat:
             warnings.append(f"{nm}: no finish time and no finish-line mat — "
                             f"incomplete record, skipped")
+            continue
+        # If both a finish_time and a finish mat are given, they must agree — otherwise the
+        # runner is filed in one finish window while the splits are paced to a different
+        # finish, skewing analyze_cohort.
+        if finish and has_finish_mat and abs(snapped[-1][1] - finish) > FINISH_MATCH_TOL_SECONDS:
+            warnings.append(f"{nm}: finish time {_format_time(finish)} disagrees with the "
+                            f"finish mat {_format_time(snapped[-1][1])}, skipped")
             continue
         # Close the curve to the finish so segments after the last mat get a pace.
         if finish and not has_finish_mat:
