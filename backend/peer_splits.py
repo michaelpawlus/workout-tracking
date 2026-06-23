@@ -49,6 +49,7 @@ KNOWN_TIMING_MATS: list[dict[str, Any]] = [
     {"mile": 26.5, "name": "Valley Picnic (out)"},
     {"mile": 40.3, "name": "Kendall Lake (out)"},
     {"mile": 50.3, "name": "Silver Springs (turnaround)"},
+    {"mile": 60.5, "name": "Kendall Lake (return)"},
     {"mile": 74.2, "name": "Valley Picnic (return)"},
     {"mile": 88.6, "name": "Chestnut Shelter (return)"},
     {"mile": 96.3, "name": "Schumacher (return)"},
@@ -206,11 +207,8 @@ def import_peer_splits_long(
     leg's average pace across the segments that leg covers (so ``analyze_cohort`` sees a
     full per-segment curve from sparse mats). Returns counts + any warnings.
     """
-    course = race_engine.get_course(conn, course_id)
-    segments = sorted(race_engine.get_segments(conn, course_id), key=lambda s: s["start_mile"])
-    total_miles = course["total_distance_miles"] if course else (
-        segments[-1]["end_mile"] if segments else 0
-    )
+    segments = sorted(race_engine.get_segments(conn, course_id), key=lambda s: s["segment_number"])
+    max_seg_num = segments[-1]["segment_number"] if segments else 0
 
     runners: dict[str, dict] = {}
     warnings: list[str] = []
@@ -262,11 +260,26 @@ def import_peer_splits_long(
             continue
 
         finish = r["finish_time"]
-        mats = sorted(r["mats"], key=lambda m: m[0])
-        # Close the curve to the finish so back-half segments after the last mat get a pace.
-        if finish and (not mats or mats[-1][0] < total_miles - 0.5):
-            mats.append((float(total_miles), finish))
-        if not mats:
+        # Snap each mat to its nearest segment BOUNDARY, then key legs off segment numbers —
+        # not raw mat miles. Official mats can sit well before their segment's end mile
+        # (e.g. mat 60.5 → Kendall Lake ending 61.2), so a raw-mile cutoff would mis-charge
+        # that segment to the next leg and corrupt late-race paces.
+        snapped = []  # (segment_number, cumulative_elapsed)
+        for mat_mile, mat_elapsed in sorted(r["mats"], key=lambda m: m[0]):
+            seg = map_mat_to_segment(segments, mat_mile)
+            if seg is None:
+                warnings.append(f"{nm}: mat at mile {mat_mile} maps to no segment, skipped")
+                continue
+            snapped.append((seg["segment_number"], mat_elapsed))
+        # Keep the last elapsed per segment and ensure strictly increasing segment numbers.
+        by_seg: dict[int, int] = {}
+        for seg_num, elapsed in snapped:
+            by_seg[seg_num] = elapsed
+        snapped = sorted(by_seg.items())
+        # Close the curve to the finish so segments after the last mat get a pace.
+        if finish and (not snapped or snapped[-1][0] < max_seg_num):
+            snapped.append((max_seg_num, finish))
+        if not snapped:
             warnings.append(f"{nm}: no usable mat splits, skipped")
             continue
 
@@ -274,29 +287,28 @@ def import_peer_splits_long(
             """INSERT INTO historical_results
                (course_id, year, runner_name, finish_time_seconds, dnf)
                VALUES (?, ?, ?, ?, 0)""",
-            (course_id, r["year"] or default_year, nm, finish or mats[-1][1]),
+            (course_id, r["year"] or default_year, nm, finish or snapped[-1][1]),
         )
         result_id = cursor.lastrowid
         imported += 1
 
-        prev_mile, prev_elapsed = 0.0, 0
-        for mat_mile, mat_elapsed in mats:
-            leg_dist = mat_mile - prev_mile
+        prev_seg_num, prev_elapsed = 0, 0
+        for seg_num, mat_elapsed in snapped:
+            covered = [s for s in segments if prev_seg_num < s["segment_number"] <= seg_num]
+            leg_dist = sum(s["distance_miles"] for s in covered)
             leg_time = mat_elapsed - prev_elapsed
             if leg_dist > 0 and leg_time > 0:
                 leg_pace = leg_time / leg_dist
-                for seg in segments:
-                    # Segment belongs to this leg if its end falls within (prev, mat].
-                    if prev_mile + 0.01 < seg["end_mile"] <= mat_mile + 0.5:
-                        sp = int(round(leg_pace * seg["distance_miles"]))
-                        conn.execute(
-                            """INSERT INTO historical_splits
-                               (result_id, segment_id, split_time_seconds, pace_per_mile_seconds)
-                               VALUES (?, ?, ?, ?)""",
-                            (result_id, seg["id"], sp, int(round(leg_pace))),
-                        )
-                        splits_written += 1
-            prev_mile, prev_elapsed = mat_mile, mat_elapsed
+                for seg in covered:
+                    sp = int(round(leg_pace * seg["distance_miles"]))
+                    conn.execute(
+                        """INSERT INTO historical_splits
+                           (result_id, segment_id, split_time_seconds, pace_per_mile_seconds)
+                           VALUES (?, ?, ?, ?)""",
+                        (result_id, seg["id"], sp, int(round(leg_pace))),
+                    )
+                    splits_written += 1
+            prev_seg_num, prev_elapsed = seg_num, mat_elapsed
 
     return {
         "imported": imported,
