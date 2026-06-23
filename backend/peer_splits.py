@@ -224,7 +224,10 @@ def import_peer_splits_long(
             })
             ft = (row.get("finish_time") or "").strip()
             if ft and r["finish_time"] is None:
-                r["finish_time"] = _parse_time(ft)
+                # _parse_time returns 0 for junk like "N/A"; treat that as "not provided".
+                parsed_ft = _parse_time(ft)
+                if parsed_ft > 0:
+                    r["finish_time"] = parsed_ft
             dnf = (row.get("dnf") or "").strip().lower()
             if dnf in ("1", "true", "yes", "dnf"):
                 r["dnf"] = 1
@@ -241,9 +244,19 @@ def import_peer_splits_long(
             elapsed = (row.get("elapsed") or "").strip()
             if mile and elapsed:
                 try:
-                    r["mats"].append((float(mile), _parse_time(elapsed)))
+                    mile_f = float(mile)
                 except ValueError:
-                    warnings.append(f"{nm}: unparseable mat row mile={mile!r} elapsed={elapsed!r}")
+                    warnings.append(f"{nm}: unparseable mat mile={mile!r}, row skipped")
+                    continue
+                # _parse_time returns 0 for placeholders like "N/A"/"missing" instead of
+                # raising — a 0 here would record the mat at race start and corrupt the
+                # surrounding leg paces, so reject non-positive elapsed values.
+                elapsed_s = _parse_time(elapsed)
+                if elapsed_s <= 0:
+                    warnings.append(f"{nm}: non-positive/unparseable elapsed={elapsed!r} "
+                                    f"at mile {mile}, mat skipped")
+                    continue
+                r["mats"].append((mile_f, elapsed_s))
 
     imported = 0
     splits_written = 0

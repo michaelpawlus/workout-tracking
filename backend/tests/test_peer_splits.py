@@ -136,6 +136,25 @@ class PeerSplitsTestCase(unittest.TestCase):
         self.assertEqual(analysis["cohort_size"], 1)  # DNF excluded
         self.assertGreater(len(analysis["segments"]), 0)
 
+    def test_placeholder_elapsed_is_skipped_not_zeroed(self):
+        half = round(self.total * 0.5, 2)
+        q1 = round(self.total * 0.25, 2)
+        # The Q1 mat uses an "N/A" placeholder — it must be skipped (with a warning),
+        # not recorded as elapsed 0 (which would put it at race start).
+        csv = self._write_csv(
+            "runner_name,finish_time,dnf,mat_mile,mat_name,elapsed,year,source\n"
+            f"A,4:00:00,0,{q1},Q1,N/A,2025,ultrasignup\n"
+            f"A,4:00:00,0,{half},Turn,1:30:00,2025,ultrasignup\n"
+        )
+        with database.get_db() as conn:
+            res = peer_splits.import_peer_splits_long(conn, self.course_id, csv, default_year=2025)
+            cohort = race_engine.get_peer_cohort(conn, self.course_id, 4 * 3600, 3600)
+        self.assertTrue(any("N/A" in w for w in res["warnings"]))
+        # First leg pace comes from 0→Turn (5400s), NOT a bogus 0-elapsed Q1 mat.
+        splits = {s["segment_name"]: s for s in cohort[0]["splits"]}
+        self.assertAlmostEqual(splits["Q1"]["pace_per_mile_seconds"],
+                               round(5400 / half), delta=2)
+
     # --- research order -----------------------------------------------------
     def test_research_order_maps_mats_and_lists_schema(self):
         course = {"name": "Test Course", "year": 2026, "total_distance_miles": self.total}
