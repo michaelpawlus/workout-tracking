@@ -143,6 +143,21 @@ python3 cli.py ultra race history --add --name "Tunnel Hill 100" --date 2021-11-
 # Analyze peer cohort (finishers near your goal time)
 python3 cli.py ultra race cohort --goal-time "24:00:00" --json
 
+# Peer split comparison (issue #14): acquire & learn from BR100 finishers near the target.
+# Agent-driven (mirrors aggregate-reports): the CLI emits a RESEARCH ORDER (which results
+# to pull, which timing mats to read, the exact CSV schema); the Claude Code session does
+# the fetch. Official results/splits are agentic (RunSignup/UltraSignup/RTRT); arbitrary
+# athletes' Strava is hybrid (user drops a link/export, agent parses it).
+python3 cli.py ultra race peer-splits --goal-time "26:00:00" --json       # research order
+python3 cli.py ultra race peer-splits --skeleton                          # fillable CSV scaffold
+# Ingest a filled LONG CSV (one row per runner+timing-mat; elapsed = cumulative HH:MM:SS).
+# Sparse mats are mapped to segments and each leg's pace is spread across the segments it
+# covers, so cohort analysis sees a full per-segment curve. The 2025 cohort is committed at
+# backend/data/br100_2025_cohort_splits.csv (8 finishers near 26h, pulled from the RunSignup API).
+python3 cli.py ultra race peer-splits --import backend/data/br100_2025_cohort_splits.csv --year 2025 --json
+# Render/persist the cohort learnings (back-half fade %, highest-divergence segments, pacing skeleton):
+python3 cli.py ultra race peer-splits --goal-time "26:00:00" --window 60 --learnings --vault
+
 # Race-report aggregator (issue #15): build a research brief for course/strategy intel.
 # The CLI emits the "research order" (sources + queries + output sections); the Claude
 # Code session runs the deep research and files the synthesized guide to race-prep/.
