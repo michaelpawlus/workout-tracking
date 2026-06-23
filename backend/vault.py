@@ -25,6 +25,7 @@ from typing import Any
 
 OJ_BINARY = "/home/michaelpawlus/projects/obsidian_journal/.venv/bin/oj"
 WORKOUTS_SUBDIR = "workouts"
+RACE_PREP_SUBDIR = "race-prep"
 PRODUCT_LOG_FILENAME = "PRODUCT_LOG.md"
 JOURNAL_SUBDIR = "Journal"
 
@@ -58,6 +59,12 @@ def _vault_root() -> Path:
 
 def _workouts_dir() -> Path:
     out = _vault_root() / WORKOUTS_SUBDIR
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def _race_prep_dir() -> Path:
+    out = _vault_root() / RACE_PREP_SUBDIR
     out.mkdir(parents=True, exist_ok=True)
     return out
 
@@ -422,3 +429,80 @@ def append_product_log_entry(
         f.write(entry)
 
     return {"path": str(log_path), "appended": True}
+
+
+def _race_frontmatter(doc_date: str, doc_type: str) -> str:
+    tag = re.sub(r"[^a-z0-9]+", "-", (doc_type or "guide").lower()).strip("-") or "guide"
+    return (
+        "---\n"
+        f"date: '{doc_date}'\n"
+        "tags:\n"
+        "- race-prep\n"
+        f"- race-prep/{tag}\n"
+        "type: race-intel\n"
+        "---\n\n"
+    )
+
+
+def write_race_intel_to_vault(
+    *,
+    title: str,
+    body: str,
+    doc_date: str | None = None,
+    doc_type: str = "course-guide",
+    date_prefix: bool = False,
+    use_oj: bool = False,
+) -> dict:
+    """Render a race-intel document and write it to ``race-prep/`` in the Obsidian vault.
+
+    Used for synthesized course/strategy guides (issue #15) and other BR100 prep docs
+    that feed the capstone strategy report. Unlike run reports, these are typically
+    regenerated in place, so the filename defaults to a stable ``<Title>.md`` (set
+    ``date_prefix=True`` for a dated, point-in-time snapshot instead).
+
+    Defaults to a direct write so the ``race-prep`` frontmatter tags are applied
+    deterministically (these are reference docs, not journal entries); pass
+    ``use_oj=True`` to route through the ``oj`` CLI instead. ``body`` is the markdown
+    the agent synthesized — this function only frames and persists it.
+
+    Returns ``{"path": <absolute md path>, "method": "oj"|"direct", "filename": ...}``.
+    Raises ``VaultError`` if the vault path itself is unusable.
+    """
+    race_prep_dir = _race_prep_dir()  # raises VaultError if env unset/missing
+
+    doc_date = doc_date or datetime.now().strftime("%Y-%m-%d")
+    # Preserve the author's casing (e.g. "BR100"); only strip filesystem-illegal chars.
+    title_segment = re.sub(r"[\\/:*?\"<>|]", "", (title or "").strip()) or "Race Intel"
+    title_segment = re.sub(r"\s+", " ", title_segment)
+    stem = f"{doc_date} {title_segment}" if date_prefix else title_segment
+    filename = stem.strip() + ".md"
+    target = race_prep_dir / filename
+
+    framed = _race_frontmatter(doc_date, doc_type) + body.rstrip() + "\n"
+
+    if use_oj:
+        ok, journal_path = _try_oj_capture(body)
+        if ok:
+            src: Path | None = None
+            if journal_path:
+                jp = Path(journal_path)
+                if jp.exists():
+                    src = jp
+            if src is None:
+                journal_dir = _vault_root() / JOURNAL_SUBDIR
+                if journal_dir.exists():
+                    candidates = sorted(
+                        journal_dir.glob("*.md"),
+                        key=lambda p: p.stat().st_mtime,
+                        reverse=True,
+                    )
+                    if candidates:
+                        src = candidates[0]
+            if src and src.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(src), str(target))
+                return {"path": str(target), "method": "oj", "filename": filename}
+            # oj said ok but we can't find the note — fall through to direct write.
+
+    target.write_text(framed, encoding="utf-8")
+    return {"path": str(target), "method": "direct", "filename": filename}
