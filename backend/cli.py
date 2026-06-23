@@ -28,6 +28,7 @@ from .adapt import (
 from . import strava
 from . import race_engine
 from . import race_research
+from . import peer_splits
 from . import vault
 
 
@@ -1528,6 +1529,102 @@ def cmd_race_cohort(args):
                       f"{s['pace_stdev_seconds'] or 0:6.0f}s{danger}")
 
 
+def cmd_race_peer_splits(args):
+    """Acquire & analyze peer finisher splits near a target (#14).
+
+    Default: emit a research order the agent executes. --skeleton emits a fillable CSV;
+    --import ingests a filled long CSV; --learnings renders/persists the cohort report.
+    """
+    goal_seconds = race_engine._parse_time(args.goal_time)
+    window_seconds = args.window * 60
+
+    with get_db() as conn:
+        course = race_engine.get_course(conn, name=args.course_name)
+        if not course:
+            _err("No course found. Load a course first.", args.json, 2)
+        course = dict(course)
+        segments = race_engine.get_segments(conn, course["id"])
+
+        # --- ingest a filled CSV ------------------------------------------
+        if args.import_csv:
+            year = args.year or ((course.get("year") or 1) - 1)
+            res = peer_splits.import_peer_splits_long(
+                conn, course["id"], args.import_csv, default_year=year)
+            res["message"] = (f"Imported {res['imported']} finishers "
+                              f"({res['splits_written']} segment splits)")
+            _print(res, args.json)
+            return
+
+        # --- render the cohort learnings report ---------------------------
+        if args.learnings:
+            analysis = race_engine.analyze_cohort(
+                conn, course["id"], goal_seconds, window_seconds)
+            cohort = race_engine.get_peer_cohort(
+                conn, course["id"], goal_seconds, window_seconds)
+            md = peer_splits.peer_learnings_markdown(
+                analysis, cohort, race_engine._format_time(goal_seconds))
+            out = {"analysis": analysis, "markdown": md}
+            if args.save:
+                with open(args.save, "w") as f:
+                    f.write(md)
+                out["saved_path"] = args.save
+            if args.vault:
+                try:
+                    res = vault.write_race_intel_to_vault(
+                        title=f"{course['name']} Peer Split Learnings",
+                        body=md, doc_type="peer-splits")
+                    out["vault_path"] = res["path"]
+                except vault.VaultError as e:
+                    _err(str(e), args.json)
+            if args.json:
+                _print(out, True)
+            else:
+                print(md)
+                if out.get("vault_path"):
+                    print(f"\nWritten to {out['vault_path']}", file=sys.stderr)
+            return
+
+    # --- skeleton CSV -----------------------------------------------------
+    if args.skeleton:
+        skeleton = peer_splits.skeleton_csv(course, segments, goal_seconds)
+        if args.json:
+            _print({"skeleton": skeleton}, True)
+        else:
+            print(skeleton)
+        return
+
+    # --- default: the research order --------------------------------------
+    order = peer_splits.build_research_order(
+        course, segments, goal_seconds, window_seconds, target_n=args.target_n)
+    if args.json:
+        _print(order, True)
+    else:
+        w = order["target_window"]
+        print(f"=== {order['race']['name']} — Peer Split Research Order ===")
+        print(f"Target {w['goal_time']} · window {w['finish_low']}–{w['finish_high']} "
+              f"· gather ~{w['target_finishers']} finishers")
+        print()
+        print(order["objective"])
+        print()
+        print("Sources & queries:")
+        for src in order["sources"]:
+            print(f"\n  ▸ {src['category']}")
+            print(f"    {src['why']}")
+            if src["where"]:
+                print(f"    where: {', '.join(src['where'])}")
+            for query in src["queries"]:
+                print(f"      - {query}")
+        print()
+        print("Timing mats to extract (cumulative elapsed):")
+        for m in order["timing_mats"]:
+            seg = f"→ seg {m['maps_to_segment']}" if m["maps_to_segment"] else "(no segment)"
+            print(f"  mile {m['mile']:>5} {m['name']:<28} {seg}")
+        print()
+        print(f"Fill the long CSV ({', '.join(order['output']['columns'])}), then:")
+        for step in order["output"]["then"]:
+            print(f"  $ {step}")
+
+
 def cmd_race_history(args):
     """Ingest & analyze the athlete's own prior races at a given distance."""
     from . import historical
@@ -2263,6 +2360,31 @@ def main():
     rco_p.add_argument("--course-name", type=str, default="Burning River 100")
     rco_p.add_argument("--json", action="store_true")
 
+    # ultra race peer-splits
+    rps_p = race_sub.add_parser(
+        "peer-splits",
+        help="Acquire & analyze peer finisher splits near a target (#14)")
+    rps_p.add_argument("--goal-time", type=str, default=peer_splits.DEFAULT_TARGET_FINISH,
+                       help="Target finish to build the cohort around (HH:MM:SS)")
+    rps_p.add_argument("--window", type=int, default=peer_splits.DEFAULT_WINDOW_SECONDS // 60,
+                       help="Finish window in minutes (± around the goal); default 30")
+    rps_p.add_argument("--target-n", type=int, default=12,
+                       help="Number of near-target finishers to gather")
+    rps_p.add_argument("--skeleton", action="store_true",
+                       help="Emit a fillable long-format CSV scaffold instead of the order")
+    rps_p.add_argument("--import", dest="import_csv", type=str, metavar="CSV",
+                       help="Ingest a filled long-format peer-split CSV")
+    rps_p.add_argument("--year", type=int,
+                       help="Results year for --import (defaults to course year - 1)")
+    rps_p.add_argument("--learnings", action="store_true",
+                       help="Render the cohort learnings report")
+    rps_p.add_argument("--save", type=str, metavar="PATH",
+                       help="With --learnings, also write the markdown to a file")
+    rps_p.add_argument("--vault", action="store_true",
+                       help="With --learnings, write the report into the Obsidian vault")
+    rps_p.add_argument("--course-name", type=str, default="Burning River 100")
+    rps_p.add_argument("--json", action="store_true")
+
     # ultra race plan
     rpl_p = race_sub.add_parser("plan", help="Generate A/B/C race execution plans")
     rpl_p.add_argument("--goal-time", type=str, required=True,
@@ -2420,6 +2542,7 @@ def main():
                 "status": cmd_race_status,
                 "segments": cmd_race_segments,
                 "aggregate-reports": cmd_race_aggregate_reports,
+                "peer-splits": cmd_race_peer_splits,
             }
 
             cmd = race_commands.get(args.race_command)

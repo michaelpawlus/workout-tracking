@@ -1,0 +1,77 @@
+# Burning River 100 — 2025 finisher cohort near the ~26h governor target (#14 peer splits).
+# Source: RunSignup Results REST API, race 13735 / event 917753 (100 Mile) / result_set 569971,
+#   fetched 2026-06-22. 9 official timing mats; elapsed = cumulative HH:MM:SS at the mat.
+# 2025 course measured 100.5 mi; import-time mat->segment mapping snaps onto the loaded 2026 course.
+# Window shown: ~25:20-26:55 finishers (the band around the 26h target). DNFs not included.
+runner_name,finish_time,dnf,mat_mile,mat_name,elapsed,year,source
+John Bogart,25:26:40,0,12.1,Chestnut 12.1M,1:50:57,2025,runsignup
+John Bogart,25:26:40,0,26.5,Valley Picnic 26.5M,4:11:18,2025,runsignup
+John Bogart,25:26:40,0,40.3,Kendall Lake 40.3M,7:17:17,2025,runsignup
+John Bogart,25:26:40,0,50.3,Silver Springs 50.3M,9:59:34,2025,runsignup
+John Bogart,25:26:40,0,60.5,Kendall Lake 60.5M,12:41:36,2025,runsignup
+John Bogart,25:26:40,0,74.2,Valley Picnic 74.2M,17:28:44,2025,runsignup
+John Bogart,25:26:40,0,88.6,Chestnut Shelter 88.6M,22:01:25,2025,runsignup
+John Bogart,25:26:40,0,96.3,Schumacher 96.3M,24:11:52,2025,runsignup
+John Bogart,25:26:40,0,100.5,Front Street 100.5M,25:26:40,2025,runsignup
+Adam Salberg,25:50:05,0,12.1,Chestnut 12.1M,2:06:47,2025,runsignup
+Adam Salberg,25:50:05,0,26.5,Valley Picnic 26.5M,4:45:13,2025,runsignup
+Adam Salberg,25:50:05,0,40.3,Kendall Lake 40.3M,7:43:33,2025,runsignup
+Adam Salberg,25:50:05,0,50.3,Silver Springs 50.3M,9:47:32,2025,runsignup
+Adam Salberg,25:50:05,0,60.5,Kendall Lake 60.5M,12:20:05,2025,runsignup
+Adam Salberg,25:50:05,0,74.2,Valley Picnic 74.2M,16:30:36,2025,runsignup
+Adam Salberg,25:50:05,0,88.6,Chestnut Shelter 88.6M,21:26:19,2025,runsignup
+Adam Salberg,25:50:05,0,96.3,Schumacher 96.3M,24:28:54,2025,runsignup
+Adam Salberg,25:50:05,0,100.5,Front Street 100.5M,25:50:05,2025,runsignup
+Darren Wright,25:54:43,0,12.1,Chestnut 12.1M,2:20:09,2025,runsignup
+Darren Wright,25:54:43,0,26.5,Valley Picnic 26.5M,5:18:33,2025,runsignup
+Darren Wright,25:54:43,0,40.3,Kendall Lake 40.3M,8:23:54,2025,runsignup
+Darren Wright,25:54:43,0,50.3,Silver Springs 50.3M,11:02:40,2025,runsignup
+Darren Wright,25:54:43,0,60.5,Kendall Lake 60.5M,13:44:07,2025,runsignup
+Darren Wright,25:54:43,0,74.2,Valley Picnic 74.2M,17:36:36,2025,runsignup
+Darren Wright,25:54:43,0,88.6,Chestnut Shelter 88.6M,22:00:11,2025,runsignup
+Darren Wright,25:54:43,0,96.3,Schumacher 96.3M,24:43:42,2025,runsignup
+Darren Wright,25:54:43,0,100.5,Front Street 100.5M,25:54:43,2025,runsignup
+Robert Trnavsky,26:13:14,0,12.1,Chestnut 12.1M,2:51:39,2025,runsignup
+Robert Trnavsky,26:13:14,0,26.5,Valley Picnic 26.5M,6:12:01,2025,runsignup
+Robert Trnavsky,26:13:14,0,40.3,Kendall Lake 40.3M,9:46:48,2025,runsignup
+Robert Trnavsky,26:13:14,0,50.3,Silver Springs 50.3M,12:18:40,2025,runsignup
+Robert Trnavsky,26:13:14,0,60.5,Kendall Lake 60.5M,14:58:48,2025,runsignup
+Robert Trnavsky,26:13:14,0,74.2,Valley Picnic 74.2M,18:46:08,2025,runsignup
+Robert Trnavsky,26:13:14,0,88.6,Chestnut Shelter 88.6M,22:51:13,2025,runsignup
+Robert Trnavsky,26:13:14,0,96.3,Schumacher 96.3M,25:13:34,2025,runsignup
+Robert Trnavsky,26:13:14,0,100.5,Front Street 100.5M,26:13:14,2025,runsignup
+Anthony Visioni,26:39:43,0,12.1,Chestnut 12.1M,2:29:13,2025,runsignup
+Anthony Visioni,26:39:43,0,26.5,Valley Picnic 26.5M,5:21:59,2025,runsignup
+Anthony Visioni,26:39:43,0,40.3,Kendall Lake 40.3M,8:34:50,2025,runsignup
+Anthony Visioni,26:39:43,0,50.3,Silver Springs 50.3M,11:05:24,2025,runsignup
+Anthony Visioni,26:39:43,0,74.2,Valley Picnic 74.2M,17:31:14,2025,runsignup
+Anthony Visioni,26:39:43,0,88.6,Chestnut Shelter 88.6M,22:11:30,2025,runsignup
+Anthony Visioni,26:39:43,0,96.3,Schumacher 96.3M,25:18:24,2025,runsignup
+Anthony Visioni,26:39:43,0,100.5,Front Street 100.5M,26:39:43,2025,runsignup
+Kenton McCosh,26:41:29,0,12.1,Chestnut 12.1M,2:16:16,2025,runsignup
+Kenton McCosh,26:41:29,0,26.5,Valley Picnic 26.5M,5:12:22,2025,runsignup
+Kenton McCosh,26:41:29,0,40.3,Kendall Lake 40.3M,8:31:01,2025,runsignup
+Kenton McCosh,26:41:29,0,50.3,Silver Springs 50.3M,11:13:11,2025,runsignup
+Kenton McCosh,26:41:29,0,60.5,Kendall Lake 60.5M,14:08:18,2025,runsignup
+Kenton McCosh,26:41:29,0,74.2,Valley Picnic 74.2M,17:46:37,2025,runsignup
+Kenton McCosh,26:41:29,0,88.6,Chestnut Shelter 88.6M,22:50:47,2025,runsignup
+Kenton McCosh,26:41:29,0,96.3,Schumacher 96.3M,25:29:08,2025,runsignup
+Kenton McCosh,26:41:29,0,100.5,Front Street 100.5M,26:41:29,2025,runsignup
+Kyle Mechley,26:50:50,0,12.1,Chestnut 12.1M,2:27:34,2025,runsignup
+Kyle Mechley,26:50:50,0,26.5,Valley Picnic 26.5M,5:31:26,2025,runsignup
+Kyle Mechley,26:50:50,0,40.3,Kendall Lake 40.3M,9:15:10,2025,runsignup
+Kyle Mechley,26:50:50,0,50.3,Silver Springs 50.3M,12:02:52,2025,runsignup
+Kyle Mechley,26:50:50,0,60.5,Kendall Lake 60.5M,14:51:44,2025,runsignup
+Kyle Mechley,26:50:50,0,74.2,Valley Picnic 74.2M,18:53:30,2025,runsignup
+Kyle Mechley,26:50:50,0,88.6,Chestnut Shelter 88.6M,23:01:39,2025,runsignup
+Kyle Mechley,26:50:50,0,96.3,Schumacher 96.3M,25:40:24,2025,runsignup
+Kyle Mechley,26:50:50,0,100.5,Front Street 100.5M,26:50:50,2025,runsignup
+Harald Sundby,26:55:11,0,12.1,Chestnut 12.1M,2:40:22,2025,runsignup
+Harald Sundby,26:55:11,0,26.5,Valley Picnic 26.5M,5:32:01,2025,runsignup
+Harald Sundby,26:55:11,0,40.3,Kendall Lake 40.3M,8:40:13,2025,runsignup
+Harald Sundby,26:55:11,0,50.3,Silver Springs 50.3M,11:10:52,2025,runsignup
+Harald Sundby,26:55:11,0,60.5,Kendall Lake 60.5M,13:35:16,2025,runsignup
+Harald Sundby,26:55:11,0,74.2,Valley Picnic 74.2M,17:25:34,2025,runsignup
+Harald Sundby,26:55:11,0,88.6,Chestnut Shelter 88.6M,21:58:12,2025,runsignup
+Harald Sundby,26:55:11,0,96.3,Schumacher 96.3M,25:13:48,2025,runsignup
+Harald Sundby,26:55:11,0,100.5,Front Street 100.5M,26:55:11,2025,runsignup
