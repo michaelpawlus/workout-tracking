@@ -155,6 +155,35 @@ class PeerSplitsTestCase(unittest.TestCase):
         self.assertAlmostEqual(splits["Q1"]["pace_per_mile_seconds"],
                                round(5400 / half), delta=2)
 
+    def test_colon_placeholder_skips_mat_without_aborting(self):
+        half = round(self.total * 0.5, 2)
+        q1 = round(self.total * 0.25, 2)
+        # "--:--" makes _parse_time raise; the import must skip that mat, not abort.
+        csv = self._write_csv(
+            "runner_name,finish_time,dnf,mat_mile,mat_name,elapsed,year,source\n"
+            f"A,4:00:00,0,{q1},Q1,--:--,2025,ultrasignup\n"
+            f"A,4:00:00,0,{half},Turn,1:30:00,2025,ultrasignup\n"
+        )
+        with database.get_db() as conn:
+            res = peer_splits.import_peer_splits_long(conn, self.course_id, csv, default_year=2025)
+        self.assertEqual(res["imported"], 1)
+        self.assertTrue(any("--:--" in w for w in res["warnings"]))
+
+    def test_runner_without_finish_evidence_is_skipped(self):
+        # A non-DNF runner with only an early mat and no finish_time / finish mat must
+        # NOT be recorded as a finisher.
+        q1 = round(self.total * 0.25, 2)
+        csv = self._write_csv(
+            "runner_name,finish_time,dnf,mat_mile,mat_name,elapsed,year,source\n"
+            f"Ghost,,0,{q1},Q1,1:00:00,2025,ultrasignup\n"
+        )
+        with database.get_db() as conn:
+            res = peer_splits.import_peer_splits_long(conn, self.course_id, csv, default_year=2025)
+            n = conn.execute("SELECT COUNT(*) FROM historical_results").fetchone()[0]
+        self.assertEqual(res["imported"], 0)
+        self.assertEqual(n, 0)
+        self.assertTrue(any("incomplete" in w for w in res["warnings"]))
+
     # --- research order -----------------------------------------------------
     def test_research_order_maps_mats_and_lists_schema(self):
         course = {"name": "Test Course", "year": 2026, "total_distance_miles": self.total}

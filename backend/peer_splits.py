@@ -62,6 +62,20 @@ LONG_CSV_COLUMNS = [
 ]
 
 
+def _safe_seconds(value: str) -> int | None:
+    """Parse an HH:MM:SS / seconds string to a positive int, else None.
+
+    ``_parse_time`` returns 0 for word placeholders ("N/A") and *raises* on
+    colon-shaped ones ("--:--"), so a single junk cell in a hand-filled CSV could
+    silently zero a mat or abort the whole import. This normalizes both to None.
+    """
+    try:
+        secs = _parse_time(value)
+    except (ValueError, TypeError):
+        return None
+    return secs if secs > 0 else None
+
+
 def map_mat_to_segment(segments: list[dict], mile: float, tol: float = 1.5) -> dict | None:
     """Snap a timing-mat mile to the course segment whose END mile is closest.
 
@@ -224,10 +238,7 @@ def import_peer_splits_long(
             })
             ft = (row.get("finish_time") or "").strip()
             if ft and r["finish_time"] is None:
-                # _parse_time returns 0 for junk like "N/A"; treat that as "not provided".
-                parsed_ft = _parse_time(ft)
-                if parsed_ft > 0:
-                    r["finish_time"] = parsed_ft
+                r["finish_time"] = _safe_seconds(ft)  # None for "N/A"/"--:--"
             dnf = (row.get("dnf") or "").strip().lower()
             if dnf in ("1", "true", "yes", "dnf"):
                 r["dnf"] = 1
@@ -248,11 +259,10 @@ def import_peer_splits_long(
                 except ValueError:
                     warnings.append(f"{nm}: unparseable mat mile={mile!r}, row skipped")
                     continue
-                # _parse_time returns 0 for placeholders like "N/A"/"missing" instead of
-                # raising — a 0 here would record the mat at race start and corrupt the
-                # surrounding leg paces, so reject non-positive elapsed values.
-                elapsed_s = _parse_time(elapsed)
-                if elapsed_s <= 0:
+                # Placeholders ("N/A", "--:--") must skip just this mat, not zero it or
+                # abort the import — see _safe_seconds.
+                elapsed_s = _safe_seconds(elapsed)
+                if elapsed_s is None:
                     warnings.append(f"{nm}: non-positive/unparseable elapsed={elapsed!r} "
                                     f"at mile {mile}, mat skipped")
                     continue
@@ -289,12 +299,22 @@ def import_peer_splits_long(
         for seg_num, elapsed in snapped:
             by_seg[seg_num] = elapsed
         snapped = sorted(by_seg.items())
-        # Close the curve to the finish so segments after the last mat get a pace.
-        if finish and (not snapped or snapped[-1][0] < max_seg_num):
-            snapped.append((max_seg_num, finish))
         if not snapped:
             warnings.append(f"{nm}: no usable mat splits, skipped")
             continue
+
+        # Require real finish evidence before counting someone as a finisher: either a
+        # parsed finish_time, or a mat that snaps to the final segment. Otherwise the last
+        # captured mat (e.g. a 96.3M split) would be stored as the finish, sneaking an
+        # incomplete runner into the cohort and skewing analyze_cohort's late-race learning.
+        has_finish_mat = snapped[-1][0] == max_seg_num
+        if not finish and not has_finish_mat:
+            warnings.append(f"{nm}: no finish time and no finish-line mat — "
+                            f"incomplete record, skipped")
+            continue
+        # Close the curve to the finish so segments after the last mat get a pace.
+        if finish and not has_finish_mat:
+            snapped.append((max_seg_num, finish))
 
         cursor = conn.execute(
             """INSERT INTO historical_results
