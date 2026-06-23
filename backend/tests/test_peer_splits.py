@@ -184,6 +184,27 @@ class PeerSplitsTestCase(unittest.TestCase):
         self.assertEqual(n, 0)
         self.assertTrue(any("incomplete" in w for w in res["warnings"]))
 
+    def test_backwards_cumulative_mat_is_dropped(self):
+        # A mat whose cumulative time goes backwards must be skipped (no negative leg),
+        # while the rest of the runner still imports with a monotonic curve.
+        q1 = round(self.total * 0.25, 2)
+        half = round(self.total * 0.50, 2)
+        q3 = round(self.total * 0.75, 2)
+        csv = self._write_csv(
+            "runner_name,finish_time,dnf,mat_mile,mat_name,elapsed,year,source\n"
+            f"A,4:00:00,0,{q1},Q1,1:00:00,2025,ultrasignup\n"
+            f"A,4:00:00,0,{half},Turn,2:00:00,2025,ultrasignup\n"
+            f"A,4:00:00,0,{q3},Q3,1:30:00,2025,ultrasignup\n"  # backwards typo (< Turn)
+        )
+        with database.get_db() as conn:
+            res = peer_splits.import_peer_splits_long(conn, self.course_id, csv, default_year=2025)
+            cohort = race_engine.get_peer_cohort(conn, self.course_id, 4 * 3600, 3600)
+        self.assertEqual(res["imported"], 1)
+        self.assertTrue(any("non-increasing" in w for w in res["warnings"]))
+        # Every segment split is a positive pace (no holes / negatives from the bad mat).
+        paces = [s["pace_per_mile_seconds"] for s in cohort[0]["splits"]]
+        self.assertTrue(all(p > 0 for p in paces))
+
     # --- research order -----------------------------------------------------
     def test_research_order_maps_mats_and_lists_schema(self):
         course = {"name": "Test Course", "year": 2026, "total_distance_miles": self.total}

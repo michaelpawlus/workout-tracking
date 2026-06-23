@@ -298,7 +298,19 @@ def import_peer_splits_long(
         by_seg: dict[int, int] = {}
         for seg_num, elapsed in snapped:
             by_seg[seg_num] = elapsed
-        snapped = sorted(by_seg.items())
+        # Cumulative times must increase with distance; a hand-filled CSV typo that goes
+        # backwards (e.g. 74.2M earlier than 60.5M) would make a leg non-positive — writing
+        # no splits for those segments yet still advancing past the bad mat, leaving holes
+        # and distorting the next leg. Drop any mat that doesn't advance the clock.
+        snapped_sorted, mono, last_e = sorted(by_seg.items()), [], 0
+        for seg_num, elapsed in snapped_sorted:
+            if elapsed <= last_e:
+                warnings.append(f"{nm}: non-increasing cumulative time at seg {seg_num} "
+                                f"({_format_time(elapsed)} ≤ previous), mat skipped")
+                continue
+            mono.append((seg_num, elapsed))
+            last_e = elapsed
+        snapped = mono
         if not snapped:
             warnings.append(f"{nm}: no usable mat splits, skipped")
             continue
@@ -314,6 +326,10 @@ def import_peer_splits_long(
             continue
         # Close the curve to the finish so segments after the last mat get a pace.
         if finish and not has_finish_mat:
+            if finish <= snapped[-1][1]:
+                warnings.append(f"{nm}: finish time {_format_time(finish)} is not after the "
+                                f"last mat, incomplete record, skipped")
+                continue
             snapped.append((max_seg_num, finish))
 
         cursor = conn.execute(
