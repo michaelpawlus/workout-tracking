@@ -189,6 +189,23 @@ python3 cli.py ultra race crew-manual --no-splits             # use the engine's
 # Defaults: --profile backend/data/br100_crew_protocol.yaml; goal/start from that profile;
 # splits from the bundled 2025 analog. Load the BR100 GPX first for grade-aware ETAs.
 
+# Capstone strategy report (issue #16): the meta-synthesis everything feeds into.
+# Agent-driven (mirrors aggregate-reports/peer-splits): the CLI gathers EVERY internal
+# signal — adaptive targets, own-history fade, the 26h peer cohort, the A/B/C plan, the
+# per-segment fueling math, crew/drop-bag flags, and the training block — into one JSON
+# "synthesis order"; the Claude Code session writes/updates the comprehensive strategy
+# report and files it to race-prep/. It is a LIVING document: re-run after each new long
+# run and it updates the SAME vault file in place (stable filename + Revision Log).
+python3 cli.py ultra race capstone --json                 # the synthesis dossier
+python3 cli.py ultra race capstone --weather-temp 82      # human-readable signal inventory
+python3 cli.py ultra race capstone --skeleton             # fillable section scaffold
+# After synthesizing, persist (stable filename = living doc; re-running updates in place):
+cat report.md | python3 cli.py ultra race capstone --save-guide - --json
+python3 cli.py ultra race capstone --save-guide report.md --date-prefix   # dated snapshot
+# Defaults: goal 26:00:00 governor, start 04:00, title "Burning River 100 Race Strategy".
+# When the report already exists, the dossier's method flips to "update in place" and asks
+# you to append a dated Revision Log entry noting what new data moved which numbers.
+
 # Live race tracking
 python3 cli.py ultra race checkin --station "Happy Days 2" --time "9:15:00" --json
 python3 cli.py ultra race status --json

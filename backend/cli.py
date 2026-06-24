@@ -28,6 +28,7 @@ from .adapt import (
 from . import strava
 from . import race_engine
 from . import race_research
+from . import race_capstone
 from . import peer_splits
 from . import vault
 
@@ -2125,6 +2126,133 @@ def cmd_race_aggregate_reports(args):
               "`ultra race aggregate-reports --save-guide -` to file the guide.")
 
 
+def cmd_race_capstone(args):
+    """Capstone (#16): gather every signal into a dossier, or save the synthesized report.
+
+    Default: emit the structured synthesis dossier (the "synthesis order") — adaptive
+    targets, own-history fade, peer cohort, A/B/C plan, fueling, crew stations, and the
+    training block — that the Claude Code session turns into the comprehensive strategy
+    report. ``--save-guide PATH|-`` persists a finished markdown report to the vault under
+    a STABLE filename (living document; re-running updates it in place). ``--skeleton``
+    emits a fillable scaffold.
+    """
+    title = args.title or race_capstone.DEFAULT_TITLE
+
+    # --save-guide: persist an agent-produced report to the vault (no course needed).
+    if args.save_guide:
+        if args.save_guide == "-":
+            body = sys.stdin.read()
+        else:
+            try:
+                with open(args.save_guide, "r", encoding="utf-8") as f:
+                    body = f.read()
+            except OSError as e:
+                _err(f"Could not read report: {e}", args.json, 2)
+        if not body.strip():
+            _err("Report is empty — nothing to save.", args.json)
+        try:
+            res = vault.write_race_intel_to_vault(
+                title=title, body=body, doc_type="strategy-report",
+                date_prefix=args.date_prefix,
+            )
+        except vault.VaultError as e:
+            _err(str(e), args.json)
+        res["message"] = f"Strategy report written to {res['path']}"
+        _print(res, args.json)
+        return
+
+    goal_seconds = race_engine._parse_time(
+        args.goal_time or race_capstone.DEFAULT_TARGET_FINISH)
+
+    with get_db() as conn:
+        course = race_engine.get_course(conn)
+        if not course:
+            _err("No course loaded. Run: ultra race load-course <gpx> --name ... --year ...",
+                 args.json, 2)
+        course = dict(course)
+        plan = _get_plan(conn)
+        plan_id = plan["id"] if plan else None
+
+        dossier = race_capstone.build_capstone_dossier(
+            conn, course, plan_id=plan_id, goal_time_seconds=goal_seconds,
+            weather_temp_f=args.weather_temp, start_time=args.start_time or "05:00",
+            title=title,
+        )
+
+    if args.skeleton:
+        skeleton = race_capstone.render_capstone_skeleton(dossier)
+        if args.json:
+            _print({"skeleton": skeleton}, True)
+        else:
+            print(skeleton)
+        return
+
+    if args.json:
+        _print(dossier, True)
+        return
+
+    race = dossier["race"]
+    sig = dossier["signals"]
+    refs = dossier["references"]
+    print(f"=== {race['name']} ({race.get('year')}) — Capstone Synthesis Order ===")
+    gain = race.get("elevation_gain_ft")
+    dist = race.get("distance_miles")
+    meta = []
+    if dist:
+        meta.append(f"{dist:g} mi")
+    if gain:
+        meta.append(f"{gain:,.0f} ft")
+    if meta:
+        print(" · ".join(meta))
+    print(f"Governor {race['target_finish']} · {race['governor']}")
+    if race.get("weather_temp_f"):
+        print(f"Weather: {race['weather_temp_f']:g}°F")
+    print()
+    print(dossier["objective"])
+    print()
+
+    # Signal inventory — one line per signal so the operator sees what was gathered.
+    print("Signals gathered:")
+    t = sig.get("targets")
+    print(f"  ▸ Adaptive targets: "
+          + (f"easy {_fmt_pace(t['easy_pace'])}, long {_fmt_pace(t['long_run_pace'])}, "
+             f"MAF {t['maf_hr']} (eff. {t['effective_date']})" if t else "none on file"))
+    h = sig["history"]
+    print(f"  ▸ Own history: {h.get('count')} races, "
+          f"avg fade {h.get('avg_fade_pct')}% — {h.get('failure_mode') or 'no dominant mode'}")
+    pc = sig["peer_cohort"]
+    print(f"  ▸ Peer cohort: {pc.get('cohort_size')} finishers near {pc.get('goal_time')}, "
+          f"back-half slowdown {pc.get('slowdown_pct')}%, "
+          f"{len(pc.get('danger_zones') or [])} danger zone(s)")
+    rp = sig["race_plan"]
+    bands = " / ".join(f"{k}:{rp['plans'][k]['total_time_display']}" for k in ("A", "B", "C"))
+    print(f"  ▸ Race plan A/B/C: {bands}  (base {rp.get('base_pace_display')})")
+    print(f"  ▸ Fueling: {len(sig['fueling'])} segments costed")
+    print(f"  ▸ Crew/drop-bag stations: {len(sig['crew_stations'])}")
+    tb = sig["training_block"]
+    print(f"  ▸ Training block: {tb.get('count')} logged runs "
+          f"({len(tb.get('long_runs') or [])} long runs ≥18mi), latest {tb.get('latest_date')}")
+    print()
+
+    print("References to read:")
+    print(f"  report: {refs.get('report_path')} "
+          f"({'EXISTS — update in place' if refs.get('report_exists') else 'new — write fresh'})")
+    for key in ("course_guide", "peer_learnings", "crew_manual", "workouts_dir"):
+        print(f"  {key}: {refs[key]}")
+    print()
+
+    print("Method:")
+    for i, step in enumerate(dossier["method"], 1):
+        print(f"  {i}. {step}")
+    print()
+    print("Output sections:")
+    for section in dossier["output_sections"]:
+        print(f"  ▸ {section['heading']} — {section['what']}")
+    print()
+    print("Next: synthesize the report, then "
+          "`ultra race capstone --save-guide -` to file it (living document).")
+
+
 def cmd_export_md(args):
     import os
     from .ultra_plan import generate_training_plan_markdown
@@ -2458,6 +2586,26 @@ def main():
                        help="Prefix the saved filename with today's date (snapshot mode)")
     rar_p.add_argument("--json", action="store_true")
 
+    # ultra race capstone
+    rcp_p = race_sub.add_parser(
+        "capstone",
+        help="Capstone (#16): synthesize all signals into the BR100 strategy report")
+    rcp_p.add_argument("--goal-time", type=str,
+                       help="Governor finish time (HH:MM:SS, default 26:00:00)")
+    rcp_p.add_argument("--weather-temp", type=float,
+                       help="Forecast temperature (°F); escalates fueling/cooling")
+    rcp_p.add_argument("--start-time", type=str, default="05:00",
+                       help="Race start time (HH:MM, default 05:00)")
+    rcp_p.add_argument("--skeleton", action="store_true",
+                       help="Emit a fillable markdown scaffold of the report sections")
+    rcp_p.add_argument("--save-guide", type=str, metavar="PATH",
+                       help="Persist a finished markdown report to the vault ('-' for stdin)")
+    rcp_p.add_argument("--title", type=str,
+                       help="Report title / stable vault filename (default 'Burning River 100 Race Strategy')")
+    rcp_p.add_argument("--date-prefix", action="store_true",
+                       help="Prefix the saved filename with today's date (snapshot mode)")
+    rcp_p.add_argument("--json", action="store_true")
+
     # ultra race segments
     rsg_p = race_sub.add_parser("segments", help="View/edit course segments")
     rsg_p.add_argument("--segment", type=int, help="Segment number to edit")
@@ -2543,6 +2691,7 @@ def main():
                 "segments": cmd_race_segments,
                 "aggregate-reports": cmd_race_aggregate_reports,
                 "peer-splits": cmd_race_peer_splits,
+                "capstone": cmd_race_capstone,
             }
 
             cmd = race_commands.get(args.race_command)
