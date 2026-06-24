@@ -444,6 +444,23 @@ def _race_frontmatter(doc_date: str, doc_type: str) -> str:
     )
 
 
+def race_intel_target_path(
+    title: str, *, date_prefix: bool = False, doc_date: str | None = None
+):
+    """Return the ``race-prep/`` path a race-intel doc with ``title`` would be written to.
+
+    Lets callers check whether a doc already exists (e.g. the capstone living document)
+    without writing. Raises ``VaultError`` if the vault path is unusable. Mirrors the
+    filename logic in :func:`write_race_intel_to_vault`.
+    """
+    race_prep_dir = _race_prep_dir()
+    doc_date = doc_date or datetime.now().strftime("%Y-%m-%d")
+    title_segment = re.sub(r"[\\/:*?\"<>|]", "", (title or "").strip()) or "Race Intel"
+    title_segment = re.sub(r"\s+", " ", title_segment)
+    stem = f"{doc_date} {title_segment}" if date_prefix else title_segment
+    return race_prep_dir / (stem.strip() + ".md")
+
+
 def write_race_intel_to_vault(
     *,
     title: str,
@@ -468,15 +485,12 @@ def write_race_intel_to_vault(
     Returns ``{"path": <absolute md path>, "method": "oj"|"direct", "filename": ...}``.
     Raises ``VaultError`` if the vault path itself is unusable.
     """
-    race_prep_dir = _race_prep_dir()  # raises VaultError if env unset/missing
+    _race_prep_dir()  # raises VaultError if env unset/missing
 
     doc_date = doc_date or datetime.now().strftime("%Y-%m-%d")
     # Preserve the author's casing (e.g. "BR100"); only strip filesystem-illegal chars.
-    title_segment = re.sub(r"[\\/:*?\"<>|]", "", (title or "").strip()) or "Race Intel"
-    title_segment = re.sub(r"\s+", " ", title_segment)
-    stem = f"{doc_date} {title_segment}" if date_prefix else title_segment
-    filename = stem.strip() + ".md"
-    target = race_prep_dir / filename
+    target = race_intel_target_path(title, date_prefix=date_prefix, doc_date=doc_date)
+    filename = target.name
 
     framed = _race_frontmatter(doc_date, doc_type) + body.rstrip() + "\n"
 
