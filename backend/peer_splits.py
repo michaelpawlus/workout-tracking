@@ -392,17 +392,11 @@ def peer_learnings_markdown(analysis: dict, cohort: list[dict], goal_display: st
                      "and `peer-splits --import` first.")
         return "\n".join(lines) + "\n"
 
-    # Flag divergence RELATIVELY (coefficient of variation = stdev / median pace), not by
-    # the engine's absolute 60s threshold — at 15+ min/mi ultra pace every segment trips an
-    # absolute cutoff. A segment is a "divergence point" if its CV is in the cohort's top
-    # quartile: that's where finishers actually separate.
+    # The engine flags divergence RELATIVELY (top-quartile coefficient of variation),
+    # so consume its danger_zone flags directly rather than recomputing the cut here.
     scored = [s for s in analysis["segments"] if s.get("median_pace_seconds")]
-    for s in scored:
-        sd_s = s.get("pace_stdev_seconds") or 0
-        s["_cv"] = sd_s / s["median_pace_seconds"] if s["median_pace_seconds"] else 0
-    cvs = sorted((s["_cv"] for s in scored), reverse=True)
-    cv_cut = cvs[max(0, len(cvs) // 4 - 1)] if cvs else 0
-    diverge = [s for s in scored if s["_cv"] >= cv_cut and s["_cv"] > 0]
+    diverge = sorted((s for s in scored if s.get("danger_zone")),
+                     key=lambda s: -(s.get("pace_cv") or 0))
 
     lines += [
         f"**Finish range:** {analysis['fastest_finish']} – {analysis['slowest_finish']} "
@@ -417,7 +411,7 @@ def peer_learnings_markdown(analysis: dict, cohort: list[dict], goal_display: st
                      f"{sd}% slower than the first half. Plan for it; don't fight it.")
     if diverge:
         names = ", ".join(f"{s['segment_name']} (seg {s['segment_number']})"
-                          for s in sorted(diverge, key=lambda x: -x["_cv"])[:6])
+                          for s in diverge[:6])
         lines.append(f"- **Highest-divergence segments (where finishes separate most):** {names}. "
                      "Execute these deliberately — they decide the day more than the average mile.")
     lines += ["", "## Pacing skeleton (median per-segment)", "",

@@ -508,8 +508,12 @@ def analyze_cohort(conn, course_id, goal_time_seconds, window_seconds=3600):
                 "median_pace_display": _format_pace(median_pace),
                 "median_time_seconds": int(median_time),
                 "pace_stdev_seconds": round(pace_stdev, 1),
+                # Coefficient of variation (stdev relative to pace) is the comparable
+                # divergence metric; the absolute danger_zone flag is set in a second
+                # pass below once every segment's CV is known.
+                "pace_cv": round(pace_stdev / median_pace, 4) if median_pace else 0.0,
                 "sample_size": len(paces),
-                "danger_zone": pace_stdev > 60,  # high variance = danger
+                "danger_zone": False,
             }
         else:
             stat = {
@@ -520,10 +524,17 @@ def analyze_cohort(conn, course_id, goal_time_seconds, window_seconds=3600):
                 "median_pace_display": "N/A",
                 "median_time_seconds": None,
                 "pace_stdev_seconds": None,
+                "pace_cv": None,
                 "sample_size": 0,
                 "danger_zone": False,
             }
         segment_stats.append(stat)
+
+    # Flag danger zones RELATIVELY: a segment is a danger zone when its coefficient
+    # of variation (pace_stdev / median_pace) lands in the cohort's top quartile.
+    # An absolute stdev cutoff (the old `pace_stdev > 60`) trips on nearly every
+    # segment at 15+ min/mi ultra pace, where >60s spread is normal (issue #23).
+    danger_zones = _flag_danger_zones(segment_stats)
 
     # Identify slowdown curve: how much did the cohort slow in back half?
     first_half = [s for s in segment_stats
@@ -546,9 +557,30 @@ def analyze_cohort(conn, course_id, goal_time_seconds, window_seconds=3600):
         "fastest_finish": _format_time(min(finish_times)),
         "slowest_finish": _format_time(max(finish_times)),
         "slowdown_pct": slowdown_pct,
-        "danger_zones": [s["segment_name"] for s in segment_stats if s["danger_zone"]],
+        "danger_zones": danger_zones,
         "segments": segment_stats,
     }
+
+
+def _flag_danger_zones(segment_stats):
+    """Mark the cohort's highest-divergence segments by coefficient of variation.
+
+    Mutates each segment dict's ``danger_zone`` flag in place and returns the
+    danger-zone segment names ordered by descending CV (most divergent first).
+
+    A segment is flagged when its CV is in the top quartile of the cohort, so the
+    signal scales with pace instead of tripping on every segment at ultra pace.
+    """
+    scored = [s for s in segment_stats if s.get("pace_cv")]
+    if not scored:
+        return []
+    cvs = sorted((s["pace_cv"] for s in scored), reverse=True)
+    cv_cut = cvs[max(0, len(cvs) // 4 - 1)]
+    diverge = sorted((s for s in scored if s["pace_cv"] >= cv_cut),
+                     key=lambda s: -s["pace_cv"])
+    for s in diverge:
+        s["danger_zone"] = True
+    return [s["segment_name"] for s in diverge]
 
 
 # ---------------------------------------------------------------------------

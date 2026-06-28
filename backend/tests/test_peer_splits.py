@@ -221,6 +221,55 @@ class PeerSplitsTestCase(unittest.TestCase):
         self.assertEqual(n, 0)
         self.assertTrue(any("disagrees" in w for w in res["warnings"]))
 
+    # --- relative danger zones (#23) ----------------------------------------
+    def test_danger_zones_are_relative_not_every_segment(self):
+        # Three finishers near 4:00. Splits are tight on every leg EXCEPT Q3, where
+        # the cohort diverges hard. Under the old absolute `stdev > 60` rule every
+        # 15+ min/mi leg would flag; the relative top-quartile CV should isolate Q3.
+        q1 = round(self.total * 0.25, 2)
+        half = round(self.total * 0.50, 2)
+        q3 = round(self.total * 0.75, 2)
+        full = round(self.total, 2)
+        rows = ["runner_name,finish_time,dnf,mat_mile,mat_name,elapsed,year,source"]
+        # Q3 elapsed varies wildly across runners; all other mats are near-identical.
+        q3_elapseds = ["2:50:00", "3:10:00", "3:30:00"]
+        for name, q3e in zip("ABC", q3_elapseds):
+            rows += [
+                f"{name},4:00:00,0,{q1},Q1,1:00:00,2025,ultrasignup",
+                f"{name},4:00:00,0,{half},Turn,2:00:00,2025,ultrasignup",
+                f"{name},4:00:00,0,{q3},Q3,{q3e},2025,ultrasignup",
+                f"{name},4:00:00,0,{full},Finish,4:00:00,2025,ultrasignup",
+            ]
+        csv = self._write_csv("\n".join(rows) + "\n")
+        with database.get_db() as conn:
+            peer_splits.import_peer_splits_long(conn, self.course_id, csv, default_year=2025)
+            analysis = race_engine.analyze_cohort(conn, self.course_id, 4 * 3600, 3600)
+        scored = [s for s in analysis["segments"] if s["median_pace_seconds"]]
+        flagged = analysis["danger_zones"]
+        # Top quartile of 4 segments = 1 — NOT every segment, which is the #23 fix.
+        self.assertEqual(len(flagged), 1)
+        self.assertLess(len(flagged), len(scored))
+        # The flagged segment is the genuine highest-CV (most divergent) leg, and the
+        # tight early legs (Q1/Turn, identical splits) are not flagged.
+        top = max(scored, key=lambda s: s["pace_cv"])
+        self.assertEqual(flagged, [top["segment_name"]])
+        by_name = {s["segment_name"]: s for s in analysis["segments"]}
+        self.assertFalse(by_name["Q1"]["danger_zone"])
+        self.assertFalse(by_name["Turn"]["danger_zone"])
+
+    def test_flag_danger_zones_orders_by_cv_and_handles_empty(self):
+        segs = [
+            {"segment_name": "lo", "pace_cv": 0.02, "danger_zone": False},
+            {"segment_name": "hi", "pace_cv": 0.20, "danger_zone": False},
+            {"segment_name": "mid", "pace_cv": 0.10, "danger_zone": False},
+            {"segment_name": "gap", "pace_cv": None, "danger_zone": False},
+        ]
+        names = race_engine._flag_danger_zones(segs)
+        self.assertEqual(names, ["hi"])               # top quartile of 3 scored = 1
+        self.assertTrue(segs[1]["danger_zone"])
+        # No scored segments → no flags, no crash.
+        self.assertEqual(race_engine._flag_danger_zones([{"pace_cv": None}]), [])
+
     # --- research order -----------------------------------------------------
     def test_research_order_maps_mats_and_lists_schema(self):
         course = {"name": "Test Course", "year": 2026, "total_distance_miles": self.total}
