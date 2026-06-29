@@ -167,6 +167,11 @@ def init_db():
                 hr_feedback TEXT,
                 overall_feedback TEXT,
                 warnings TEXT,
+                mental_state TEXT,
+                breathing_quality TEXT,
+                mind_wandering TEXT,
+                mental_intention TEXT,
+                mental_notes TEXT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             );
 
@@ -365,6 +370,11 @@ def init_db():
         # Add nutrition columns to run_feedback if they don't exist (migration)
         rf_cols = {row[1] for row in conn.execute("PRAGMA table_info(run_feedback)").fetchall()}
         for col in ("pre_meal", "during_fuel", "during_hydration", "post_meal", "nutrition_notes"):
+            if col not in rf_cols:
+                conn.execute(f"ALTER TABLE run_feedback ADD COLUMN {col} TEXT")
+
+        # Add mental-state columns to run_feedback if they don't exist (migration, issue #9 piece 1)
+        for col in ("mental_state", "breathing_quality", "mind_wandering", "mental_intention", "mental_notes"):
             if col not in rf_cols:
                 conn.execute(f"ALTER TABLE run_feedback ADD COLUMN {col} TEXT")
 

@@ -134,14 +134,15 @@ def render_run_report(
     actual: dict | None,
     feedback: dict | None,
     nutrition: dict | None = None,
+    mental: dict | None = None,
     weekly_context: dict | None = None,
     notes: str | None = None,
 ) -> str:
     """Render a run report as markdown.
 
-    Sections: Prescribed, Actual, Coaching Feedback, Nutrition, Notes. Sections with
-    no data are omitted so the output stays readable. Always includes an actual section
-    so the report is never empty.
+    Sections: Prescribed, Actual, Coaching Feedback, Nutrition, Mental, Notes. Sections
+    with no data are omitted so the output stays readable. Always includes an actual
+    section so the report is never empty.
     """
     prescribed = prescribed or {}
     actual = actual or {}
@@ -258,6 +259,29 @@ def render_run_report(
             lines.append(f"_Notes:_ {nutrition['nutrition_notes']}")
         lines.append("")
 
+    # Mental (issue #9)
+    if mental and any(mental.get(k) for k in (
+        "mental_state", "breathing_quality", "mind_wandering", "mental_intention", "mental_notes",
+    )):
+        lines.append("## Mental")
+        lines.append("")
+        if mental.get("mental_intention"):
+            lines.append(f"- Intention (target): {mental['mental_intention']}")
+        if mental.get("mental_state"):
+            lines.append(f"- State: {mental['mental_state']}")
+        if mental.get("breathing_quality"):
+            lines.append(f"- Breathing: {mental['breathing_quality']}")
+        if mental.get("mind_wandering"):
+            lines.append(f"- Mind wandering: {mental['mind_wandering']}")
+        if feedback.get("mental_feedback"):
+            lines.append("")
+            lines.append("### Coaching")
+            lines.append(feedback["mental_feedback"])
+        if mental.get("mental_notes"):
+            lines.append("")
+            lines.append(f"_Notes:_ {mental['mental_notes']}")
+        lines.append("")
+
     if notes:
         lines.append("## Notes")
         lines.append("")
@@ -317,6 +341,7 @@ def write_run_report_to_vault(
     actual: dict | None,
     feedback: dict | None,
     nutrition: dict | None = None,
+    mental: dict | None = None,
     weekly_context: dict | None = None,
     notes: str | None = None,
     description: str | None = None,
@@ -335,7 +360,7 @@ def write_run_report_to_vault(
     workouts_dir = _workouts_dir()  # raises VaultError if env unset/missing
     body = render_run_report(
         run_date=run_date, prescribed=prescribed, actual=actual,
-        feedback=feedback, nutrition=nutrition,
+        feedback=feedback, nutrition=nutrition, mental=mental,
         weekly_context=weekly_context, notes=notes,
     )
 
