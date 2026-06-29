@@ -235,7 +235,9 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
                 effort=None, pace=None, notes="", source="cli", run_date=None,
                 skip_feedback=False, strava_activity_id=None, as_json=False,
                 pre_meal=None, during_fuel=None, during_hydration=None,
-                post_meal=None, nutrition_notes=None, scheduled_date=None,
+                post_meal=None, nutrition_notes=None,
+                mental_state=None, breathing_quality=None, mind_wandering=None,
+                mental_intention=None, mental_notes=None, scheduled_date=None,
                 skip_vault=False):
     """Core run submission logic. Returns result dict.
 
@@ -362,10 +364,20 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
             "nutrition_notes": nutrition_notes,
         }
 
+    mental_data = None
+    if any(v is not None for v in (mental_state, breathing_quality, mind_wandering, mental_intention, mental_notes)):
+        mental_data = {
+            "mental_state": mental_state,
+            "breathing_quality": breathing_quality,
+            "mind_wandering": mind_wandering,
+            "mental_intention": mental_intention,
+            "mental_notes": mental_notes,
+        }
+
     try:
         if not as_json:
             print("Analyzing run...", file=sys.stderr)
-        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info, athlete_targets=targets_dict, nutrition_data=nutrition_data, historical_data=historical_summary)
+        feedback = analyze_run_feedback(prescribed, actual, weekly_context, trend_data, benchmark_data, race_info, athlete_targets=targets_dict, nutrition_data=nutrition_data, historical_data=historical_summary, mental_data=mental_data)
     except Exception as e:
         feedback = {
             "compliance_score": None,
@@ -381,8 +393,9 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
                 actual_distance_miles, prescribed_pace, actual_pace, avg_heart_rate,
                 max_heart_rate, elevation_gain_ft, effort_rating, compliance_score,
                 pace_feedback, hr_feedback, overall_feedback, warnings,
-                pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes,
+                mental_state, breathing_quality, mind_wandering, mental_intention, mental_notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (workout_id, daily_workout_id, plan["id"],
              prescribed.get("target_distance_miles"), distance,
              prescribed.get("target_pace_min_per_mile"), pace,
@@ -392,7 +405,8 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
              feedback.get("hr_feedback", ""),
              feedback.get("overall_feedback", ""),
              json.dumps(feedback.get("warnings", [])),
-             pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes),
+             pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes,
+             mental_state, breathing_quality, mind_wandering, mental_intention, mental_notes),
         )
 
     vault_result = None
@@ -403,6 +417,7 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
             actual=actual,
             feedback=feedback,
             nutrition=nutrition_data,
+            mental=mental_data,
             weekly_context=weekly_context,
             notes=notes or None,
             as_json=as_json,
@@ -438,7 +453,7 @@ def _summarize_for_product_log(prescribed, actual, feedback):
 
 
 def _write_run_to_vault(*, run_date, prescribed, actual, feedback, nutrition,
-                        weekly_context, notes, as_json):
+                        mental=None, weekly_context, notes, as_json):
     """Write the run report + product log entry, swallowing errors so DB writes succeed.
 
     Returns a dict with status info, or None on hard failure (vault path unset, etc).
@@ -450,6 +465,7 @@ def _write_run_to_vault(*, run_date, prescribed, actual, feedback, nutrition,
             actual=actual,
             feedback=feedback,
             nutrition=nutrition,
+            mental=mental,
             weekly_context=weekly_context,
             notes=notes,
         )
@@ -497,6 +513,9 @@ def cmd_submit(args):
         pre_meal=args.pre_meal, during_fuel=args.during_fuel,
         during_hydration=args.during_hydration, post_meal=args.post_meal,
         nutrition_notes=args.nutrition_notes,
+        mental_state=args.mental_state, breathing_quality=args.breathing_quality,
+        mind_wandering=args.mind_wandering, mental_intention=args.mental_intention,
+        mental_notes=args.mental_notes,
         scheduled_date=getattr(args, 'scheduled_date', None),
         skip_vault=getattr(args, 'no_vault', False),
     )
@@ -521,6 +540,8 @@ def cmd_submit(args):
                 print(f"  - {w}")
         if feedback.get("race_readiness"):
             print(f"\nRace Readiness: {feedback['race_readiness']}")
+        if feedback.get("mental_feedback"):
+            print(f"\nMental: {feedback['mental_feedback']}")
         v = result.get("vault") or {}
         if v.get("path"):
             print(f"\nVault note: {v['path']}")
@@ -709,6 +730,15 @@ def _save_feedback_to_vault(args):
             "post_meal": fb_row.get("post_meal"),
             "nutrition_notes": fb_row.get("nutrition_notes"),
         }
+    mental = None
+    if any(fb_row.get(k) for k in ("mental_state", "breathing_quality", "mind_wandering", "mental_intention", "mental_notes")):
+        mental = {
+            "mental_state": fb_row.get("mental_state"),
+            "breathing_quality": fb_row.get("breathing_quality"),
+            "mind_wandering": fb_row.get("mind_wandering"),
+            "mental_intention": fb_row.get("mental_intention"),
+            "mental_notes": fb_row.get("mental_notes"),
+        }
     weekly_context = None
     if fb_row.get("week_number"):
         weekly_context = {
@@ -718,7 +748,7 @@ def _save_feedback_to_vault(args):
 
     result = _write_run_to_vault(
         run_date=run_date, prescribed=prescribed, actual=actual,
-        feedback=feedback, nutrition=nutrition, weekly_context=weekly_context,
+        feedback=feedback, nutrition=nutrition, mental=mental, weekly_context=weekly_context,
         notes=fb_row.get("workout_notes") or None, as_json=args.json,
     )
 
@@ -2323,6 +2353,15 @@ def main():
     submit_p.add_argument("--during-hydration", type=str, help="During-run hydration")
     submit_p.add_argument("--post-meal", type=str, help="Post-run meal description")
     submit_p.add_argument("--nutrition-notes", type=str, help="Nutrition observations (bonking, GI issues, etc)")
+    submit_p.add_argument("--mental-state", type=str, choices=["calm", "focused", "scattered", "stressed", "flow"],
+                          help="Dominant mental state during the run (issue #9)")
+    submit_p.add_argument("--breathing-quality", type=str, choices=["relaxed", "forced", "erratic"],
+                          help="Breathing quality during the run")
+    submit_p.add_argument("--mind-wandering", type=str, choices=["yes", "no", "sometimes"],
+                          help="Did the mind wander off task/calm during the run?")
+    submit_p.add_argument("--mental-intention", type=str,
+                          help="Pre-run mindset TARGET (e.g. 'box breathing on climbs'); enables prescribed-vs-actual mental tracking")
+    submit_p.add_argument("--mental-notes", type=str, help="Free-text mental/focus observations")
     submit_p.add_argument("--scheduled-date", type=str, help="Date of the prescribed workout if different from --date")
     submit_p.add_argument("--no-vault", action="store_true", help="Skip writing the run report to Obsidian")
     submit_p.add_argument("--json", action="store_true")

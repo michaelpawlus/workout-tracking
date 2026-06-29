@@ -52,20 +52,31 @@ class RenderRunReportTests(unittest.TestCase):
                 "hr_feedback": "Z2 throughout.",
                 "warnings": ["Watch hydration tomorrow."],
                 "race_readiness": "On track",
+                "mental_feedback": "Calm focus held HR down — keep practicing box breathing.",
             },
             nutrition={"pre_meal": "oatmeal", "during_fuel": "1 gel"},
+            mental={
+                "mental_state": "calm",
+                "breathing_quality": "relaxed",
+                "mind_wandering": "no",
+                "mental_intention": "box breathing on climbs",
+                "mental_notes": "HR dropped when I focused on breath.",
+            },
             weekly_context={"week_number": 8, "week_type": "build"},
             notes="Felt smooth.",
         )
 
         for header in ("## Easy Run", "## Prescribed", "## Actual", "## Coaching Feedback",
-                       "## Nutrition", "## Notes"):
+                       "## Nutrition", "## Mental", "## Notes"):
             self.assertIn(header, md)
         self.assertIn("Week 8 (build)", md)
         self.assertIn("Compliance Score: 92/100", md)
         self.assertIn("Race Readiness: On track", md)
         self.assertIn("Watch hydration tomorrow.", md)
         self.assertIn("Pre-run: oatmeal", md)
+        self.assertIn("Intention (target): box breathing on climbs", md)
+        self.assertIn("State: calm", md)
+        self.assertIn("Calm focus held HR down", md)
         self.assertTrue(md.endswith("\n"))
 
     def test_omits_sections_with_no_data(self):
@@ -79,6 +90,7 @@ class RenderRunReportTests(unittest.TestCase):
         self.assertNotIn("## Prescribed", md)
         self.assertNotIn("## Coaching Feedback", md)
         self.assertNotIn("## Nutrition", md)
+        self.assertNotIn("## Mental", md)
         self.assertNotIn("## Notes", md)
         self.assertIn("## Actual", md)
 

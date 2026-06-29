@@ -43,6 +43,26 @@ python3 cli.py ultra submit --distance 10 --duration 100 --hr 140 \
 
 Proactively remind about fuel for runs >60 min. Treat bonking or GI reports as high-priority coaching moments — these are critical for race-day preparation.
 
+## Mental Training Tracking (Issue #9, piece 1 of 4)
+
+Mental energy management is treated as a **peer dimension** to fitness and economy — not a soft add-on. Mental state and cardiac output are directly coupled (a scattered mind raises HR at constant pace; calm focus lowers it). When generating a run report, **ask about mental state** alongside nutrition:
+
+1. **Intention (pre-run target)**: What mindset did you set out to practice? (e.g. box breathing on climbs, staying present)
+2. **State**: calm / focused / scattered / stressed / flow
+3. **Breathing**: relaxed / forced / erratic
+4. **Mind-wandering**: yes / no / sometimes
+
+Pass responses via CLI flags on `submit`; they're stored on `run_feedback`, woven into AI coaching (`mental_feedback`), and rendered in a `## Mental` section of the vault note:
+
+```bash
+python3 cli.py ultra submit --distance 10 --duration 100 --hr 140 \
+  --mental-intention "box breathing on climbs" --mental-state flow \
+  --breathing-quality relaxed --mind-wandering no \
+  --mental-notes "HR dropped whenever I focused on breath"
+```
+
+The coaching lens: the ultra mental tools are **pre-loaded then deployed** (rehearsed visualization, pre-written mantras like "Calm is strong", pain reframes like "burning quads = info, not a stop sign"). Reinforce practicing them on training runs so they're automatic by race day, and coach prescribed-vs-actual when an `--mental-intention` was set. Remaining pieces of #9 (still to build): weekly mental prescriptions, race-day mental rehearsal, and HR-at-pace × mental-state correlation analysis.
+
 ## Schedule Adjustments
 
 The markdown (`TRAINING_PLAN.md`) is the reference plan. Small day-to-day shifts (e.g., doing Wednesday's tempo on Thursday) don't need formal tracking — just note them in the run report. When submitting a shifted workout via CLI, use `--scheduled-date` to match the right prescribed workout:

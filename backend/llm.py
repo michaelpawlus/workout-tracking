@@ -360,7 +360,8 @@ def analyze_run_feedback(prescribed: dict, actual: dict,
                          race_info: dict | None = None,
                          athlete_targets: dict | None = None,
                          nutrition_data: dict | None = None,
-                         historical_data: dict | None = None) -> dict:
+                         historical_data: dict | None = None,
+                         mental_data: dict | None = None) -> dict:
     """Analyze a completed run against the prescribed workout and return structured feedback."""
 
     system_prompt = """You are an experienced ultramarathon coach analyzing a training run for an athlete preparing for a 100-mile race (Burning River 100, July 25, 2026, sub-24hr goal).
@@ -390,6 +391,19 @@ NUTRITION COACHING:
 - GI issues are common — use training runs to practice nutrition, not race day
 - If athlete reports bonking or GI issues, flag it prominently in feedback
 
+MENTAL ENERGY COACHING (treat as a peer dimension to fitness and economy, not a soft add-on):
+- Mental state and cardiac output are directly coupled: a scattered/stressed mind raises HR at
+  the same pace; calm focus and relaxed breathing lower HR and improve economy. When mental data
+  is provided, read HR-at-pace through this lens before concluding fitness is the limiter.
+- The ultra mental tools are PRE-LOADED then DEPLOYED, not improvised when depleted: rehearsed
+  visualization, pre-written mantras ("Calm is strong"), and pain reframes ("burning quads = info,
+  not a stop sign"). Reinforce practicing these on training runs so they are automatic on race day.
+- If a pre-run mental INTENTION/target was set, coach prescribed-vs-actual: did the athlete hold the
+  intention? If breathing was forced/erratic or the mind wandered, suggest a concrete anchor (box
+  breathing, cadence counting, a present-moment cue) to practice next time.
+- Mile 60-70 is where 100-milers implode; frame calm-under-fatigue as a trainable skill being built now.
+- Keep mental_feedback empty ("") when no mental data was provided.
+
 Respond with JSON only:
 {
     "compliance_score": <0-100 float>,
@@ -398,6 +412,7 @@ Respond with JSON only:
     "distance_feedback": "...",
     "overall_feedback": "...",
     "nutrition_feedback": "...",
+    "mental_feedback": "...",
     "weekly_mileage": {"target": <num>, "completed": <num>, "remaining": <num>},
     "warnings": ["warning1", "warning2"],
     "race_readiness": "On track / Needs attention / Behind"
@@ -419,6 +434,11 @@ Respond with JSON only:
         user_msg_parts.append(f"\n## Current Athlete Targets\n{json.dumps(athlete_targets, indent=2, default=str)}")
     if nutrition_data:
         user_msg_parts.append(f"\n## Nutrition Report\n{json.dumps(nutrition_data, indent=2, default=str)}")
+    if mental_data:
+        user_msg_parts.append(
+            "\n## Mental Report (mental_intention = pre-run TARGET; the rest = how the run actually felt)\n"
+            + json.dumps(mental_data, indent=2, default=str)
+        )
     if historical_data:
         user_msg_parts.append(
             "\n## Historical Race Analysis (athlete's own prior efforts)\n"
