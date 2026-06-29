@@ -134,6 +134,15 @@ def cmd_today(args):
 
         result = dict(workout)
 
+        # Surface this week's mental-training prescription (issue #9, piece 2)
+        if result.get("week_id"):
+            week_row = conn.execute(
+                "SELECT mental_focus FROM training_plan_weeks WHERE id = ?",
+                (result["week_id"],),
+            ).fetchone()
+            if week_row and week_row["mental_focus"]:
+                result["mental_focus"] = week_row["mental_focus"]
+
     # Add nutrition guidance for medium/long tier workouts
     dist = result.get("target_distance_miles") or 0
     dur = result.get("target_duration_minutes")
@@ -163,6 +172,8 @@ def cmd_today(args):
             print(f"HR Zone: {w['target_hr_zone']}")
         if w.get("description"):
             print(f"\n{w['description']}")
+        if w.get("mental_focus"):
+            print(f"\nMental focus (this week): {w['mental_focus']}")
         if w.get("nutrition"):
             n = w["nutrition"]
             print(f"\nNutrition ({n['tier_label']}):")
@@ -219,6 +230,8 @@ def cmd_week(args):
     else:
         print(f"=== Week {week['week_number']} ({week['week_type'].upper()}) ===")
         print(f"Focus: {week.get('focus', 'N/A')}")
+        if week.get("mental_focus"):
+            print(f"Mental: {week['mental_focus']}")
         if week.get("notes"):
             print(f"Notes: {week['notes']}")
         if week.get("summary"):

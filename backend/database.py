@@ -112,6 +112,7 @@ def init_db():
                 week_number INTEGER NOT NULL,
                 week_type TEXT NOT NULL CHECK(week_type IN ('build', 'deload', 'base', 'peak', 'taper', 'race', 'recovery')),
                 focus TEXT,
+                mental_focus TEXT,
                 notes TEXT,
                 UNIQUE(plan_id, week_number)
             );
@@ -329,11 +330,15 @@ def init_db():
                     week_number INTEGER NOT NULL,
                     week_type TEXT NOT NULL CHECK(week_type IN ('build', 'deload', 'base', 'peak', 'taper', 'race', 'recovery')),
                     focus TEXT,
+                    mental_focus TEXT,
                     notes TEXT,
                     UNIQUE(plan_id, week_number)
                 )
             """)
-            conn.execute("INSERT INTO training_plan_weeks SELECT * FROM _old_tpw")
+            conn.execute(
+                """INSERT INTO training_plan_weeks (id, plan_id, week_number, week_type, focus, notes)
+                   SELECT id, plan_id, week_number, week_type, focus, notes FROM _old_tpw"""
+            )
             conn.execute("DROP TABLE _old_tpw")
 
         if _needs_check_migration(conn, "plan_benchmarks", "benchmark_type", "maf_test"):
@@ -377,6 +382,22 @@ def init_db():
         for col in ("mental_state", "breathing_quality", "mind_wandering", "mental_intention", "mental_notes"):
             if col not in rf_cols:
                 conn.execute(f"ALTER TABLE run_feedback ADD COLUMN {col} TEXT")
+
+        # Add weekly mental-prescription column to training_plan_weeks (migration, issue #9 piece 2)
+        tpw_cols = {row[1] for row in conn.execute("PRAGMA table_info(training_plan_weeks)").fetchall()}
+        if "mental_focus" not in tpw_cols:
+            conn.execute("ALTER TABLE training_plan_weeks ADD COLUMN mental_focus TEXT")
+        # Backfill weekly mental prescriptions for any existing plan weeks lacking them
+        if conn.execute(
+            "SELECT 1 FROM training_plan_weeks WHERE mental_focus IS NULL LIMIT 1"
+        ).fetchone():
+            from .ultra_plan import MENTAL_FOCUS
+            for week_number, prescription in MENTAL_FOCUS.items():
+                conn.execute(
+                    "UPDATE training_plan_weeks SET mental_focus = ? "
+                    "WHERE week_number = ? AND mental_focus IS NULL",
+                    (prescription, week_number),
+                )
 
         # Seed athlete_targets for existing plans that lack them
         plans_without_targets = conn.execute(
