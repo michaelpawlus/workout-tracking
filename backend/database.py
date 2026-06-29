@@ -168,6 +168,7 @@ def init_db():
                 hr_feedback TEXT,
                 overall_feedback TEXT,
                 warnings TEXT,
+                mental_feedback TEXT,
                 mental_state TEXT,
                 breathing_quality TEXT,
                 mind_wandering TEXT,
@@ -382,6 +383,11 @@ def init_db():
         for col in ("mental_state", "breathing_quality", "mind_wandering", "mental_intention", "mental_notes"):
             if col not in rf_cols:
                 conn.execute(f"ALTER TABLE run_feedback ADD COLUMN {col} TEXT")
+
+        # Persist the AI-generated mental coaching so retroactive vault renders
+        # (`feedback --save` after submit --no-vault) don't lose the ## Mental coaching.
+        if "mental_feedback" not in rf_cols:
+            conn.execute("ALTER TABLE run_feedback ADD COLUMN mental_feedback TEXT")
 
         # Add weekly mental-prescription column to training_plan_weeks (migration, issue #9 piece 2)
         tpw_cols = {row[1] for row in conn.execute("PRAGMA table_info(training_plan_weeks)").fetchall()}

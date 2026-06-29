@@ -405,10 +405,10 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
                (workout_id, daily_workout_id, plan_id, prescribed_distance_miles,
                 actual_distance_miles, prescribed_pace, actual_pace, avg_heart_rate,
                 max_heart_rate, elevation_gain_ft, effort_rating, compliance_score,
-                pace_feedback, hr_feedback, overall_feedback, warnings,
+                pace_feedback, hr_feedback, overall_feedback, warnings, mental_feedback,
                 pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes,
                 mental_state, breathing_quality, mind_wandering, mental_intention, mental_notes)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (workout_id, daily_workout_id, plan["id"],
              prescribed.get("target_distance_miles"), distance,
              prescribed.get("target_pace_min_per_mile"), pace,
@@ -418,6 +418,7 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
              feedback.get("hr_feedback", ""),
              feedback.get("overall_feedback", ""),
              json.dumps(feedback.get("warnings", [])),
+             feedback.get("mental_feedback", ""),
              pre_meal, during_fuel, during_hydration, post_meal, nutrition_notes,
              mental_state, breathing_quality, mind_wandering, mental_intention, mental_notes),
         )
@@ -732,6 +733,7 @@ def _save_feedback_to_vault(args):
         "overall_feedback": fb_row.get("overall_feedback"),
         "pace_feedback": fb_row.get("pace_feedback"),
         "hr_feedback": fb_row.get("hr_feedback"),
+        "mental_feedback": fb_row.get("mental_feedback"),
         "warnings": warnings or [],
     }
     nutrition = None
