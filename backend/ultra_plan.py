@@ -33,6 +33,36 @@ WEEKS = [
     (20, "race",     10, 110, "Shakeouts Mon-Fri. Jul 25: Burning River 100"),
 ]
 
+# Weekly mental-training prescriptions (issue #9, piece 2). Mental energy management
+# is a peer dimension to fitness and economy. The arc mirrors the physical block:
+# base = build the practice, build = deploy tools under fatigue, peak = rehearse the
+# dark patches you'll meet at BR100, taper = lock and trust, race = deploy, don't rehearse.
+# Pre-load then deploy: rehearse on training runs so the tools are automatic by race day.
+# Keyed by week_number; surfaced in `ultra today`/`ultra week`/TRAINING_PLAN.md and
+# pairs with the per-run --mental-intention captured in piece 1.
+MENTAL_FOCUS = {
+    1:  "Build breath awareness. First mile of every easy run: count breaths (in 3 / out 2) to set a calm baseline.",
+    2:  "Box breathing. Run 4-count box breathing on warmups and notice your HR settle before picking up the pace.",
+    3:  "Effort labeling. On tempo segments, name the effort ('this is comfortably hard') instead of bracing against it.",
+    4:  "Body scan. On easy runs, scan jaw → shoulders → hands → hips and release tension. Pair the down-shift with the cutback.",
+    5:  "Draft a mantra. Pick one short phrase ('Calm is strong') and repeat it through every hill rep.",
+    6:  "Present-moment anchor. On day 2 of the back-to-back, anchor to footstrike/cadence whenever the mind drifts to fatigue.",
+    7:  "Calm = lower HR. During MAF #2, hold relaxed breathing and watch HR-at-pace fall — this is the core hypothesis of the mental work.",
+    8:  "Parasympathetic down-shift. Run the extra-easy days as active meditation: no metrics, just breath and surroundings.",
+    9:  "Pain reframe. Practice 'burning quads = information, not a stop sign' on the tempo and long run.",
+    10: "Couple fueling with a reset. Make each gel a mental cue: three calm breaths, restate the mantra.",
+    11: "Dress rehearsal for the head. On your big training race, run the full mental toolkit — segment it into chunks and deploy your mantras at the low points.",
+    12: "Confidence review. Note which mental tools lowered your HR; double down on the two that work best for you.",
+    13: "Dark-patch rehearsal. Mentally rehearse the 'this will pass' script for the low you'll hit around BR100 mile 60-70, so the response is automatic when it arrives.",
+    14: "Segment the distance. Break your long run into aid-station-sized chunks; only ever run to the next one.",
+    15: "Full race-day visualization. Rehearse start → crew stops → finish, including exactly how you'll respond when it gets hard.",
+    16: "Quiet confidence under pressure. On your benchmark efforts, stay relaxed under the clock; trust the trained calm.",
+    17: "Lock the mantras. Finalize your 2-3 race mantras and the one reframe you'll lean on most.",
+    18: "Manage the taper tantrum. Reframe restlessness and phantom niggles as readiness, not warning signs.",
+    19: "Visualize the first 30 miles: calm, patient, fueling on schedule. Bank composure, not time.",
+    20: "Deploy, don't rehearse. Run present, one aid station at a time. Calm is strong. Burning quads = information.",
+}
+
 # Benchmark schedule: (week_num, name, type, day_offset_from_week_start)
 # Week starts on Monday, so: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
 BENCHMARKS = [
@@ -470,9 +500,9 @@ def create_br100_plan(conn=None, start_date="2026-03-09"):
             week_start = start + timedelta(weeks=week_num - 1)
 
             week_cursor = conn.execute(
-                """INSERT INTO training_plan_weeks (plan_id, week_number, week_type, focus, notes)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (plan_id, week_num, week_type, focus,
+                """INSERT INTO training_plan_weeks (plan_id, week_number, week_type, focus, mental_focus, notes)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (plan_id, week_num, week_type, focus, MENTAL_FOCUS.get(week_num),
                  f"Target: {miles_low}-{miles_high} miles"),
             )
             week_id = week_cursor.lastrowid
@@ -578,6 +608,7 @@ def generate_training_plan_markdown(conn, plan_id):
         wn = week_row["week_number"]
         wtype = week_row["week_type"].upper()
         focus = week_row["focus"] or ""
+        mental_focus = (week_row["mental_focus"] if "mental_focus" in week_row.keys() else "") or ""
         notes = week_row["notes"] or ""
 
         workouts = [dict(r) for r in conn.execute(
@@ -596,6 +627,9 @@ def generate_training_plan_markdown(conn, plan_id):
         lines.append(f"## Week {wn} ({wtype}) — {first_date} to {last_date}")
         lines.append(f"")
         lines.append(f"**Focus:** {focus}")
+        if mental_focus:
+            lines.append(f"")
+            lines.append(f"**Mental:** {mental_focus}")
         lines.append(f"{notes}")
         lines.append(f"")
 

@@ -20,6 +20,8 @@
 ## Week 1 (BASE) — 2026-03-09 to 2026-03-15
 
 **Focus:** Baseline week. Easy running, 5K TT, MAF test
+
+**Mental:** Build breath awareness. First mile of every easy run: count breaths (in 3 / out 2) to set a calm baseline.
 Target: 25-30 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -52,6 +54,8 @@ Target: 25-30 miles
 ## Week 2 (BASE) — 2026-03-16 to 2026-03-22
 
 **Focus:** Endurance baseline. Strides 2x
+
+**Mental:** Box breathing. Run 4-count box breathing on warmups and notice your HR settle before picking up the pace.
 Target: 30-35 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -84,6 +88,8 @@ Target: 30-35 miles
 ## Week 3 (BASE) — 2026-03-23 to 2026-03-29
 
 **Focus:** First tempo segments. Trail run
+
+**Mental:** Effort labeling. On tempo segments, name the effort ('this is comfortably hard') instead of bracing against it.
 Target: 35-40 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -116,6 +122,8 @@ Target: 35-40 miles
 ## Week 4 (RECOVERY) — 2026-03-30 to 2026-04-05
 
 **Focus:** ~70% volume cutback
+
+**Mental:** Body scan. On easy runs, scan jaw → shoulders → hands → hips and release tension. Pair the down-shift with the cutback.
 Target: 25-28 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -145,6 +153,8 @@ Target: 25-28 miles
 ## Week 5 (BUILD) — 2026-04-06 to 2026-04-12
 
 **Focus:** Tempo 4mi. Hill repeats
+
+**Mental:** Draft a mantra. Pick one short phrase ('Calm is strong') and repeat it through every hill rep.
 Target: 40-45 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -180,6 +190,8 @@ Target: 40-45 miles
 ## Week 6 (BUILD) — 2026-04-13 to 2026-04-19
 
 **Focus:** Back-to-back long runs: 16 Sat / 8 Sun
+
+**Mental:** Present-moment anchor. On day 2 of the back-to-back, anchor to footstrike/cadence whenever the mind drifts to fatigue.
 Target: 45-50 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -215,6 +227,8 @@ Target: 45-50 miles
 ## Week 7 (BUILD) — 2026-04-20 to 2026-04-26
 
 **Focus:** MAF retest #2. Trail long run
+
+**Mental:** Calm = lower HR. During MAF #2, hold relaxed breathing and watch HR-at-pace fall — this is the core hypothesis of the mental work.
 Target: 45-50 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -250,6 +264,8 @@ Target: 45-50 miles
 ## Week 8 (RECOVERY) — 2026-04-27 to 2026-05-03
 
 **Focus:** Cutback. Light strides
+
+**Mental:** Parasympathetic down-shift. Run the extra-easy days as active meditation: no metrics, just breath and surroundings.
 Target: 30-35 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -279,6 +295,8 @@ Target: 30-35 miles
 ## Week 9 (BUILD) — 2026-05-04 to 2026-05-10
 
 **Focus:** B2B: 14/8. Tempo 5mi
+
+**Mental:** Pain reframe. Practice 'burning quads = information, not a stop sign' on the tempo and long run.
 Target: 50-55 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -314,6 +332,8 @@ Target: 50-55 miles
 ## Week 10 (BUILD) — 2026-05-11 to 2026-05-17
 
 **Focus:** Nutrition practice. Hill workout
+
+**Mental:** Couple fueling with a reset. Make each gel a mental cue: three calm breaths, restate the mantra.
 Target: 55-60 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -349,6 +369,8 @@ Target: 55-60 miles
 ## Week 11 (BUILD) — 2026-05-18 to 2026-05-24
 
 **Focus:** Adjusted: 50K removed (May 23-25 conflict). Pre-Mohican mini-taper week.
+
+**Mental:** Dress rehearsal for the head. On your big training race, run the full mental toolkit — segment it into chunks and deploy your mantras at the low points.
 Target: 18-20 miles. 50K relocated to Buckeye Trail 50K on Jun 28; this week now serves as Mohican Marathon taper.
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -381,6 +403,8 @@ Target: 18-20 miles. 50K relocated to Buckeye Trail 50K on Jun 28; this week now
 ## Week 12 (RECOVERY) — 2026-05-25 to 2026-05-31
 
 **Focus:** RACE WEEK: Mohican Marathon (May 30). First of two race-effort tune-ups for BR100.
+
+**Mental:** Confidence review. Note which mental tools lowered your HR; double down on the two that work best for you.
 Target: 35-40 miles. MAF Test #3 dropped (too close to race). Marathon replaces 12mi long run.
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -410,6 +434,8 @@ Target: 35-40 miles. MAF Test #3 dropped (too close to race). Marathon replaces 
 ## Week 13 (PEAK) — 2026-06-01 to 2026-06-07
 
 **Focus:** Recovery: post-Mohican + conflict. Light volume Jun 2-4, then rest Jun 5-7.
+
+**Mental:** Dark-patch rehearsal. Mentally rehearse the 'this will pass' script for the low you'll hit around BR100 mile 60-70, so the response is automatic when it arrives.
 Target: 12-15 miles. Thu Jun 4 22mi long run REMOVED (5 days post-marathon = too soon).
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -436,6 +462,8 @@ Target: 12-15 miles. Thu Jun 4 22mi long run REMOVED (5 days post-marathon = too
 ## Week 14 (PEAK) — 2026-06-08 to 2026-06-14
 
 **Focus:** Restart from conflict. Bridge long run between Mohican and Buckeye Trail 50K.
+
+**Mental:** Segment the distance. Break your long run into aid-station-sized chunks; only ever run to the next one.
 Target: 24 miles. Sat Jun 13 18mi (reduced from 22mi) bridges between two race efforts.
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -459,6 +487,8 @@ Target: 24 miles. Sat Jun 13 18mi (reduced from 22mi) bridges between two race e
 ## Week 15 (PEAK) — 2026-06-15 to 2026-06-21
 
 **Focus:** Restoration + soft-conflict weekend (Jun 19-21). No peak long run; saving legs for 50K.
+
+**Mental:** Full race-day visualization. Rehearse start → crew stops → finish, including exactly how you'll respond when it gets hard.
 Target: 14-18 miles. 30mi peak REMOVED; replaced by Buckeye Trail 50K next week. Weekend = run what you can.
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -494,6 +524,8 @@ Target: 14-18 miles. 30mi peak REMOVED; replaced by Buckeye Trail 50K next week.
 ## Week 16 (RECOVERY) — 2026-06-22 to 2026-06-28
 
 **Focus:** RACE WEEK: Buckeye Trail 50K (Sun Jun 28). Peak race-effort tune-up; ~15mi of course overlaps BR100 final miles.
+
+**Mental:** Quiet confidence under pressure. On your benchmark efforts, stay relaxed under the clock; trust the trained calm.
 Target: ~45 miles (race-inclusive). MAF Test #4 kept Wed. 50K is the peak stimulus, replacing solo 30mi.
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -526,6 +558,8 @@ Target: ~45 miles (race-inclusive). MAF Test #4 kept Wed. 50K is the peak stimul
 ## Week 17 (TAPER) — 2026-06-29 to 2026-07-05
 
 **Focus:** Post-50K recovery + taper begin. Last Tempo dropped; long run reduced to 13mi.
+
+**Mental:** Lock the mantras. Finalize your 2-3 race mantras and the one reframe you'll lean on most.
 Target: 25-30 miles. Reduced from original ~45mi to absorb 50K. 4 weeks to BR100.
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -555,6 +589,8 @@ Target: 25-30 miles. Reduced from original ~45mi to absorb 50K. 4 weeks to BR100
 ## Week 18 (TAPER) — 2026-07-06 to 2026-07-12
 
 **Focus:** ~50% of peak. Short strides
+
+**Mental:** Manage the taper tantrum. Reframe restlessness and phantom niggles as readiness, not warning signs.
 Target: 35-40 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -584,6 +620,8 @@ Target: 35-40 miles
 ## Week 19 (TAPER) — 2026-07-13 to 2026-07-19
 
 **Focus:** Very easy. Gear check
+
+**Mental:** Visualize the first 30 miles: calm, patient, fueling on schedule. Bank composure, not time.
 Target: 20-25 miles
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -613,6 +651,8 @@ Target: 20-25 miles
 ## Week 20 (RACE) — 2026-07-20 to 2026-07-26
 
 **Focus:** Shakeouts Mon-Fri. Jul 25: Burning River 100
+
+**Mental:** Deploy, don't rehearse. Run present, one aid station at a time. Calm is strong. Burning quads = information.
 Target: 10-110 miles
 
 | Date | Workout | Distance | Pace | Intensity |

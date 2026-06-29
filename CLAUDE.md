@@ -43,7 +43,7 @@ python3 cli.py ultra submit --distance 10 --duration 100 --hr 140 \
 
 Proactively remind about fuel for runs >60 min. Treat bonking or GI reports as high-priority coaching moments — these are critical for race-day preparation.
 
-## Mental Training Tracking (Issue #9, piece 1 of 4)
+## Mental Training Tracking (Issue #9, pieces 1-2 of 4)
 
 Mental energy management is treated as a **peer dimension** to fitness and economy — not a soft add-on. Mental state and cardiac output are directly coupled (a scattered mind raises HR at constant pace; calm focus lowers it). When generating a run report, **ask about mental state** alongside nutrition:
 
@@ -61,7 +61,15 @@ python3 cli.py ultra submit --distance 10 --duration 100 --hr 140 \
   --mental-notes "HR dropped whenever I focused on breath"
 ```
 
-The coaching lens: the ultra mental tools are **pre-loaded then deployed** (rehearsed visualization, pre-written mantras like "Calm is strong", pain reframes like "burning quads = info, not a stop sign"). Reinforce practicing them on training runs so they're automatic by race day, and coach prescribed-vs-actual when an `--mental-intention` was set. Remaining pieces of #9 (still to build): weekly mental prescriptions, race-day mental rehearsal, and HR-at-pace × mental-state correlation analysis.
+The coaching lens: the ultra mental tools are **pre-loaded then deployed** (rehearsed visualization, pre-written mantras like "Calm is strong", pain reframes like "burning quads = info, not a stop sign"). Reinforce practicing them on training runs so they're automatic by race day, and coach prescribed-vs-actual when an `--mental-intention` was set.
+
+### Weekly mental prescriptions (piece 2)
+
+Each of the 20 plan weeks carries a **mental-training prescription** alongside its physical focus — a concrete protocol to rehearse that week (e.g. week 5: "Pick one short mantra and repeat it through every hill rep"; week 13: "Dark-patch rehearsal on the night run"). The arc mirrors the block: base = build the practice, build = deploy under fatigue, peak = rehearse the BR100 dark patches, taper = lock and trust, race week = deploy, don't rehearse. The text lives in `MENTAL_FOCUS` in `ultra_plan.py` and is stored on `training_plan_weeks.mental_focus` (additive migration backfills existing plans).
+
+Surfaced as a **Mental:** line in `ultra today`, `ultra week`, and `TRAINING_PLAN.md`. When coaching a run, tie the athlete's per-run `--mental-intention` back to the week's prescription (prescribed-vs-actual at the week level). After editing prescriptions, re-run `ultra plan --export-md`.
+
+Remaining pieces of #9 (still to build): race-day mental rehearsal (piece 3, per-segment cues / dark-patch scripts in the Race Day Engine + capstone), and HR-at-pace × mental-state correlation analysis in run reports (piece 4, needs ≥~6 runs of piece-1 data).
 
 ## Schedule Adjustments
 
