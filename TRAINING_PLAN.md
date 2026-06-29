@@ -370,7 +370,7 @@ Target: 55-60 miles
 
 **Focus:** Adjusted: 50K removed (May 23-25 conflict). Pre-Mohican mini-taper week.
 
-**Mental:** Dress rehearsal for the head. Run the 50K with the full toolkit — segment the race and deploy mantras at the low points.
+**Mental:** Dress rehearsal for the head. On your big training race, run the full mental toolkit — segment it into chunks and deploy your mantras at the low points.
 Target: 18-20 miles. 50K relocated to Buckeye Trail 50K on Jun 28; this week now serves as Mohican Marathon taper.
 
 | Date | Workout | Distance | Pace | Intensity |

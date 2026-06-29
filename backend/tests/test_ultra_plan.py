@@ -65,6 +65,38 @@ class WeeklyMentalFocusTest(unittest.TestCase):
             ).fetchone()["n"]
         self.assertEqual(missing, 0)
 
+    def test_backfill_does_not_contaminate_non_br100_plans(self):
+        # A non-BR100 plan with week numbers 1-20 must NOT receive BR100 copy.
+        with database.get_db() as conn:
+            create_br100_plan(conn)
+            conn.execute("UPDATE training_plan_weeks SET mental_focus = NULL")
+            other = conn.execute(
+                "INSERT INTO training_plans (name, goal, start_date, end_date, "
+                "total_weeks, status) VALUES ('Marathon Block', 'PR', "
+                "'2026-01-01', '2026-04-01', 12, 'active')"
+            ).lastrowid
+            for wk in range(1, 21):
+                conn.execute(
+                    "INSERT INTO training_plan_weeks (plan_id, week_number, week_type) "
+                    "VALUES (?, ?, 'build')",
+                    (other, wk),
+                )
+            conn.commit()
+        database.init_db()
+        with database.get_db() as conn:
+            other_filled = conn.execute(
+                "SELECT COUNT(*) AS n FROM training_plan_weeks "
+                "WHERE plan_id = ? AND mental_focus IS NOT NULL",
+                (other,),
+            ).fetchone()["n"]
+            br100_missing = conn.execute(
+                "SELECT COUNT(*) AS n FROM training_plan_weeks tpw "
+                "JOIN training_plans tp ON tp.id = tpw.plan_id "
+                "WHERE tp.name = 'Burning River 100' AND tpw.mental_focus IS NULL"
+            ).fetchone()["n"]
+        self.assertEqual(other_filled, 0)   # non-BR100 plan untouched
+        self.assertEqual(br100_missing, 0)  # BR100 plan still fully backfilled
+
 
 if __name__ == "__main__":
     unittest.main()

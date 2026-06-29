@@ -387,15 +387,20 @@ def init_db():
         tpw_cols = {row[1] for row in conn.execute("PRAGMA table_info(training_plan_weeks)").fetchall()}
         if "mental_focus" not in tpw_cols:
             conn.execute("ALTER TABLE training_plan_weeks ADD COLUMN mental_focus TEXT")
-        # Backfill weekly mental prescriptions for any existing plan weeks lacking them
+        # Backfill weekly mental prescriptions for BR100 plan weeks lacking them.
+        # MENTAL_FOCUS copy is BR100-specific (mentions the 50K, MAF tests, the
+        # mile 60-70 dark patch), so scope to that plan — never touch unrelated plans.
         if conn.execute(
-            "SELECT 1 FROM training_plan_weeks WHERE mental_focus IS NULL LIMIT 1"
+            """SELECT 1 FROM training_plan_weeks tpw
+               JOIN training_plans tp ON tp.id = tpw.plan_id
+               WHERE tp.name = 'Burning River 100' AND tpw.mental_focus IS NULL LIMIT 1"""
         ).fetchone():
             from .ultra_plan import MENTAL_FOCUS
             for week_number, prescription in MENTAL_FOCUS.items():
                 conn.execute(
-                    "UPDATE training_plan_weeks SET mental_focus = ? "
-                    "WHERE week_number = ? AND mental_focus IS NULL",
+                    """UPDATE training_plan_weeks SET mental_focus = ?
+                       WHERE week_number = ? AND mental_focus IS NULL
+                         AND plan_id IN (SELECT id FROM training_plans WHERE name = 'Burning River 100')""",
                     (prescription, week_number),
                 )
 

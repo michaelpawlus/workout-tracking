@@ -51,7 +51,7 @@ MENTAL_FOCUS = {
     8:  "Parasympathetic down-shift. Run the extra-easy days as active meditation: no metrics, just breath and surroundings.",
     9:  "Pain reframe. Practice 'burning quads = information, not a stop sign' on the tempo and long run.",
     10: "Couple fueling with a reset. Make each gel a mental cue: three calm breaths, restate the mantra.",
-    11: "Dress rehearsal for the head. Run the 50K with the full toolkit — segment the race and deploy mantras at the low points.",
+    11: "Dress rehearsal for the head. On your big training race, run the full mental toolkit — segment it into chunks and deploy your mantras at the low points.",
     12: "Confidence review. Note which mental tools lowered your HR; double down on the two that work best for you.",
     13: "Dark-patch rehearsal. On the night run, rehearse the 'this will pass' script for the low you'll hit around BR100 mile 60-70.",
     14: "Segment the distance. Break the longest run into aid-station-sized chunks; only ever run to the next one.",
