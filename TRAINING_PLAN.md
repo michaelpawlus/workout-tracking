@@ -1,6 +1,6 @@
 # Burning River 100 — 20-Week Training Plan
 
-**Goal:** 26-hour finish (target); prior 100s 25:23-27:17
+**Goal:** Sub-24 hour finish
 **Race Date:** July 25, 2026
 **Start:** 2026-03-09 | **End:** 2026-07-26
 
@@ -435,7 +435,7 @@ Target: 35-40 miles. MAF Test #3 dropped (too close to race). Marathon replaces 
 
 **Focus:** Recovery: post-Mohican + conflict. Light volume Jun 2-4, then rest Jun 5-7.
 
-**Mental:** Dark-patch rehearsal. On the night run, rehearse the 'this will pass' script for the low you'll hit around BR100 mile 60-70.
+**Mental:** Dark-patch rehearsal. Mentally rehearse the 'this will pass' script for the low you'll hit around BR100 mile 60-70, so the response is automatic when it arrives.
 Target: 12-15 miles. Thu Jun 4 22mi long run REMOVED (5 days post-marathon = too soon).
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -463,7 +463,7 @@ Target: 12-15 miles. Thu Jun 4 22mi long run REMOVED (5 days post-marathon = too
 
 **Focus:** Restart from conflict. Bridge long run between Mohican and Buckeye Trail 50K.
 
-**Mental:** Segment the distance. Break the longest run into aid-station-sized chunks; only ever run to the next one.
+**Mental:** Segment the distance. Break your long run into aid-station-sized chunks; only ever run to the next one.
 Target: 24 miles. Sat Jun 13 18mi (reduced from 22mi) bridges between two race efforts.
 
 | Date | Workout | Distance | Pace | Intensity |
@@ -525,7 +525,7 @@ Target: 14-18 miles. 30mi peak REMOVED; replaced by Buckeye Trail 50K next week.
 
 **Focus:** RACE WEEK: Buckeye Trail 50K (Sun Jun 28). Peak race-effort tune-up; ~15mi of course overlaps BR100 final miles.
 
-**Mental:** Quiet confidence under pressure. On MAF #4 / 5K TT, stay relaxed under the benchmark clock; trust the trained calm.
+**Mental:** Quiet confidence under pressure. On your benchmark efforts, stay relaxed under the clock; trust the trained calm.
 Target: ~45 miles (race-inclusive). MAF Test #4 kept Wed. 50K is the peak stimulus, replacing solo 30mi.
 
 | Date | Workout | Distance | Pace | Intensity |
