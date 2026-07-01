@@ -31,7 +31,11 @@ from . import vault
 from .adapt import get_current_targets
 
 
-_DEFAULT_MENTAL_PROFILE = Path(__file__).resolve().parent / "data" / "br100_mental_race_plan.yaml"
+_DATA_DIR = Path(__file__).resolve().parent / "data"
+_DEFAULT_MENTAL_PROFILE = _DATA_DIR / "br100_mental_race_plan.yaml"
+# Same peer-split skeleton the standalone `ultra race mental` / crew manual pace off
+# by default, so the dossier's mental signal matches the linked artifact's ETAs.
+_DEFAULT_MENTAL_SKELETON = _DATA_DIR / "br100_2025_analog_splits.csv"
 
 
 def _mental_signal(
@@ -53,10 +57,25 @@ def _mental_signal(
         return None
     try:
         profile = race_mental.load_mental_profile(str(_DEFAULT_MENTAL_PROFILE))
+        # Pace the signal off the profile's OWN start time (falling back to the
+        # capstone's only if the profile lacks one), so the dossier's night/dark-
+        # patch clocks match the linked Mental Race Plan artifact — which is
+        # profile-driven and ignores the capstone default. Otherwise the capstone's
+        # 05:00 default would shift night_onset_mile an hour off the doc it cites.
+        mental_start = profile.get("meta", {}).get("start_time") or start_time
+        # Pace off the same bundled skeleton the artifact uses (fall back to the
+        # engine model if it's absent), so ETAs — and thus night/dark-patch miles —
+        # line up with the linked Mental Race Plan.
+        skeleton = None
+        if _DEFAULT_MENTAL_SKELETON.exists():
+            try:
+                skeleton = race_engine.load_split_skeleton(str(_DEFAULT_MENTAL_SKELETON))
+            except (FileNotFoundError, ValueError):
+                skeleton = None
         script = race_mental.build_mental_script(
             conn, course_id, profile,
-            goal_time_seconds=goal_time_seconds, start_time=start_time,
-            weather_temp_f=weather_temp_f, cohort=cohort,
+            goal_time_seconds=goal_time_seconds, start_time=mental_start,
+            weather_temp_f=weather_temp_f, skeleton=skeleton, cohort=cohort,
         )
     except Exception:
         return None

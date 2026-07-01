@@ -286,6 +286,22 @@ class CapstoneMentalSignalTestCase(unittest.TestCase):
         headings = [s["heading"] for s in dossier["output_sections"]]
         self.assertTrue(any("Mental Race Plan" in h for h in headings))
 
+    def test_mental_signal_paces_off_profile_start_not_capstone_default(self):
+        # The mental signal must match the (profile-driven) Mental Race Plan doc it
+        # links, regardless of the start time the capstone is invoked with — so its
+        # night/dark-patch clocks don't drift an hour off the artifact.
+        with database.get_db() as conn:
+            course = dict(self.race_engine.get_course(conn))
+            early = self.race_capstone.build_capstone_dossier(
+                conn, course, plan_id=None,
+                goal_time_seconds=26 * 3600, start_time="04:00",
+            )["signals"]["mental"]
+            late = self.race_capstone.build_capstone_dossier(
+                conn, course, plan_id=None,
+                goal_time_seconds=26 * 3600, start_time="12:00",
+            )["signals"]["mental"]
+        self.assertEqual(early["night_onset_mile"], late["night_onset_mile"])
+
 
 if __name__ == "__main__":
     unittest.main()
