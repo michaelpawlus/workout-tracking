@@ -1220,6 +1220,42 @@ def eta_seconds_from_skeleton(skeleton, mile, course_total_miles, goal_seconds):
     return raw * (goal_seconds / total_s)
 
 
+def segment_cumulative_seconds(conn, course_id, segments, total_miles,
+                               goal_time_seconds, start_time="05:00",
+                               weather_temp_f=None, skeleton=None):
+    """Cumulative elapsed seconds at each segment's END mile, paced to the governor.
+
+    Shared pacing spine for the crew manual (#12) and the mental race plan (#9,
+    piece 3), so both surfaces put the athlete at the same place at the same clock
+    time. ETAs come from ``skeleton`` (a peer-split pacing skeleton scaled to the
+    goal) when provided; otherwise from the engine's goal-pace race plan, whose
+    grade/fade SHAPE is normalized so the finish pins exactly to the governor.
+
+    Returns ``({segment_number: seconds}, eta_source_label)``.
+    """
+    if skeleton:
+        cum_by_num = {
+            s["segment_number"]: eta_seconds_from_skeleton(
+                skeleton, s["end_mile"], total_miles, goal_time_seconds)
+            for s in segments
+        }
+        return cum_by_num, "peer-split skeleton"
+
+    # Engine fallback: force GOAL-based pacing (plan_id=None) so ETAs honor the
+    # governor rather than the athlete's current training targets, then normalize
+    # the grade+fatigue curve so its total pins to the goal.
+    race_plan = generate_race_plan(
+        conn, course_id, None, goal_time_seconds,
+        weather_temp_f=weather_temp_f, start_time=start_time,
+    )
+    gov = race_plan["plans"]["A"]["segments"]
+    raw_cum = {s["segment_number"]: s["cumulative_time_seconds"] for s in gov}
+    engine_total = race_plan["plans"]["A"]["total_time_seconds"]
+    scale = goal_time_seconds / engine_total if engine_total else 1.0
+    cum_by_num = {num: secs * scale for num, secs in raw_cum.items()}
+    return cum_by_num, "engine model (grade + fade), scaled to governor"
+
+
 def _sodium_per_hr(protocol, hot):
     """Resolve the working sodium rate (mg/hr) from the profile, hot-aware."""
     fueling = protocol.get("fueling", {})
@@ -1261,35 +1297,11 @@ def generate_crew_manual(conn, course_id, protocol, goal_time_seconds=None,
     total_miles = course["total_distance_miles"] if course else 0
 
     # Cumulative elapsed seconds at each segment's end mile, from either source.
-    if skeleton:
-        cum_by_num = {
-            s["segment_number"]: eta_seconds_from_skeleton(
-                skeleton, s["end_mile"], total_miles, goal_time_seconds)
-            for s in segments
-        }
-        eta_source = "peer-split skeleton"
-        gov_finish_display = _format_time(goal_time_seconds)
-    else:
-        # Engine fallback: force GOAL-based pacing so the manual's ETAs honor the
-        # governor. Passing the active plan id would make generate_race_plan base
-        # pace on the athlete's *current training* targets (long_run_pace) instead,
-        # letting ETAs/fuel/night-kit timing drift off the advertised governor.
-        # (The skeleton path above already scales the curve to the goal.)
-        race_plan = generate_race_plan(
-            conn, course_id, None, goal_time_seconds,
-            weather_temp_f=weather_temp_f, start_time=start_time,
-        )
-        gov = race_plan["plans"]["A"]["segments"]
-        raw_cum = {s["segment_number"]: s["cumulative_time_seconds"] for s in gov}
-        # generate_race_plan starts from goal pace but layers grade/fatigue/heat
-        # multipliers, so its total drifts past the goal. Normalize the curve to
-        # the governor — keep the grade+fade SHAPE, pin the finish to goal — so the
-        # fallback honors the advertised governor just like the skeleton path.
-        engine_total = race_plan["plans"]["A"]["total_time_seconds"]
-        scale = goal_time_seconds / engine_total if engine_total else 1.0
-        cum_by_num = {num: secs * scale for num, secs in raw_cum.items()}
-        eta_source = "engine model (grade + fade), scaled to governor"
-        gov_finish_display = _format_time(goal_time_seconds)
+    cum_by_num, eta_source = segment_cumulative_seconds(
+        conn, course_id, segments, total_miles, goal_time_seconds,
+        start_time=start_time, weather_temp_f=weather_temp_f, skeleton=skeleton,
+    )
+    gov_finish_display = _format_time(goal_time_seconds)
 
     hot_threshold = (protocol.get("cooling") or {}).get("hot_threshold_f")
     hot = (weather_temp_f is not None and hot_threshold is not None

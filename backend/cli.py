@@ -29,6 +29,7 @@ from . import strava
 from . import race_engine
 from . import race_research
 from . import race_capstone
+from . import race_mental
 from . import peer_splits
 from . import vault
 
@@ -1965,6 +1966,97 @@ def cmd_race_crew_manual(args):
         print(f"Vault write skipped: {saved['vault_error']}", file=sys.stderr)
 
 
+def cmd_race_mental(args):
+    """Mental race plan (#9, piece 3): per-segment dark-patch / rehearsal script.
+
+    Maps each course segment to a mental zone, overlays night + the peer cohort's
+    high-divergence segments, and renders a printable "what you'll feel → what to
+    deploy" plan. Paces to the governor via the same spine as the crew manual.
+    """
+    from pathlib import Path
+    data_dir = Path(__file__).resolve().parent / "data"
+
+    profile_path = args.profile or str(data_dir / "br100_mental_race_plan.yaml")
+    try:
+        profile = race_mental.load_mental_profile(profile_path)
+    except (FileNotFoundError, ValueError) as e:
+        _err(str(e), args.json, 2)
+
+    # Pacing skeleton: explicit --splits, else the bundled analog, unless --no-splits.
+    skeleton = None
+    splits_path = None
+    if not args.no_splits:
+        if args.splits:
+            splits_path = args.splits
+        else:
+            cand = data_dir / "br100_2025_analog_splits.csv"
+            if cand.exists():
+                splits_path = str(cand)
+    if splits_path:
+        try:
+            skeleton = race_engine.load_split_skeleton(splits_path)
+        except (FileNotFoundError, ValueError) as e:
+            _err(str(e), args.json, 2)
+
+    goal_seconds = race_engine._parse_time(args.goal_time) if args.goal_time else None
+
+    with get_db() as conn:
+        course = race_engine.get_course(conn)
+        if not course:
+            _err("No course loaded. Run: ultra race load-course "
+                 "(then load-aid-stations).", args.json, 2)
+
+        # Cohort flags high-divergence segments; failure here just drops the overlay.
+        cohort = None
+        try:
+            cohort = race_engine.analyze_cohort(
+                conn, course["id"],
+                goal_seconds if goal_seconds is not None
+                else race_engine._parse_time(
+                    profile.get("meta", {}).get("governor_goal_time", "26:00:00")),
+            )
+        except Exception:
+            cohort = None
+
+        script = race_mental.build_mental_script(
+            conn, course["id"], profile,
+            goal_time_seconds=goal_seconds,
+            start_time=args.start_time,
+            weather_temp_f=args.weather_temp,
+            skeleton=skeleton,
+            cohort=cohort,
+        )
+
+    md = race_mental.mental_script_to_markdown(script)
+
+    saved = {}
+    if args.output:
+        with open(args.output, "w") as f:
+            f.write(md)
+        saved["output_path"] = args.output
+    if args.vault:
+        try:
+            res = vault.write_mental_plan_to_vault(md, script["course"])
+            saved["vault_path"] = res["path"]
+        except vault.VaultError as e:
+            saved["vault_error"] = str(e)
+
+    if args.json:
+        out = dict(script)
+        if saved:
+            out["saved"] = saved
+        _print(out, True)
+        return
+
+    print(md)
+    if "output_path" in saved:
+        print(f"\nSaved to {saved['output_path']}", file=sys.stderr)
+    if "vault_path" in saved:
+        print(f"Wrote mental race plan to {saved['vault_path']}", file=sys.stderr)
+    if "vault_error" in saved:
+        print(f"Vault write skipped: {saved['vault_error']}", file=sys.stderr)
+
+
 def cmd_race_checkin(args):
     with get_db() as conn:
         # Find the A-plan race_plan_id for the latest course
@@ -2274,6 +2366,15 @@ def cmd_race_capstone(args):
     print(f"  ▸ Race plan A/B/C: {bands}  (base {rp.get('base_pace_display')})")
     print(f"  ▸ Fueling: {len(sig['fueling'])} segments costed")
     print(f"  ▸ Crew/drop-bag stations: {len(sig['crew_stations'])}")
+    mp = sig.get("mental")
+    if mp:
+        dp = mp.get("dark_patch_range")
+        dp_str = f"dark patch ~mi {dp[0]:g}–{dp[1]:g}" if dp else "no dark-patch band"
+        night = mp.get("night_onset_mile")
+        night_str = f", night from mi {night:g}" if night is not None else ""
+        print(f"  ▸ Mental plan: {len(mp.get('zones') or [])} zones, {dp_str}{night_str}")
+    else:
+        print("  ▸ Mental plan: none (profile absent)")
     tb = sig["training_block"]
     print(f"  ▸ Training block: {tb.get('count')} logged runs "
           f"({len(tb.get('long_runs') or [])} long runs ≥18mi), latest {tb.get('latest_date')}")
@@ -2282,7 +2383,7 @@ def cmd_race_capstone(args):
     print("References to read:")
     print(f"  report: {refs.get('report_path')} "
           f"({'EXISTS — update in place' if refs.get('report_exists') else 'new — write fresh'})")
-    for key in ("course_guide", "peer_learnings", "crew_manual", "workouts_dir"):
+    for key in ("course_guide", "peer_learnings", "crew_manual", "mental_plan", "workouts_dir"):
         print(f"  {key}: {refs[key]}")
     print()
 
@@ -2611,6 +2712,27 @@ def main():
     rcm_p.add_argument("--vault", action="store_true", help="Write the manual into the Obsidian vault")
     rcm_p.add_argument("--json", action="store_true")
 
+    # ultra race mental
+    rmt_p = race_sub.add_parser(
+        "mental",
+        help="Mental race plan (#9 piece 3): per-segment dark-patch / rehearsal script")
+    rmt_p.add_argument("--goal-time", type=str,
+                       help="Governor finish time (HH:MM:SS); default from the profile")
+    rmt_p.add_argument("--start-time", type=str,
+                       help="Race start time (HH:MM); default from the profile")
+    rmt_p.add_argument("--weather-temp", type=float,
+                       help="Forecast temperature (°F), shown in the plan header")
+    rmt_p.add_argument("--profile", type=str,
+                       help="Path to the mental race plan YAML (default backend/data/br100_mental_race_plan.yaml)")
+    rmt_p.add_argument("--splits", type=str,
+                       help="Peer-split skeleton CSV to pace ETAs (default: bundled 2025 analog)")
+    rmt_p.add_argument("--no-splits", action="store_true",
+                       help="Ignore the peer skeleton; use the engine's grade+fade model")
+    rmt_p.add_argument("--output", type=str, help="Save markdown to a file path")
+    rmt_p.add_argument("--vault", action="store_true",
+                       help="Write the plan into the Obsidian vault (race/)")
+    rmt_p.add_argument("--json", action="store_true")
+
     # ultra race checkin
     rci_p = race_sub.add_parser("checkin", help="Log arrival at an aid station during race")
     rci_p.add_argument("--station", type=str, required=True,
@@ -2746,6 +2868,7 @@ def main():
                 "aggregate-reports": cmd_race_aggregate_reports,
                 "peer-splits": cmd_race_peer_splits,
                 "capstone": cmd_race_capstone,
+                "mental": cmd_race_mental,
             }
 
             cmd = race_commands.get(args.race_command)

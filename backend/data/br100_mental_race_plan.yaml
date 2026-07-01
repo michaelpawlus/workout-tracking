@@ -1,0 +1,110 @@
+# Burning River 100 — race-day mental rehearsal profile (2026).
+#
+# Issue #9, piece 3: mental energy management is a peer dimension to fitness and
+# economy, so race day gets its own rehearsal script — not a soft add-on. This is
+# the athlete-specific, hand-editable data layer for `ultra race mental`; the engine
+# maps each course segment to a mental ZONE (by mile fraction), overlays night
+# (ETA past sunset) and the peer cohort's high-divergence "danger" segments, and
+# renders a per-segment "what you'll likely feel here → what to deploy" plan.
+#
+# Nothing race-specific is hardcoded in Python (mirrors br100_crew_protocol.yaml):
+# a second race = a second profile. The tools below were PRE-LOADED across the
+# 20-week block (see MENTAL_FOCUS in ultra_plan.py) — race day is DEPLOY, not
+# rehearse. Keep this diff-able and committed.
+
+meta:
+  race: Burning River 100
+  year: 2026
+  athlete: Michael Pawlus
+  start_time: "04:00"            # 4:00 AM gun; drives the day/dusk/night ETA tags
+  governor_goal_time: "26:00:00" # Pace the rehearsal to THIS, not the 24h stretch
+  sunset: "20:50"                # Akron, late July — segments reached after = night
+  sunrise: "06:15"               # second sunrise, ~mile 90+ for a 26h day
+
+# The trained toolkit. Repeated through the block so it's automatic under fatigue.
+mantras:
+  - "Calm is strong."
+  - "One aid station at a time."
+  - "Patient, present, fueling on schedule."
+  - "Relentless forward progress."
+
+# Pain/discomfort reframes — turn a stop signal into information.
+reframes:
+  quads: "Burning quads = information, not a stop sign. Note it, keep moving."
+  low_mood: "The low is chemical, not the truth. Eat, drink, and it lifts."
+  doubt: "Doubt shows up on schedule around mile 60. It's a visitor, not a verdict."
+  heat: "Heat is the #1 challenge — respect it: cool, slow, and it stays survivable."
+  clock: "Beating the 26h ETAs is confidence. Chasing 24 is stress. Run the governor."
+
+# Present-moment anchors — where attention goes when the mind wanders to fatigue.
+anchors:
+  - "Footstrike / cadence — count 20 steps."
+  - "Breath: in 3, out 2."
+  - "Body scan: jaw → shoulders → hands → hips, release."
+  - "Name three things you can see right now."
+
+# Pre-race visualization sequence — rehearse the night before and at the start line.
+# Bank composure, not time; see yourself calm exactly where it usually gets hard.
+visualization:
+  - "The 4 AM start: calm and patient in the dark, letting the fast starters go."
+  - "Every crew stop: quick, cheerful, fueled — in and out, ETA beaten."
+  - "The mile 60–70 low arriving on schedule — and you already know the script."
+  - "Nightfall with the headlamp: the world shrinks to the trail; you settle in."
+  - "The final towpath miles: legs shot, mind quiet, reeling in the finish."
+
+# Zone scripts — the engine maps segments to these by mile fraction of the course.
+# Order matters only for display; `max_fraction` is the upper bound of each zone.
+zones:
+  launch:
+    max_fraction: 0.20
+    label: "Launch — patience"
+    likely_feel: "Fresh and eager in the cool dark; tempted to bank time early."
+    do: "Let the field go. Run an effort you'd barely notice. Fuel from mile one."
+    deploy: "Bank composure, not time."
+  settle:
+    max_fraction: 0.45
+    label: "Settle — find the rhythm"
+    likely_feel: "Warming up, into a groove; the day is getting real but you're fine."
+    do: "Lock the fueling clock (gel every 30–40 min). Relaxed jaw and shoulders."
+    deploy: "Patient, present, fueling on schedule."
+  grind:
+    max_fraction: 0.58
+    label: "Grind — the work begins"
+    likely_feel: "First real fatigue, heat of the day, halfway math starting to bite."
+    do: "Down-shift, cool aggressively, walk the climbs. Keep eating before hungry."
+    deploy: "One aid station at a time."
+    reframe: heat
+  dark_patch:
+    max_fraction: 0.70
+    label: "Dark patch — the low"
+    likely_feel: "The famous mile 60–70 implosion: low mood, doubt, 'why am I here'."
+    do: >-
+      Shrink the race to the next aid station only. Eat, drink, keep moving —
+      the low is chemical and it WILL pass. Do not make any big decision here.
+    deploy: "This will pass. It always passes. Next aid station only."
+    reframe: low_mood
+  deep:
+    max_fraction: 0.85
+    label: "Deep water — past the low"
+    likely_feel: "Through the worst, but deep fatigue and (likely) full dark now."
+    do: "Relentless forward progress. Power-hike the ups, jog the flats/downs."
+    deploy: "Relentless forward progress."
+    reframe: quads
+  closer:
+    max_fraction: 1.01
+    label: "Closer — bring it home"
+    likely_feel: "Legs shot, but the finish is real and pulling you in."
+    do: "Empty the tank on your terms. Reel in the miles one at a time; smile."
+    deploy: "Calm is strong — finish the way you rehearsed."
+
+# Overlays stack ON TOP of the mile-fraction zone for a given segment.
+overlays:
+  night:
+    label: "Night"
+    likely_feel: "World shrinks to the headlamp cone; time and pace get slippery."
+    do: >-
+      Settle into the quiet. Chase your own light. Extra vigilance on fuel —
+      it's easy to forget to eat in the dark.
+    deploy: "Chase the light. Keep eating."
+  cohort_danger:
+    note: "Peers scatter here (high split variance) — hold your plan while others unravel."
