@@ -421,6 +421,23 @@ def write_crew_manual_to_vault(markdown: str, race: str, *, subdir: str = "race"
     return {"path": str(target)}
 
 
+def write_mental_plan_to_vault(markdown: str, race: str, *, subdir: str = "race") -> dict:
+    """Write a generated mental race plan into ``<vault>/race/`` as
+    ``<Race> Mental Race Plan.md``.
+
+    Direct write (the plan owns its own markdown); raises ``VaultError`` if
+    ``OBSIDIAN_VAULT_PATH`` is unusable. Returns ``{"path": <absolute md path>}``.
+    Companion to the crew manual (issue #9, piece 3 alongside #12).
+    """
+    out = _vault_root() / subdir
+    out.mkdir(parents=True, exist_ok=True)
+    safe = re.sub(r"\s+", " ", f"{race} Mental Race Plan").strip()
+    safe = re.sub(r'[\\/:*?"<>|]', "", safe)
+    target = out / f"{safe}.md"
+    target.write_text(markdown, encoding="utf-8")
+    return {"path": str(target)}
+
+
 def append_product_log_entry(
     *,
     run_date: str,

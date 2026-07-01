@@ -91,7 +91,7 @@ class CapstoneTestCase(unittest.TestCase):
         sig = dossier["signals"]
         self.assertEqual(set(sig), {
             "targets", "history", "peer_cohort", "race_plan",
-            "fueling", "crew_stations", "training_block"})
+            "fueling", "crew_stations", "mental", "training_block"})
 
         # History wired through.
         self.assertEqual(sig["history"]["count"], 1)

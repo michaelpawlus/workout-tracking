@@ -21,12 +21,67 @@ Public surface:
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from . import race_engine
 from . import historical
+from . import race_mental
 from . import vault
 from .adapt import get_current_targets
+
+
+_DEFAULT_MENTAL_PROFILE = Path(__file__).resolve().parent / "data" / "br100_mental_race_plan.yaml"
+
+
+def _mental_signal(
+    conn,
+    course_id: int,
+    goal_time_seconds: int,
+    start_time: str,
+    weather_temp_f: float | None,
+    cohort: dict | None,
+) -> dict[str, Any] | None:
+    """Compact mental race-plan signal (issue #9, piece 3) for the dossier.
+
+    Loads the bundled mental profile, builds the per-segment script (reusing the
+    already-computed ``cohort`` for danger flags), and collapses it to the zone arc
+    + dark-patch/night markers + the trained toolkit. Returns ``None`` if the
+    profile is absent/unreadable so the capstone still builds without it.
+    """
+    if not _DEFAULT_MENTAL_PROFILE.exists():
+        return None
+    try:
+        profile = race_mental.load_mental_profile(str(_DEFAULT_MENTAL_PROFILE))
+        script = race_mental.build_mental_script(
+            conn, course_id, profile,
+            goal_time_seconds=goal_time_seconds, start_time=start_time,
+            weather_temp_f=weather_temp_f, cohort=cohort,
+        )
+    except Exception:
+        return None
+
+    # Collapse the per-segment plan into consecutive-zone bands for the dossier.
+    zones: list[dict[str, Any]] = []
+    for seg in script["segments"]:
+        if zones and zones[-1]["zone"] == seg["zone"]:
+            zones[-1]["end_mile"] = seg["end_mile"]
+        else:
+            zones.append({
+                "zone": seg["zone"],
+                "label": seg["zone_label"],
+                "start_mile": seg["start_mile"],
+                "end_mile": seg["end_mile"],
+                "deploy": seg["deploy"],
+            })
+
+    return {
+        "dark_patch_range": script["dark_patch_range"],
+        "night_onset_mile": script["night_onset_mile"],
+        "mantras": script["mantras"],
+        "reframes": script["reframes"],
+        "zones": zones,
+    }
 
 
 DEFAULT_TARGET_FINISH = "26:00:00"
@@ -96,6 +151,7 @@ def _vault_references(course_name: str, title: str) -> dict[str, Any]:
         "course_guide": f"race-prep/{course_name} Course & Strategy Guide.md",
         "peer_learnings": f"race-prep/{course_name} Peer Split Learnings.md",
         "crew_manual": f"race/{course_name} Crew Manual.md",
+        "mental_plan": f"race/{course_name} Mental Race Plan.md",
         "workouts_dir": "workouts/  (per-run narrative + Mohican benchmark report)",
         "product_log": "workouts/PRODUCT_LOG.md",
         "memory": "Workout App memory: Mohican benchmark, fueling protocol, course guide notes.",
@@ -133,6 +189,11 @@ def _output_sections() -> list[dict[str, str]]:
          "what": "Explicit if/then plans. Anchor on the Canal Corridor weather-DNF lesson: "
                  "do NOT let bad overnight weather end the race mentally. Heat, GI, dark-"
                  "patch, and behind-pace playbooks."},
+        {"heading": "Mental Race Plan & Dark-Patch Scripts",
+         "what": "Mental energy as the third lever (issue #9): the zone-by-zone arc from "
+                 "`signals.mental` — patience early, the mile ~60–70 dark-patch script, the "
+                 "night overlay — with the mantras/reframes to deploy. Tie it to the crew "
+                 "plan (crew reads mood at each stop) and flag where peers scatter."},
         {"heading": "Lessons Integrated",
          "what": "Trace each pacing/fueling decision back to its signal — own-history fade, "
                  "peer cohort, Mohican benchmark, training block — so the plan is auditable."},
@@ -164,6 +225,9 @@ def _method(existing: bool) -> list[str]:
         "(`signals.peer_cohort.slowdown_pct`); call out the danger-zone segments explicitly.",
         "Cross-check the fueling schedule against the athlete's logged protocol and the Mohican "
         "HEED lesson — do not invent products; reconcile g/hr and mg/hr against `signals.fueling`.",
+        "Weave the mental race plan in as a first-class dimension: pull the zone arc + dark-patch "
+        "script + night overlay from `signals.mental` (full detail in the linked mental-plan doc), "
+        "and align the mantras/reframes to the clock ETAs so the low patch has a rehearsed response.",
         "Keep every claim traceable to a signal in this dossier or a cited vault doc; flag any "
         "gap the data cannot close rather than papering over it.",
         "Save with `ultra race capstone --save-guide -` (markdown on stdin) — stable filename, so "
@@ -230,6 +294,10 @@ def build_capstone_dossier(
         if s.get("crew_accessible") or s.get("drop_bag")
     ]
 
+    # --- mental race plan (issue #9, piece 3) -----------------------------
+    mental = _mental_signal(
+        conn, course_id, goal_time_seconds, start_time, weather_temp_f, cohort)
+
     # --- training block digest --------------------------------------------
     training_block = _training_block_digest(conn, plan_id)
 
@@ -270,6 +338,7 @@ def build_capstone_dossier(
             "race_plan": race_plan,
             "fueling": fueling,
             "crew_stations": crew_stations,
+            "mental": mental,
             "training_block": training_block,
         },
         "references": references,

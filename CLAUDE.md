@@ -69,7 +69,23 @@ Each of the 20 plan weeks carries a **mental-training prescription** alongside i
 
 Surfaced as a **Mental:** line in `ultra today`, `ultra week`, and `TRAINING_PLAN.md`. When coaching a run, tie the athlete's per-run `--mental-intention` back to the week's prescription (prescribed-vs-actual at the week level). After editing prescriptions, re-run `ultra plan --export-md`.
 
-Remaining pieces of #9 (still to build): race-day mental rehearsal (piece 3, per-segment cues / dark-patch scripts in the Race Day Engine + capstone), and HR-at-pace × mental-state correlation analysis in run reports (piece 4, needs ≥~6 runs of piece-1 data).
+### Race-day mental rehearsal (piece 3)
+
+The **mental race plan** (`ultra race mental`) is the deploy-day counterpart to the crew manual: it maps each Race Day Engine segment to a mental **zone** (launch → settle → grind → dark-patch → deep → closer, by mile fraction), overlays **night** (segments whose ETA lands after sunset) and the peer cohort's high-divergence **danger** segments, and renders a printable per-segment "what you'll likely feel here → what to deploy" sheet with clock ETAs. It paces to the governor via the **same spine as the crew manual** (`race_engine.segment_cumulative_seconds`), so both surfaces put you in the same place at the same time.
+
+All athlete-specific content — mantras, reframes, anchors, the pre-race visualization, and the zone scripts — lives in `backend/data/br100_mental_race_plan.yaml` (hand-editable, like `br100_crew_protocol.yaml`; a second race = a second profile). The tools were **pre-loaded** across the 20-week block (`MENTAL_FOCUS`); race day is **deploy, not rehearse**. After editing the profile, just re-run the command.
+
+```bash
+cd /home/michaelpawlus/projects/workout-app/backend
+python3 cli.py ultra race mental --weather-temp 82              # print the plan
+python3 cli.py ultra race mental --vault                        # write to vault race/<Race> Mental Race Plan.md
+python3 cli.py ultra race mental --no-splits                    # engine grade+fade model instead of the 2025 analog
+python3 cli.py ultra race mental --json                         # structured (zones + per-segment cues)
+```
+
+The capstone (`ultra race capstone`) folds a compact mental signal (`signals.mental`: zone arc + dark-patch/night markers + toolkit) into its synthesis order and links the full mental-plan doc, so mental energy is a first-class dimension of the strategy report.
+
+Remaining piece of #9 (still to build): HR-at-pace × mental-state correlation analysis in run reports (piece 4, needs ≥~6 runs of piece-1 data).
 
 ## Schedule Adjustments
 
@@ -216,6 +232,17 @@ python3 cli.py ultra race crew-manual --splits backend/data/br100_2025_analog_sp
 python3 cli.py ultra race crew-manual --no-splits             # use the engine's grade+fade model
 # Defaults: --profile backend/data/br100_crew_protocol.yaml; goal/start from that profile;
 # splits from the bundled 2025 analog. Load the BR100 GPX first for grade-aware ETAs.
+
+# Mental race plan (issue #9, piece 3): per-segment dark-patch / rehearsal script.
+# Maps each segment to a mental zone (by mile fraction), overlays night (ETA past
+# sunset) + the peer cohort's high-divergence segments, and renders a printable
+# "what you'll feel → what to deploy" sheet with clock ETAs. Paces to the governor
+# via the same spine as the crew manual. Athlete content lives in the YAML profile.
+python3 cli.py ultra race mental --weather-temp 82
+python3 cli.py ultra race mental --vault --json           # write into the Obsidian vault (race/)
+python3 cli.py ultra race mental --no-splits              # engine grade+fade model, not the 2025 analog
+# Defaults: --profile backend/data/br100_mental_race_plan.yaml; goal/start/sunset from it;
+# ETAs from the bundled 2025 analog skeleton. Load the BR100 GPX + aid stations first.
 
 # Capstone strategy report (issue #16): the meta-synthesis everything feeds into.
 # Agent-driven (mirrors aggregate-reports/peer-splits): the CLI gathers EVERY internal
