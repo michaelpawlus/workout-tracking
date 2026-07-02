@@ -1,6 +1,6 @@
 # Burning River 100 — 20-Week Training Plan
 
-**Goal:** Sub-24 hour finish
+**Goal:** 26-hour finish (target); prior 100s 25:23-27:17
 **Race Date:** July 25, 2026
 **Start:** 2026-03-09 | **End:** 2026-07-26
 
@@ -678,5 +678,5 @@ Target: 10-110 miles
 > Very easy 2mi. Stay loose. Hydrate well.
 
 **2026-07-25 — BURNING RIVER 100**
-> 100 miles. Sub-24 goal = ~14:24/mi avg including all stops. Start conservative. Walk all uphills. Eat early and often. The race starts at mile 60.
+> 100 miles. 26h governor = ~15:36/mi avg including all stops (sub-24 stretch = ~14:24/mi). Start conservative. Walk all uphills. Eat early and often. The race starts at mile 60.
 

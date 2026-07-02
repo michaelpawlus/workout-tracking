@@ -622,7 +622,7 @@ def ultra_submit(req: UltraSubmit):
         race_info = {
             "race": "Burning River 100",
             "date": "2026-07-25",
-            "goal": "Sub-24 hours",
+            "goal": plan["goal"],
             "weeks_remaining": max(0, (datetime(2026, 7, 25) - datetime.now()).days // 7),
         }
 
@@ -742,7 +742,7 @@ def ultra_progress():
         "plan_id": plan["id"],
         "race": "Burning River 100",
         "race_date": "2026-07-25",
-        "goal": "Sub-24 hours",
+        "goal": plan["goal"],
         "weeks_remaining": weeks_remaining,
         "workouts_total": total,
         "workouts_completed": completed,
