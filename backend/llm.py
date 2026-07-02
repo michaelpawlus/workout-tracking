@@ -364,7 +364,7 @@ def analyze_run_feedback(prescribed: dict, actual: dict,
                          mental_data: dict | None = None) -> dict:
     """Analyze a completed run against the prescribed workout and return structured feedback."""
 
-    system_prompt = """You are an experienced ultramarathon coach analyzing a training run for an athlete preparing for a 100-mile race (Burning River 100, July 25, 2026, sub-24hr goal).
+    system_prompt = """You are an experienced ultramarathon coach analyzing a training run for an athlete preparing for a 100-mile race (Burning River 100, July 25, 2026). The goal is finish-primary: a 26-hour finish is the governor the whole plan paces to; sub-24 is a stretch only.
 
 COACHING PRINCIPLES:
 - 80/20 rule: 80% of runs should be easy (conversational pace), 20% quality (tempo/hills/intervals)

@@ -107,12 +107,13 @@ def cmd_init(args):
                 print(f"Deleted existing plan (id={plan_id})", file=sys.stderr)
 
         plan_id = create_br100_plan(conn)
+        plan = _get_plan(conn)
 
     result = {"plan_id": plan_id, "message": "Burning River 100 plan created"}
     if not args.json:
         print(f"Created Burning River 100 plan (id={plan_id})")
         print("20 weeks: Mar 9 - Jul 26, 2026 (Mon-Sun weeks)")
-        print("Goal: Sub-24 hours")
+        print(f"Goal: {plan['goal']}")
     else:
         _print(result, True)
 
@@ -343,7 +344,7 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
         race_info = {
             "race": "Burning River 100",
             "date": "2026-07-25",
-            "goal": "Sub-24 hours",
+            "goal": plan["goal"],
             "weeks_remaining": max(0, (datetime(2026, 7, 25) - datetime.now()).days // 7),
         }
 
@@ -814,7 +815,7 @@ def cmd_progress(args):
         "plan_id": plan["id"],
         "race": "Burning River 100",
         "race_date": "2026-07-25",
-        "goal": "Sub-24 hours",
+        "goal": plan["goal"],
         "weeks_remaining": weeks_remaining,
         "workouts_total": total,
         "workouts_completed": completed,
@@ -827,7 +828,7 @@ def cmd_progress(args):
         _print(result, True)
     else:
         print(f"=== Burning River 100 Progress ===")
-        print(f"Race: July 25, 2026 | Goal: Sub-24hr | Weeks left: {weeks_remaining}")
+        print(f"Race: July 25, 2026 | Goal: {plan['goal']} | Weeks left: {weeks_remaining}")
         print(f"Workouts: {completed}/{total} ({result['completion_pct']}%)")
         print()
         bm_done = sum(1 for b in result["benchmarks"] if b["completed"])

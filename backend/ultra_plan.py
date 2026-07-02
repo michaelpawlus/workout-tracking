@@ -9,6 +9,17 @@ from .database import get_db
 from .adapt import seed_initial_targets
 
 
+# --- Canonical race goal (single source of truth: training_plans.goal) ---
+# Post-Mohican recalibration (issue #29): 26h finish is the *governor* the whole
+# plan paces to; sub-24 is a stretch only. race_capstone.py already treats 26h as
+# canonical — these keep the plan/coaching/CLI layers agreeing with it rather than
+# hardcoding "sub-24". Readers should pull training_plans.goal (persisted from these
+# on seed) instead of hardcoding a goal string.
+RACE_GOAL = "26-hour finish (target); prior 100s 25:23-27:17"
+RACE_GOAL_NOTES = ("20-week plan for Burning River 100 (July 25, 2026). "
+                   "Finish-primary: 26h governor; sub-24 is a stretch only.")
+
+
 # Week definitions: (week_num, phase/week_type, target_miles_low, target_miles_high, focus)
 WEEKS = [
     (1,  "base",     25, 30, "Baseline week. Easy running, 5K TT, MAF test"),
@@ -367,9 +378,9 @@ def _race_week(start_date, d):
                 "scheduled_date": day.strftime("%Y-%m-%d"),
                 "workout_type": "race",
                 "title": "BURNING RIVER 100",
-                "description": ("100 miles. Sub-24 goal = ~14:24/mi avg including all stops. "
-                                "Start conservative. Walk all uphills. Eat early and often. "
-                                "The race starts at mile 60."),
+                "description": ("100 miles. 26h governor = ~15:36/mi avg including all stops "
+                                "(sub-24 stretch = ~14:24/mi). Start conservative. Walk all "
+                                "uphills. Eat early and often. The race starts at mile 60."),
                 "target_distance_miles": 100,
                 "intensity": "hard",
                 "is_benchmark": True,
@@ -489,9 +500,8 @@ def create_br100_plan(conn=None, start_date="2026-03-09"):
         cursor = conn.execute(
             """INSERT INTO training_plans (name, goal, start_date, end_date, total_weeks, mesocycle_weeks, status, notes)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            ("Burning River 100", "Sub-24 hour finish", start_date,
-             end.strftime("%Y-%m-%d"), 20, 4, "active",
-             "20-week plan for Burning River 100 (July 25, 2026). Target: sub-24 hours."),
+            ("Burning River 100", RACE_GOAL, start_date,
+             end.strftime("%Y-%m-%d"), 20, 4, "active", RACE_GOAL_NOTES),
         )
         plan_id = cursor.lastrowid
 
