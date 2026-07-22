@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch supersedes an in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      # Installs the Python pinned in .python-version. --locked fails the build
+      # if uv.lock is stale rather than silently re-resolving, so a dependency
+      # change without a committed lock is caught here.
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Test
+        run: uv run pytest
