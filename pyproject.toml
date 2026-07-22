@@ -23,6 +23,18 @@ dependencies = [
 [project.scripts]
 ultra = "backend.cli:main"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+
 [tool.setuptools.packages.find]
 include = ["backend*"]
 

@@ -3,7 +3,7 @@
 A command-line ultramarathon coach. Plans 20 weeks of training, learns from every run, and writes the system of record to Obsidian.
 
 ```bash
-pip install -e .
+uv sync
 ```
 
 ## What this is
@@ -59,12 +59,16 @@ Apply? [y/N]
 ```bash
 git clone https://github.com/michaelpawlus/workout-app
 cd workout-app
-python3 -m venv venv && source venv/bin/activate
-pip install -e .
-ultra ultra init                  # seed the 20-week plan
+uv sync                           # creates .venv and installs the project
+uv run ultra ultra init           # seed the 20-week plan
 ```
 
-Requires Python 3.10+. Strava and intervals.icu integrations are optional — see [Device sync](#device-sync).
+Requires [uv](https://docs.astral.sh/uv/) and Python 3.12 (pinned in `.python-version`;
+`uv` will fetch it if missing). Strava and intervals.icu integrations are optional — see
+[Device sync](#device-sync).
+
+Commands below are written as bare `ultra ...`. Either prefix them with `uv run`, or
+`source .venv/bin/activate` once per shell and call `ultra` directly.
 
 ## Contents
 
