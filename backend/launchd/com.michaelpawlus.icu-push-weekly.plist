@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  macOS replacement for the WSL cron job that pushed upcoming BR100 workouts
+  to Intervals.icu. Install with:
+
+    cp backend/launchd/com.michaelpawlus.icu-push-weekly.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.michaelpawlus.icu-push-weekly.plist
+
+  Check status / logs / run it now:
+
+    launchctl print gui/$(id -u)/com.michaelpawlus.icu-push-weekly
+    tail -f /tmp/icu-push-weekly.{out,err}.log
+    launchctl kickstart -p gui/$(id -u)/com.michaelpawlus.icu-push-weekly
+
+  Uninstall:
+
+    launchctl bootout gui/$(id -u)/com.michaelpawlus.icu-push-weekly
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.michaelpawlus.icu-push-weekly</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/michaelpawlus/dev/projects/workout-tracking/backend/icu-push-weekly.sh</string>
+    </array>
+
+    <!-- Sunday 18:00, ahead of the Monday-start training week. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>0</integer>
+        <key>Hour</key>
+        <integer>18</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Unlike cron, launchd runs a missed job once the Mac wakes up. -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Homebrew's bin must be on PATH for `uv`; launchd's default PATH is minimal. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/icu-push-weekly.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/icu-push-weekly.err.log</string>
+</dict>
+</plist>
