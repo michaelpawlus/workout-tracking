@@ -4,6 +4,30 @@
 
 You are a running coach assistant for a Burning River 100 ultramarathon training plan (20 weeks, March 9 – July 26, 2026). Weeks run Monday–Sunday with the long run on Saturday as the capstone. You help the user track workouts, analyze Strava data, and provide actionable feedback.
 
+## Environment
+
+Repo root is `/Users/michaelpawlus/dev/projects/workout-tracking` (macOS). Python is managed
+with **uv** — never pip, never a hand-rolled venv. Run everything through `uv run`:
+
+```bash
+uv sync                      # install / refresh the environment
+uv run ultra ultra today     # entry point is `ultra`; BR100 lives under the `ultra` subgroup
+uv run pytest                # 75 tests
+uv run ruff check
+```
+
+Python is pinned to 3.12 in `.python-version` — the exact dependency pins (`pydantic==2.9.2`)
+have no wheels for 3.13+ and would fall back to a Rust source build.
+
+Two things are machine-local and **not** in git — the CLI fails loudly without them:
+
+- `backend/workouts.db` — the whole training record (plan, runs, feedback, race data)
+- `backend/.env` — `ANTHROPIC_API_KEY`, Strava, and Intervals.icu credentials
+
+`OBSIDIAN_VAULT_PATH` must point at the vault for any `--vault` / `--save` write to succeed.
+Set it in `backend/.env` or `~/.zshrc`. Keep the vault and any git repo **out** of
+iCloud-synced `~/Documents` and `~/Desktop` — iCloud and git conflict on each other's files.
+
 ## Run Reports
 
 When the user asks for feedback on a run:
@@ -35,7 +59,7 @@ When generating a run report, **always ask about nutrition**:
 
 Use `ultra nutrition --json` to get guidelines for context before asking. Pass user responses via CLI flags:
 ```bash
-python3 cli.py ultra submit --distance 10 --duration 100 --hr 140 \
+uv run ultra ultra submit --distance 10 --duration 100 --hr 140 \
   --pre-meal "oatmeal 2hr before" --during-fuel "2 gels at miles 4 and 7" \
   --during-hydration "20oz water + Nuun" --post-meal "protein shake" \
   --nutrition-notes "felt great" --json
@@ -55,7 +79,7 @@ Mental energy management is treated as a **peer dimension** to fitness and econo
 Pass responses via CLI flags on `submit`; they're stored on `run_feedback`, woven into AI coaching (`mental_feedback`), and rendered in a `## Mental` section of the vault note:
 
 ```bash
-python3 cli.py ultra submit --distance 10 --duration 100 --hr 140 \
+uv run ultra ultra submit --distance 10 --duration 100 --hr 140 \
   --mental-intention "box breathing on climbs" --mental-state flow \
   --breathing-quality relaxed --mind-wandering no \
   --mental-notes "HR dropped whenever I focused on breath"
@@ -76,11 +100,11 @@ The **mental race plan** (`ultra race mental`) is the deploy-day counterpart to 
 All athlete-specific content — mantras, reframes, anchors, the pre-race visualization, and the zone scripts — lives in `backend/data/br100_mental_race_plan.yaml` (hand-editable, like `br100_crew_protocol.yaml`; a second race = a second profile). The tools were **pre-loaded** across the 20-week block (`MENTAL_FOCUS`); race day is **deploy, not rehearse**. After editing the profile, just re-run the command.
 
 ```bash
-cd /home/michaelpawlus/projects/workout-app/backend
-python3 cli.py ultra race mental --weather-temp 82              # print the plan
-python3 cli.py ultra race mental --vault                        # write to vault race/<Race> Mental Race Plan.md
-python3 cli.py ultra race mental --no-splits                    # engine grade+fade model instead of the 2025 analog
-python3 cli.py ultra race mental --json                         # structured (zones + per-segment cues)
+cd /Users/michaelpawlus/dev/projects/workout-tracking
+uv run ultra ultra race mental --weather-temp 82              # print the plan
+uv run ultra ultra race mental --vault                        # write to vault race/<Race> Mental Race Plan.md
+uv run ultra ultra race mental --no-splits                    # engine grade+fade model instead of the 2025 analog
+uv run ultra ultra race mental --json                         # structured (zones + per-segment cues)
 ```
 
 The capstone (`ultra race capstone`) folds a compact mental signal (`signals.mental`: zone arc + dark-patch/night markers + toolkit) into its synthesis order and links the full mental-plan doc, so mental energy is a first-class dimension of the strategy report.
@@ -93,52 +117,52 @@ The markdown (`TRAINING_PLAN.md`) is the reference plan. Small day-to-day shifts
 
 ```bash
 # "I did Wednesday's tempo on Thursday"
-python3 cli.py ultra submit --distance 8 --duration 75 --hr 162 \
+uv run ultra ultra submit --distance 8 --duration 75 --hr 162 \
   --date 2026-03-26 --scheduled-date 2026-03-25
 ```
 
 To regenerate `TRAINING_PLAN.md` after target changes:
 ```bash
-python3 cli.py ultra plan --export-md
+uv run ultra ultra plan --export-md
 ```
 
 ## CLI Reference
 
 ```bash
-cd /home/michaelpawlus/projects/workout-app/backend
+cd /Users/michaelpawlus/dev/projects/workout-tracking
 
 # List recent Strava activities
-python3 cli.py ultra strava-import --list --count 5 --json
+uv run ultra ultra strava-import --list --count 5 --json
 
 # Today's prescribed workout
-python3 cli.py ultra today
+uv run ultra ultra today
 
 # This week's schedule
-python3 cli.py ultra week
+uv run ultra ultra week
 
 # Set pace targets manually (updates DB + future workouts)
-python3 cli.py ultra targets --set --tempo 9.25 --easy 10.25 --long-run 10.75
+uv run ultra ultra targets --set --tempo 9.25 --easy 10.25 --long-run 10.75
 
 # View current targets
-python3 cli.py ultra targets --json
+uv run ultra ultra targets --json
 
 # Regenerate TRAINING_PLAN.md from DB with current targets
-python3 cli.py ultra plan --export-md
+uv run ultra ultra plan --export-md
 
 # Nutrition guidelines for today's workout
-python3 cli.py ultra nutrition --json
+uv run ultra ultra nutrition --json
 
 # Nutrition for a specific distance
-python3 cli.py ultra nutrition --distance 15 --json
+uv run ultra ultra nutrition --distance 15 --json
 
 # Skip vault write on submit (debugging / throwaway runs)
-python3 cli.py ultra submit --distance 4 --duration 40 --hr 138 --no-vault
+uv run ultra ultra submit --distance 4 --duration 40 --hr 138 --no-vault
 
 # Retroactively write the most recent feedback row to the vault
-python3 cli.py ultra feedback --save
+uv run ultra ultra feedback --save
 
 # Retroactively write a specific feedback row (by run_feedback.id)
-python3 cli.py ultra feedback --save --id 42 --json
+uv run ultra ultra feedback --save --id 42 --json
 ```
 
 ## Race Day Engine
@@ -148,88 +172,88 @@ Generate segment-by-segment race execution plans by combining GPX course data, h
 ### Race Day CLI Reference
 
 ```bash
-cd /home/michaelpawlus/projects/workout-app/backend
+cd /Users/michaelpawlus/dev/projects/workout-tracking
 
 # Load a course from GPX file
-python3 cli.py ultra race load-course <gpx_file> --name "Burning River 100" --year 2026
-python3 cli.py ultra race load-course course.gpx --name "BR100" --year 2026 \
+uv run ultra ultra race load-course <gpx_file> --name "Burning River 100" --year 2026
+uv run ultra ultra race load-course course.gpx --name "BR100" --year 2026 \
   --segment-breaks "5.2,12.8,20.1,31.4,40.2,50.0,62.5,75.3,87.9" --json
 
 # Populate ALL segments at once from an aid-station chart (names + crew/drop-bag).
 # Re-derives segments at the real aid-station miles (recomputing elevation from
 # the loaded course's GPX) and replaces them in place — no duplicate course row.
 # BR100's chart is committed at backend/data/br100_aid_stations_2026.csv.
-python3 cli.py ultra race load-aid-stations backend/data/br100_aid_stations_2026.csv --dry-run
-python3 cli.py ultra race load-aid-stations backend/data/br100_aid_stations_2026.csv --json
+uv run ultra ultra race load-aid-stations backend/data/br100_aid_stations_2026.csv --dry-run
+uv run ultra ultra race load-aid-stations backend/data/br100_aid_stations_2026.csv --json
 # CSV columns: mile,name,crew,drop_bag,notes (lines starting with # are ignored).
 # Re-pull the participant guide and re-run if mile markers shift year to year.
 
 # View/edit individual course segments (one-off tweaks after a bulk load)
-python3 cli.py ultra race segments --json
-python3 cli.py ultra race segments --segment 3 --set-name "Happy Days 1" --crew 1 --drop-bag 1
+uv run ultra ultra race segments --json
+uv run ultra ultra race segments --segment 3 --set-name "Happy Days 1" --crew 1 --drop-bag 1
 
 # Import historical race results from CSV (peer finishers on this course)
-python3 cli.py ultra race import-results results.csv --year 2025 --json
+uv run ultra ultra race import-results results.csv --year 2025 --json
 
 # Historical analysis of the athlete's OWN prior races at the same distance.
 # Extracts late fade / positive split / HR drift / stoppage and feeds the
 # lessons into coaching (run reports), programming (training implications),
 # and race reports (late-race fade biases the Race Day Engine pace plan).
-python3 cli.py ultra race history --seed              # seed known prior 100s
-python3 cli.py ultra race history --json              # analyze all prior races
-python3 cli.py ultra race history --distance-filter 100   # only same-distance efforts
-python3 cli.py ultra race history --md                # markdown report (for the vault)
+uv run ultra ultra race history --seed              # seed known prior 100s
+uv run ultra ultra race history --json              # analyze all prior races
+uv run ultra ultra race history --distance-filter 100   # only same-distance efforts
+uv run ultra ultra race history --md                # markdown report (for the vault)
 # Add a race manually, optionally enriching from Strava when connected:
-python3 cli.py ultra race history --add --name "Tunnel Hill 100" --date 2021-11-13 \
+uv run ultra ultra race history --add --name "Tunnel Hill 100" --date 2021-11-13 \
   --distance 101.1 --finish 25:23:00 --moving 23:34:00 \
   --first-half 13:03:00 --second-half 14:56:00 --strava-id 6257195830
 
 # Analyze peer cohort (finishers near your goal time)
-python3 cli.py ultra race cohort --goal-time "24:00:00" --json
+uv run ultra ultra race cohort --goal-time "24:00:00" --json
 
 # Peer split comparison (issue #14): acquire & learn from BR100 finishers near the target.
 # Agent-driven (mirrors aggregate-reports): the CLI emits a RESEARCH ORDER (which results
 # to pull, which timing mats to read, the exact CSV schema); the Claude Code session does
 # the fetch. Official results/splits are agentic (RunSignup/UltraSignup/RTRT); arbitrary
 # athletes' Strava is hybrid (user drops a link/export, agent parses it).
-python3 cli.py ultra race peer-splits --goal-time "26:00:00" --json       # research order
-python3 cli.py ultra race peer-splits --skeleton                          # fillable CSV scaffold
+uv run ultra ultra race peer-splits --goal-time "26:00:00" --json       # research order
+uv run ultra ultra race peer-splits --skeleton                          # fillable CSV scaffold
 # Ingest a filled LONG CSV (one row per runner+timing-mat; elapsed = cumulative HH:MM:SS).
 # Sparse mats are mapped to segments and each leg's pace is spread across the segments it
 # covers, so cohort analysis sees a full per-segment curve. The 2025 cohort is committed at
 # backend/data/br100_2025_cohort_splits.csv (8 finishers near 26h, pulled from the RunSignup API).
-python3 cli.py ultra race peer-splits --import backend/data/br100_2025_cohort_splits.csv --year 2025 --json
+uv run ultra ultra race peer-splits --import backend/data/br100_2025_cohort_splits.csv --year 2025 --json
 # Render/persist the cohort learnings (back-half fade %, highest-divergence segments, pacing skeleton):
-python3 cli.py ultra race peer-splits --goal-time "26:00:00" --window 60 --learnings --vault
+uv run ultra ultra race peer-splits --goal-time "26:00:00" --window 60 --learnings --vault
 
 # Race-report aggregator (issue #15): build a research brief for course/strategy intel.
 # The CLI emits the "research order" (sources + queries + output sections); the Claude
 # Code session runs the deep research and files the synthesized guide to race-prep/.
-python3 cli.py ultra race aggregate-reports --json          # structured research brief
-python3 cli.py ultra race aggregate-reports --skeleton      # fillable markdown scaffold
+uv run ultra ultra race aggregate-reports --json          # structured research brief
+uv run ultra ultra race aggregate-reports --skeleton      # fillable markdown scaffold
 # After synthesizing, persist the guide to $OBSIDIAN_VAULT_PATH/race-prep/ (stdin or file):
-cat guide.md | python3 cli.py ultra race aggregate-reports --save-guide - \
+cat guide.md | uv run ultra ultra race aggregate-reports --save-guide - \
   --title "Burning River 100 Course & Strategy Guide" --json
-python3 cli.py ultra race aggregate-reports --save-guide guide.md --date-prefix  # dated snapshot
+uv run ultra ultra race aggregate-reports --save-guide guide.md --date-prefix  # dated snapshot
 
 # Generate A/B/C race execution plans
-python3 cli.py ultra race plan --goal-time "24:00:00" --weather-temp 75 --json
-python3 cli.py ultra race plan --goal-time "24:00:00" --save  # persist to DB
+uv run ultra ultra race plan --goal-time "24:00:00" --weather-temp 75 --json
+uv run ultra ultra race plan --goal-time "24:00:00" --save  # persist to DB
 
 # Per-segment fueling plan
-python3 cli.py ultra race nutrition --goal-time "24:00:00" --json
+uv run ultra ultra race nutrition --goal-time "24:00:00" --json
 
 # Crew sheet with multi-scenario ETAs
-python3 cli.py ultra race crew-sheet --goal-time "24:00:00" --output crew_sheet.md
+uv run ultra ultra race crew-sheet --goal-time "24:00:00" --output crew_sheet.md
 
 # Full crew MANUAL (issue #12): per crew-stop ETA + fuel + cooling/chafing protocol.
 # Paces to the 26h GOVERNOR (from the profile, not the 24h stretch goal) and uses a
 # peer-split skeleton (a real finisher scaled to the goal) so ETAs follow the real fade.
 # Everything athlete-specific lives in backend/data/br100_crew_protocol.yaml.
-python3 cli.py ultra race crew-manual --weather-temp 82 --output crew_manual.md
-python3 cli.py ultra race crew-manual --vault --json          # write into the Obsidian vault
-python3 cli.py ultra race crew-manual --splits backend/data/br100_2025_analog_splits.csv
-python3 cli.py ultra race crew-manual --no-splits             # use the engine's grade+fade model
+uv run ultra ultra race crew-manual --weather-temp 82 --output crew_manual.md
+uv run ultra ultra race crew-manual --vault --json          # write into the Obsidian vault
+uv run ultra ultra race crew-manual --splits backend/data/br100_2025_analog_splits.csv
+uv run ultra ultra race crew-manual --no-splits             # use the engine's grade+fade model
 # Defaults: --profile backend/data/br100_crew_protocol.yaml; goal/start from that profile;
 # splits from the bundled 2025 analog. Load the BR100 GPX first for grade-aware ETAs.
 
@@ -238,9 +262,9 @@ python3 cli.py ultra race crew-manual --no-splits             # use the engine's
 # sunset) + the peer cohort's high-divergence segments, and renders a printable
 # "what you'll feel → what to deploy" sheet with clock ETAs. Paces to the governor
 # via the same spine as the crew manual. Athlete content lives in the YAML profile.
-python3 cli.py ultra race mental --weather-temp 82
-python3 cli.py ultra race mental --vault --json           # write into the Obsidian vault (race/)
-python3 cli.py ultra race mental --no-splits              # engine grade+fade model, not the 2025 analog
+uv run ultra ultra race mental --weather-temp 82
+uv run ultra ultra race mental --vault --json           # write into the Obsidian vault (race/)
+uv run ultra ultra race mental --no-splits              # engine grade+fade model, not the 2025 analog
 # Defaults: --profile backend/data/br100_mental_race_plan.yaml; goal/start/sunset from it;
 # ETAs from the bundled 2025 analog skeleton. Load the BR100 GPX + aid stations first.
 
@@ -251,17 +275,17 @@ python3 cli.py ultra race mental --no-splits              # engine grade+fade mo
 # "synthesis order"; the Claude Code session writes/updates the comprehensive strategy
 # report and files it to race-prep/. It is a LIVING document: re-run after each new long
 # run and it updates the SAME vault file in place (stable filename + Revision Log).
-python3 cli.py ultra race capstone --json                 # the synthesis dossier
-python3 cli.py ultra race capstone --weather-temp 82      # human-readable signal inventory
-python3 cli.py ultra race capstone --skeleton             # fillable section scaffold
+uv run ultra ultra race capstone --json                 # the synthesis dossier
+uv run ultra ultra race capstone --weather-temp 82      # human-readable signal inventory
+uv run ultra ultra race capstone --skeleton             # fillable section scaffold
 # After synthesizing, persist (stable filename = living doc; re-running updates in place):
-cat report.md | python3 cli.py ultra race capstone --save-guide - --json
-python3 cli.py ultra race capstone --save-guide report.md --date-prefix   # dated snapshot
+cat report.md | uv run ultra ultra race capstone --save-guide - --json
+uv run ultra ultra race capstone --save-guide report.md --date-prefix   # dated snapshot
 # Defaults: goal 26:00:00 governor, start 04:00, title "Burning River 100 Race Strategy".
 # When the report already exists, the dossier's method flips to "update in place" and asks
 # you to append a dated Revision Log entry noting what new data moved which numbers.
 
 # Live race tracking
-python3 cli.py ultra race checkin --station "Happy Days 2" --time "9:15:00" --json
-python3 cli.py ultra race status --json
+uv run ultra ultra race checkin --station "Happy Days 2" --time "9:15:00" --json
+uv run ultra ultra race status --json
 ```

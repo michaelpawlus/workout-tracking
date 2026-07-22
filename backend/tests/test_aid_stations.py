@@ -160,7 +160,7 @@ class ImportTests(AidStationTestCase):
         stations = [dict(s) for s in self.stations]
         stations[-1]["mile"] = round(self.total - 1.0, 2)
         with database.get_db() as conn:
-            result = self.race_engine.import_aid_stations(conn, stations, course_id=self.course_id)
+            self.race_engine.import_aid_stations(conn, stations, course_id=self.course_id)
             segs = self.race_engine.get_segments(conn, self.course_id)
         self.assertEqual(len(segs), 4)
         self.assertEqual(segs[-1]["name"], "Finish")

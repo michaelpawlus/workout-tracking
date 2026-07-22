@@ -33,7 +33,7 @@ import csv
 from typing import Any
 
 from . import race_engine
-from .race_engine import _format_pace, _format_time, _parse_time
+from .race_engine import _format_time, _parse_time
 
 
 DEFAULT_TARGET_FINISH = "26:00:00"

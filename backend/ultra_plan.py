@@ -5,7 +5,6 @@ Inserts day-by-day workouts, weekly structure, and benchmark schedule.
 """
 
 from datetime import datetime, timedelta
-from .database import get_db
 from .adapt import seed_initial_targets
 
 
@@ -598,13 +597,13 @@ def generate_training_plan_markdown(conn, plan_id):
         "# Burning River 100 — 20-Week Training Plan",
         "",
         f"**Goal:** {plan['goal']}",
-        f"**Race Date:** July 25, 2026",
+        "**Race Date:** July 25, 2026",
         f"**Start:** {plan['start_date']} | **End:** {plan['end_date']}",
         "",
         "## Current Pace Targets",
         "",
-        f"| Zone | Target |",
-        f"|------|--------|",
+        "| Zone | Target |",
+        "|------|--------|",
         f"| Easy | {easy_pace_str} |",
         f"| Long Run | {long_pace_str} |",
         f"| Tempo | {tempo_pace_str} |",
@@ -632,26 +631,26 @@ def generate_training_plan_markdown(conn, plan_id):
         first_date = workouts[0]["scheduled_date"]
         last_date = workouts[-1]["scheduled_date"]
 
-        lines.append(f"---")
-        lines.append(f"")
+        lines.append("---")
+        lines.append("")
         lines.append(f"## Week {wn} ({wtype}) — {first_date} to {last_date}")
-        lines.append(f"")
+        lines.append("")
         lines.append(f"**Focus:** {focus}")
         if mental_focus:
-            lines.append(f"")
+            lines.append("")
             lines.append(f"**Mental:** {mental_focus}")
         lines.append(f"{notes}")
-        lines.append(f"")
+        lines.append("")
 
         # Week schedule table
-        lines.append(f"| Date | Workout | Distance | Pace | Intensity |")
-        lines.append(f"|------|---------|----------|------|-----------|")
+        lines.append("| Date | Workout | Distance | Pace | Intensity |")
+        lines.append("|------|---------|----------|------|-----------|")
         for w in workouts:
             dist = f"{w['target_distance_miles']}mi" if w.get("target_distance_miles") else "—"
             pace = _fmt_pace(w["target_pace_min_per_mile"]) if w.get("target_pace_min_per_mile") else "—"
             lines.append(f"| {w['scheduled_date']} | {w['title']} | {dist} | {pace} | {w.get('intensity', '')} |")
 
-        lines.append(f"")
+        lines.append("")
 
         # Workout details for non-trivial sessions
         for w in workouts:
@@ -660,7 +659,7 @@ def generate_training_plan_markdown(conn, plan_id):
             if w.get("description"):
                 lines.append(f"**{w['scheduled_date']} — {w['title']}**")
                 lines.append(f"> {w['description']}")
-                lines.append(f"")
+                lines.append("")
 
     lines.append("")
     return "\n".join(lines)
