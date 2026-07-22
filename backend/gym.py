@@ -8,7 +8,7 @@ import json
 import sys
 from datetime import date
 
-from .database import get_db, init_db
+from .database import get_db
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +109,6 @@ def _detect_and_save_prs(conn, workout_id, exercises, workout_date):
         eid = ex["exercise_id"]
         weight = ex.get("weight_lbs")
         reps = ex.get("reps")
-        sets = ex.get("sets")
 
         if not weight or not reps:
             continue

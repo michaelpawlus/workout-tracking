@@ -16,7 +16,6 @@ import math
 import os
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 from backend import database, historical, race_capstone, race_engine, vault

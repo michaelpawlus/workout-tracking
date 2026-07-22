@@ -20,8 +20,7 @@ from .ultra_plan import create_br100_plan
 from .llm import analyze_run_feedback, analyze_strava_screenshot
 from .nutrition import get_nutrition_tier, get_guidelines_for_workout
 from .adapt import (
-    get_current_targets, get_targets_history, seed_initial_targets,
-    adapt_from_maf, adapt_from_5k_tt, adapt_from_trends,
+    get_current_targets, get_targets_history, adapt_from_maf, adapt_from_5k_tt, adapt_from_trends,
     apply_targets_to_future_workouts, format_adaptation_report,
     find_unprocessed_benchmarks, set_manual_targets,
 )
@@ -828,7 +827,7 @@ def cmd_progress(args):
     if args.json:
         _print(result, True)
     else:
-        print(f"=== Burning River 100 Progress ===")
+        print("=== Burning River 100 Progress ===")
         print(f"Race: July 25, 2026 | Goal: {plan['goal']} | Weeks left: {weeks_remaining}")
         print(f"Workouts: {completed}/{total} ({result['completion_pct']}%)")
         print()
@@ -1005,7 +1004,7 @@ def cmd_strava_import(args):
             pace = duration_min / dist_mi
 
         try:
-            result = _submit_run(
+            _submit_run(
                 distance=dist_mi, duration=duration_min, hr=avg_hr,
                 max_hr=max_hr, elevation=elevation_ft, pace=pace,
                 notes=a.get("name", ""), source="strava", run_date=run_date,
@@ -1094,7 +1093,7 @@ def cmd_export_fit(args):
 
 
 def cmd_icu_push(args):
-    from .intervals_icu import create_event, create_events_bulk, workout_to_icu_description, list_events, delete_event
+    from .intervals_icu import create_events_bulk, workout_to_icu_description, list_events, delete_event
 
     with get_db() as conn:
         plan = _get_plan(conn)
@@ -1550,14 +1549,14 @@ def cmd_race_cohort(args):
     with get_db() as conn:
         course = race_engine.get_course(conn, name=args.course_name)
         if not course:
-            _err(f"No course found. Load a course first.", args.json, 2)
+            _err("No course found. Load a course first.", args.json, 2)
 
         analysis = race_engine.analyze_cohort(conn, course["id"], goal_seconds)
 
     if args.json:
         _print(analysis, True)
     else:
-        print(f"=== Peer Cohort Analysis ===")
+        print("=== Peer Cohort Analysis ===")
         print(f"Goal: {analysis['goal_time']} | Window: ±{analysis['window_hours']}hr")
         print(f"Cohort size: {analysis['cohort_size']}")
         if analysis["cohort_size"] > 0:
@@ -1764,8 +1763,8 @@ def cmd_race_history(args):
               f"{finish:>9} {fade:>6} {pace:>9}")
     if analysis.get("lessons"):
         print("\nLessons:")
-        for l in analysis["lessons"]:
-            print(f"  • {l}")
+        for lesson in analysis["lessons"]:
+            print(f"  • {lesson}")
     if analysis.get("training_implications"):
         print("\nTraining implications:")
         for i in analysis["training_implications"]:
@@ -1847,7 +1846,7 @@ def cmd_race_nutrition(args):
     if args.json:
         _print(fueled, True)
     else:
-        print(f"=== Race Fueling Plan (A scenario) ===")
+        print("=== Race Fueling Plan (A scenario) ===")
         print(f"{'Seg':>3} {'Name':<20} {'Cal/hr':>6} {'CalTgt':>6} "
               f"{'Na mg':>5} {'FlOz':>4} {'Deficit':>7} Notes")
         print("-" * 90)
@@ -2352,7 +2351,7 @@ def cmd_race_capstone(args):
     # Signal inventory — one line per signal so the operator sees what was gathered.
     print("Signals gathered:")
     t = sig.get("targets")
-    print(f"  ▸ Adaptive targets: "
+    print("  ▸ Adaptive targets: "
           + (f"easy {_fmt_pace(t['easy_pace'])}, long {_fmt_pace(t['long_run_pace'])}, "
              f"MAF {t['maf_hr']} (eff. {t['effective_date']})" if t else "none on file"))
     h = sig["history"]

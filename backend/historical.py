@@ -435,8 +435,8 @@ def history_to_markdown(analysis):
 
     if analysis.get("lessons"):
         lines.append("## Lessons")
-        for l in analysis["lessons"]:
-            lines.append(f"- {l}")
+        for lesson in analysis["lessons"]:
+            lines.append(f"- {lesson}")
         lines.append("")
 
     if analysis.get("training_implications"):
