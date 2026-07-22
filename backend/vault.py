@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 
-OJ_BINARY = "/home/michaelpawlus/projects/obsidian_journal/.venv/bin/oj"
+OJ_BINARY_ENV = "OJ_BINARY"
 WORKOUTS_SUBDIR = "workouts"
 RACE_PREP_SUBDIR = "race-prep"
 PRODUCT_LOG_FILENAME = "PRODUCT_LOG.md"
@@ -49,7 +49,8 @@ def _vault_root() -> Path:
     path = os.environ.get("OBSIDIAN_VAULT_PATH")
     if not path:
         raise VaultError(
-            "OBSIDIAN_VAULT_PATH is not set. Set it in ~/.bashrc to enable vault writes."
+            "OBSIDIAN_VAULT_PATH is not set. Set it in your shell profile "
+            "(~/.zshrc) or backend/.env to enable vault writes."
         )
     root = Path(path)
     if not root.exists():
@@ -304,11 +305,23 @@ def _frontmatter(run_date: str, run_type: str) -> str:
     )
 
 
+def _resolve_oj_binary() -> str | None:
+    """Locate the ``oj`` CLI, or return None if it isn't installed.
+
+    Checks ``$OJ_BINARY`` first (point it at a venv-local ``oj`` when the
+    obsidian_journal project isn't on PATH), then falls back to PATH lookup.
+    """
+    override = os.environ.get(OJ_BINARY_ENV)
+    if override and Path(override).exists():
+        return override
+    return shutil.which("oj")
+
+
 def _try_oj_capture(body: str) -> tuple[bool, str | None]:
     """Try to capture via ``oj``. Returns (ok, journal_path_or_None)."""
-    if not Path(OJ_BINARY).exists() and not shutil.which("oj"):
+    binary = _resolve_oj_binary()
+    if binary is None:
         return False, None
-    binary = OJ_BINARY if Path(OJ_BINARY).exists() else "oj"
 
     try:
         proc = subprocess.run(
