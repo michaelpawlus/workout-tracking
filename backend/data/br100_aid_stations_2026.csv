@@ -1,5 +1,7 @@
 # Burning River 100 — aid station chart, 2026 Participant Guide (Aid Station Overview, REV 1/16/26).
-# Out-and-back, 4:00 AM start, 30-hour cutoff. Total ~101.8 mi (matches V2 GPX 101.77 mi).
+# Out-and-back, 4:00 AM start, 30-hour cutoff. Total ~101.8 mi per the guide; the committed
+# official course GPX (br100_2026_course_v03.gpx, V03) measures 101.64 mi, so segment miles
+# here are mapped onto the GPX by course fraction rather than assumed equal.
 # Columns: mile = cumulative race mile of the aid station (= segment END mile);
 #          crew/drop_bag = 1 if allowed for the 100-miler (CREW column non-blank / DROP BAGS = X);
 #          notes = cutoff (CLOSE) time, aid type, and food offering for the crew manual (#12).
