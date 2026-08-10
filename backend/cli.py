@@ -1240,7 +1240,7 @@ def _targets_to_hr_zones(targets):
 
 
 def cmd_adapt(args):
-    from database import get_connection
+    from .database import get_connection
 
     conn = get_connection()
     try:
@@ -1333,7 +1333,7 @@ def cmd_adapt(args):
 
 
 def cmd_targets(args):
-    from database import get_connection
+    from .database import get_connection
 
     if getattr(args, 'set', False):
         # Manual target override mode
