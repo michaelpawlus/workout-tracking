@@ -20,6 +20,7 @@ DEFAULT_TARGETS = {
     "long_run_pace": 10.75,
     "tempo_pace": 9.25,
     "threshold_pace": None,
+    "marathon_pace": None,
     "maf_hr": 137,
     "zone2_ceiling": 137,
     "zone3_ceiling": 155,
@@ -27,6 +28,25 @@ DEFAULT_TARGETS = {
 }
 
 TREND_STEP = 0.25  # 15 sec = 0.25 min/mi
+
+# Riegel endurance exponent, used to project a marathon from a short time trial.
+# 1.06 is the classic value; it is optimistic for undertrained marathoners but
+# fair for someone carrying a deep aerobic base, which is this athlete's case.
+RIEGEL_EXPONENT = 1.06
+MARATHON_MILES = 26.2188
+FIVE_K_MILES = 3.10686
+
+
+def riegel_marathon_pace(tt_time_seconds, tt_distance_miles=FIVE_K_MILES):
+    """Project goal marathon pace (min/mi) from a shorter time trial.
+
+    Returns None for nonsense input so callers can leave marathon_pace unset.
+    """
+    if tt_time_seconds <= 0 or tt_distance_miles <= 0:
+        return None
+    ratio = MARATHON_MILES / tt_distance_miles
+    marathon_seconds = tt_time_seconds * (ratio ** RIEGEL_EXPONENT)
+    return round((marathon_seconds / 60) / MARATHON_MILES, 2)
 
 
 def get_current_targets(conn, plan_id, as_of_date=None):
@@ -56,8 +76,12 @@ def get_targets_history(conn, plan_id):
     return [dict(r) for r in rows]
 
 
-def seed_initial_targets(conn, plan_id, start_date):
-    """Insert the first targets row with plan defaults."""
+def seed_initial_targets(conn, plan_id, start_date, marathon_pace=None):
+    """Insert the first targets row with plan defaults.
+
+    `marathon_pace` lets a race-specific plan seed a provisional goal pace before
+    any time trial has been run; ultra plans leave it None.
+    """
     existing = conn.execute(
         "SELECT id FROM athlete_targets WHERE plan_id = ? LIMIT 1",
         (plan_id,),
@@ -68,12 +92,13 @@ def seed_initial_targets(conn, plan_id, start_date):
     cursor = conn.execute(
         """INSERT INTO athlete_targets
            (plan_id, effective_date, easy_pace, long_run_pace, tempo_pace,
-            threshold_pace, maf_hr, zone2_ceiling, zone3_ceiling, zone4_ceiling,
-            source, notes)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            threshold_pace, marathon_pace, maf_hr, zone2_ceiling, zone3_ceiling,
+            zone4_ceiling, source, notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (plan_id, start_date,
          DEFAULT_TARGETS["easy_pace"], DEFAULT_TARGETS["long_run_pace"],
          DEFAULT_TARGETS["tempo_pace"], DEFAULT_TARGETS["threshold_pace"],
+         marathon_pace if marathon_pace is not None else DEFAULT_TARGETS["marathon_pace"],
          DEFAULT_TARGETS["maf_hr"], DEFAULT_TARGETS["zone2_ceiling"],
          DEFAULT_TARGETS["zone3_ceiling"], DEFAULT_TARGETS["zone4_ceiling"],
          "initial", "Plan defaults"),
@@ -91,12 +116,13 @@ def _insert_targets(conn, plan_id, effective_date, targets, source,
     cursor = conn.execute(
         """INSERT INTO athlete_targets
            (plan_id, effective_date, easy_pace, long_run_pace, tempo_pace,
-            threshold_pace, maf_hr, zone2_ceiling, zone3_ceiling, zone4_ceiling,
-            source, trigger_benchmark_id, notes)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            threshold_pace, marathon_pace, maf_hr, zone2_ceiling, zone3_ceiling,
+            zone4_ceiling, source, trigger_benchmark_id, notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (plan_id, effective_date,
          targets["easy_pace"], targets["long_run_pace"],
          targets["tempo_pace"], targets.get("threshold_pace"),
+         targets.get("marathon_pace"),
          targets["maf_hr"], targets["zone2_ceiling"],
          targets["zone3_ceiling"], targets["zone4_ceiling"],
          source, benchmark_id, notes),
@@ -155,15 +181,27 @@ def adapt_from_5k_tt(conn, plan_id, benchmark_id, tt_time_seconds):
     new["tempo_pace"] = _clamp(min(tempo_raw, easy - 0.1), TEMPO_PACE_MIN, TEMPO_PACE_MAX)
     new["threshold_pace"] = min(threshold_raw, new["tempo_pace"] - 0.1)
 
+    # Project goal marathon pace. Only meaningful for a plan racing the marathon,
+    # but harmless to record either way — the plan decides whether to surface it.
+    marathon_pace = riegel_marathon_pace(tt_time_seconds)
+    if marathon_pace is not None:
+        new["marathon_pace"] = marathon_pace
+
     bm = conn.execute("SELECT scheduled_date FROM plan_benchmarks WHERE id = ?",
                        (benchmark_id,)).fetchone()
     effective = bm["scheduled_date"] if bm else datetime.now().strftime("%Y-%m-%d")
 
-    row_id = _insert_targets(
-        conn, plan_id, effective, new, "5k_tt", benchmark_id,
-        f"5K TT: {tt_time_seconds}s → {pace_5k:.2f} min/mi",
-    )
-    return {"id": row_id, "targets": new, "five_k_pace": round(pace_5k, 2)}
+    note = f"5K TT: {tt_time_seconds}s → {pace_5k:.2f} min/mi"
+    if marathon_pace is not None:
+        note += f"; Riegel marathon {marathon_pace:.2f} min/mi"
+
+    row_id = _insert_targets(conn, plan_id, effective, new, "5k_tt", benchmark_id, note)
+    return {
+        "id": row_id,
+        "targets": new,
+        "five_k_pace": round(pace_5k, 2),
+        "marathon_pace": marathon_pace,
+    }
 
 
 def adapt_from_trends(conn, plan_id):
@@ -288,6 +326,19 @@ def apply_targets_to_future_workouts(conn, plan_id, targets, from_date=None):
         )
         updated += result.rowcount
 
+    # Marathon-pace sessions. Only present in a marathon plan, so this is a no-op
+    # for BR100 — but it is what makes the week-3 time trial retarget every
+    # remaining MP workout in the Columbus block.
+    if targets.get("marathon_pace"):
+        result = conn.execute(
+            """UPDATE daily_workouts
+               SET target_pace_min_per_mile = ?
+               WHERE plan_id = ? AND scheduled_date >= ? AND completed = 0
+                 AND workout_type = ?""",
+            (targets["marathon_pace"], plan_id, from_date, "marathon_pace"),
+        )
+        updated += result.rowcount
+
     return updated
 
 
@@ -299,6 +350,7 @@ def format_adaptation_report(old, new, source):
         ("long_run_pace", "Long Run Pace", "min/mi"),
         ("tempo_pace", "Tempo Pace", "min/mi"),
         ("threshold_pace", "Threshold Pace", "min/mi"),
+        ("marathon_pace", "Marathon Pace", "min/mi"),
         ("maf_hr", "MAF HR", "bpm"),
         ("zone2_ceiling", "Zone 2 Ceiling", "bpm"),
         ("zone3_ceiling", "Zone 3 Ceiling", "bpm"),
