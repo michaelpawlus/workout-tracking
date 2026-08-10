@@ -454,9 +454,13 @@ def plan_progress(plan_id: int):
 
 # --- Ultra Training (Burning River 100) ---
 
-def _get_active_ultra_plan(conn):
+def _get_active_ultra_plan(conn, plan_name="Burning River 100"):
+    """Active plan for a race. Defaults to BR100 so the /api/ultra/* routes are
+    unchanged; pass plan_name to reach another race (e.g. "Columbus Marathon")."""
     return conn.execute(
-        "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
+        "SELECT * FROM training_plans WHERE name = ? AND status = 'active' "
+        "ORDER BY id DESC LIMIT 1",
+        (plan_name,),
     ).fetchone()
 
 

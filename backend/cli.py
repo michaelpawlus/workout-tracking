@@ -73,9 +73,33 @@ def _err(msg, as_json=False, code=1):
     sys.exit(code)
 
 
-def _get_plan(conn):
+BR100_PLAN_NAME = "Burning River 100"
+COLUMBUS_PLAN_NAME = "Columbus Marathon"
+
+# Which race the shared commands operate on. main() pins this from the invoked
+# subgroup (`ultra` -> BR100, `marathon` -> Columbus) via argparse set_defaults,
+# so today/week/submit/feedback/... resolve against the right plan without every
+# command having to thread the name through. Defaults to BR100 so any caller that
+# bypasses main() behaves exactly as it did before the marathon plan existed.
+_ACTIVE_PLAN_NAME = BR100_PLAN_NAME
+
+
+def _set_active_plan_name(name):
+    global _ACTIVE_PLAN_NAME
+    _ACTIVE_PLAN_NAME = name or BR100_PLAN_NAME
+
+
+def _no_plan_msg():
+    """Error text naming the plan the current subgroup is scoped to."""
+    group = "marathon" if _ACTIVE_PLAN_NAME == COLUMBUS_PLAN_NAME else "ultra"
+    return f"No active {_ACTIVE_PLAN_NAME} plan. Run: ultra {group} init"
+
+
+def _get_plan(conn, plan_name=None):
     plan = conn.execute(
-        "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
+        "SELECT * FROM training_plans WHERE name = ? AND status = 'active' "
+        "ORDER BY id DESC LIMIT 1",
+        (plan_name or _ACTIVE_PLAN_NAME,),
     ).fetchone()
     return plan
 
@@ -123,7 +147,7 @@ def cmd_today(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         workout = conn.execute(
             "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
@@ -187,7 +211,7 @@ def cmd_week(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         if args.week_num:
             week_row = conn.execute(
@@ -269,7 +293,7 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", as_json, 2)
+            _err(_no_plan_msg(), as_json, 2)
 
         daily = conn.execute(
             "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
@@ -614,7 +638,7 @@ def cmd_feedback(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         rows = conn.execute(
             """SELECT rf.*, dw.title as workout_title
@@ -656,7 +680,7 @@ def _save_feedback_to_vault(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         if getattr(args, "id", None):
             row = conn.execute(
@@ -784,7 +808,7 @@ def cmd_progress(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         total = conn.execute(
             "SELECT COUNT(*) as total FROM daily_workouts WHERE plan_id = ? AND workout_type != 'rest'",
@@ -844,7 +868,7 @@ def cmd_benchmarks(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         rows = conn.execute(
             """SELECT pb.*, tpw.week_number, tpw.week_type
@@ -874,7 +898,7 @@ def cmd_upcoming(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         rows = conn.execute(
             """SELECT * FROM daily_workouts
@@ -977,7 +1001,7 @@ def cmd_strava_import(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
     for a in activities:
         activity_id = a["id"]
@@ -1039,7 +1063,7 @@ def cmd_export_fit(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         # Fetch adaptive HR zones
         targets = get_current_targets(conn, plan["id"])
@@ -1098,7 +1122,7 @@ def cmd_icu_push(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         if args.upcoming:
             today = datetime.now().strftime("%Y-%m-%d")
@@ -1220,11 +1244,9 @@ def cmd_adapt(args):
 
     conn = get_connection()
     try:
-        plan = conn.execute(
-            "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
-        ).fetchone()
+        plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         plan_id = plan["id"]
         old_targets = get_current_targets(conn, plan_id)
@@ -1317,11 +1339,9 @@ def cmd_targets(args):
         # Manual target override mode
         conn = get_connection()
         try:
-            plan = conn.execute(
-                "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
-            ).fetchone()
+            plan = _get_plan(conn)
             if not plan:
-                _err("No active BR100 plan", args.json, 2)
+                _err(_no_plan_msg(), args.json, 2)
 
             result = set_manual_targets(
                 conn, plan["id"],
@@ -1352,7 +1372,7 @@ def cmd_targets(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         if args.history:
             history = get_targets_history(conn, plan["id"])
@@ -2406,7 +2426,7 @@ def cmd_export_md(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         md = generate_training_plan_markdown(conn, plan["id"])
 
@@ -2436,6 +2456,7 @@ def main():
 
     # ultra subcommand
     ultra_parser = subparsers.add_parser("ultra", help="Burning River 100 training")
+    ultra_parser.set_defaults(plan_name=BR100_PLAN_NAME)
     ultra_sub = ultra_parser.add_subparsers(dest="ultra_command")
 
     # ultra init
@@ -2839,6 +2860,10 @@ def main():
     if not args.command:
         parser.print_help()
         sys.exit(1)
+
+    # Pin which race the shared commands resolve against. Each training subgroup
+    # sets plan_name via set_defaults; anything else falls back to BR100.
+    _set_active_plan_name(getattr(args, "plan_name", None))
 
     init_db()
 
