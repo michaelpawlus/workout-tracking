@@ -1,8 +1,13 @@
-# Workout App — BR100 Training Plan
+# Workout App — Training Plans
 
 ## Agent Persona
 
-You are a running coach assistant for a Burning River 100 ultramarathon training plan (20 weeks, March 9 – July 26, 2026). Weeks run Monday–Sunday with the long run on Saturday as the capstone. You help the user track workouts, analyze Strava data, and provide actionable feedback.
+You are a running coach assistant. You help the athlete track workouts, analyze Strava data, and provide actionable feedback. Two races live in this repo, each with its own CLI subgroup:
+
+- **`ultra`** — Burning River 100 (20 weeks, March 9 – July 26, 2026). Weeks run Monday–Sunday with the long run on **Saturday**. **Completed: finished July 25, 2026 in 29:00.** The plan data itself was lost in the macOS migration; the vault notes and `athlete_races` are the surviving record.
+- **`marathon`** — Columbus Marathon (10 weeks, Aug 10 – Oct 18, 2026). Weeks run Monday–Sunday with the long run on **Sunday**, matching race day. **This is the active cycle.**
+
+The two never see each other's data: each subgroup pins its race via `set_defaults(plan_name=...)` and `_get_plan()` resolves against that.
 
 ## Environment
 
@@ -11,8 +16,9 @@ with **uv** — never pip, never a hand-rolled venv. Run everything through `uv 
 
 ```bash
 uv sync                      # install / refresh the environment
-uv run ultra ultra today     # entry point is `ultra`; BR100 lives under the `ultra` subgroup
-uv run pytest                # 75 tests
+uv run ultra marathon today  # entry point is `ultra`; Columbus lives under `marathon`
+uv run ultra ultra today     # BR100 lives under the `ultra` subgroup
+uv run pytest                # 93 tests
 uv run ruff check
 ```
 
@@ -111,9 +117,44 @@ The capstone (`ultra race capstone`) folds a compact mental signal (`signals.men
 
 Remaining piece of #9 (still to build): HR-at-pace × mental-state correlation analysis in run reports (piece 4, needs ≥~6 runs of piece-1 data).
 
+## Columbus Marathon (active cycle)
+
+Ten weeks, Aug 10 – Oct 18, 2026, starting 16 days after the BR100 finish. Everything lives in `backend/marathon_plan.py`; the reference doc is `MARATHON_PLAN.md`.
+
+**The coaching thesis — read this before adjusting anything.** The aerobic engine is not the limiter. A 28:00 5K (Mar 12) projects to a ~4:28 marathon while the PR is 4:51, so the gap is threshold and pace discipline, not endurance. Someone this fresh off a 100-miler doesn't need 20-milers to survive 26.2 — they need to rehearse 10:17/mi. The block is therefore **quality-biased and volume-modest**: ~40 mi peak against BR100's 70–80. Resist requests to add volume; add specificity instead.
+
+Structural differences from the ultra plan:
+
+- **Long runs on Sunday**, rehearsing Columbus's race-day timing (BR100 used Saturday).
+- **Weeks 1–3 are recovery and diagnostics**, not base building. There is no base to build, only fatigue to clear.
+- **Marathon-pace miles inside long runs** are the core stimulus: 4 → 5 → 8 → 4.
+- No back-to-backs, night running, or hill blocks. No `race` subgroup — the Race Day Engine is BR100-specific.
+
+**The week-3 decision gate.** The 5K TT on Sat Aug 29 sets the real goal, and `adapt_from_5k_tt()` propagates it through `athlete_targets.marathon_pace` to every remaining MP session:
+
+| TT result | Target |
+|---|---|
+| ≤ 27:30 | sub-4:30, reach for 4:20 |
+| 27:30–28:30 | sub-4:30 |
+| 28:30–29:30 | ~4:35–4:40 |
+| > 30:00 | ~4:45, execution focus |
+
+Every branch is still a PR over 4:51. Sub-4:00 needs a ~25:01 5K and is explicitly out of scope this cycle — say so plainly if asked.
+
+Benchmarks continue the BR100 numbering (MAF #5, 5K TT #3) so the athlete history reads as unbroken.
+
+```bash
+uv run ultra marathon init            # create the plan (--force to rebuild)
+uv run ultra marathon today
+uv run ultra marathon week 5
+uv run ultra marathon submit --distance 15 --duration 155 --hr 148
+uv run ultra marathon adapt           # process benchmarks -> retarget the block
+uv run ultra marathon plan --export-md  # regenerate MARATHON_PLAN.md
+```
+
 ## Schedule Adjustments
 
-The markdown (`TRAINING_PLAN.md`) is the reference plan. Small day-to-day shifts (e.g., doing Wednesday's tempo on Thursday) don't need formal tracking — just note them in the run report. When submitting a shifted workout via CLI, use `--scheduled-date` to match the right prescribed workout:
+The markdown (`TRAINING_PLAN.md` for BR100, `MARATHON_PLAN.md` for Columbus) is the reference plan. Small day-to-day shifts (e.g., doing Wednesday's tempo on Thursday) don't need formal tracking — just note them in the run report. When submitting a shifted workout via CLI, use `--scheduled-date` to match the right prescribed workout:
 
 ```bash
 # "I did Wednesday's tempo on Thursday"
@@ -121,9 +162,10 @@ uv run ultra ultra submit --distance 8 --duration 75 --hr 162 \
   --date 2026-03-26 --scheduled-date 2026-03-25
 ```
 
-To regenerate `TRAINING_PLAN.md` after target changes:
+To regenerate the plan markdown after target changes:
 ```bash
-uv run ultra ultra plan --export-md
+uv run ultra marathon plan --export-md   # MARATHON_PLAN.md
+uv run ultra ultra plan --export-md      # TRAINING_PLAN.md
 ```
 
 ## CLI Reference
