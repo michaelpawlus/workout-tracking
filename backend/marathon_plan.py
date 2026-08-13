@@ -63,8 +63,8 @@ WEEKS = [
     (3,  "base",     28, 32, "5K Time Trial Sat — sets every target for the block"),
     (4,  "build",    32, 36, "Threshold reintroduced. 3x1mi"),
     (5,  "build",    36, 40, "Marathon pace enters the long run"),
-    (6,  "build",    38, 42, "Cruise intervals. Longest steady long run"),
-    (7,  "peak",     32, 36, "Half-marathon tune-up Sun — 3 weeks out"),
+    (6,  "peak",     29, 33, "Air Force Half Sat — tune-up race, 4 weeks out"),
+    (7,  "peak",     33, 37, "Absorb the race, then the longest steady long run"),
     (8,  "peak",     38, 42, "Key session: 20mi with 8 @ MP"),
     (9,  "taper",    24, 28, "Taper. Sharpen, don't build"),
     (10, "race",     12, 40, "Race week. Oct 18: Columbus Marathon"),
@@ -81,11 +81,24 @@ MENTAL_FOCUS = {
     3:  "Time-trial nerves. Rehearse the pre-TT routine you'll reuse on race morning: calm breathing, one cue word, no clock-watching before the gun.",
     4:  "Name the new discomfort. Threshold burn is not ultra fatigue — it's sharp, and it's supposed to be. Label it: 'this is the right kind of hard.'",
     5:  "Marathon pace is a feeling, not a number. On the MP miles, look away from the watch for a minute and learn the effort from the inside.",
-    6:  "Patience under a big base. Your engine will make MP feel easy early. The discipline is refusing to bank time — 'easy now is the plan working.'",
-    7:  "Race-day rehearsal. Run the half with your full marathon routine: same breakfast, same kit, same first-mile restraint.",
+    6:  "Race-day rehearsal, and the one honest chance to practice pushing. Run the half with your full marathon routine — then in the last 5K, deliberately stay in it when it starts to hurt. That is the exact thing BR100 said you back away from.",
+    7:  "Patience under a big base. Your engine will make MP feel easy at mile 3 of the long run. Refusing to bank time is the discipline — 'easy now is the plan working.'",
     8:  "The 20-mile conversation. In the last MP miles, practice the exact self-talk you'll need at Columbus mile 22. Write down what worked.",
     9:  "Trust the taper. Reduced volume will feel like losing fitness. It isn't. Decide now what you'll say when that doubt shows up.",
     10: "Deploy, don't rehearse. The first 10K should feel too easy — that's the plan working. One mile at a time; the race starts at 20.",
+}
+
+# The tune-up race. A real entry on the calendar rather than a generic placeholder,
+# because its date drives the week 6/7 structure: the half absorbs week 6's long run
+# and the 18-miler shifts to week 7, which keeps 15 days between the race and the
+# block's key session (week 8's 20mi w/ 8 @ MP) instead of the 8 a Sep 26 race allowed.
+TUNE_UP_RACE = {
+    "week": 6,
+    "day_offset": 5,                      # Saturday
+    "name": "Air Force Half Marathon",
+    "where": "Wright-Patterson AFB, Dayton",
+    "start_time": "7:15 a.m.",
+    "miles": 13.1,
 }
 
 # Benchmark schedule: (week_num, name, type, day_offset_from_Monday)
@@ -95,19 +108,22 @@ MENTAL_FOCUS = {
 BENCHMARKS = [
     (1, "MAF Test #5",            "maf_test",       2),  # Wed Aug 12
     (3, "5K Time Trial #3",       "time_trial",     5),  # Sat Aug 29 — the decision gate
-    (7, "Half Marathon Tune-Up",  "race",           6),  # Sun Sep 27 — 3 weeks out
+    (TUNE_UP_RACE["week"], TUNE_UP_RACE["name"], "race",
+     TUNE_UP_RACE["day_offset"]),                        # Sat Sep 19 — 4 weeks out
     (8, "Marathon-Pace Long Run", "endurance_test", 6),  # Sun Oct 4 — key session
 ]
 
-# Sunday long-run distance by week. Week 7 is the tune-up half, week 10 is the race.
+# Sunday distance by week. Week 6's Sunday is a recovery jog — its long effort was
+# Saturday's tune-up race. Week 10's Sunday is the marathon.
 LONG_RUNS = {
     1: 8, 2: 10, 3: 11, 4: 13, 5: 15,
-    6: 18, 7: 13.1, 8: 20, 9: 12, 10: 26.2,
+    6: 4, 7: 18, 8: 20, 9: 12, 10: 26.2,
 }
 
 # Marathon-pace miles embedded in that week's long run. This is the core stimulus
-# of the block — everything else exists to let these miles happen well.
-MP_IN_LONG_RUN = {5: 4, 6: 5, 8: 8, 9: 4}
+# of the block — everything else exists to let these miles happen well. Week 6 has
+# none: the race is the stimulus that week.
+MP_IN_LONG_RUN = {5: 4, 7: 5, 8: 8, 9: 4}
 
 
 def _week_day_map(start_date):
@@ -164,14 +180,16 @@ def _quality_session(week_num):
         5: {"workout_type": "tempo", "title": "Tempo: 4mi Continuous",
             "description": "2mi warmup, 4mi continuous at tempo, 1mi cooldown.",
             "target_distance_miles": 7, "intensity": "threshold"},
-        6: {"workout_type": "tempo", "title": "Cruise Intervals: 2x2mi",
-            "description": ("2mi warmup, 2x2mi at threshold with 3min jog recovery, 1mi cooldown. "
-                            "Slightly faster than tempo, broken up so the volume stays repeatable."),
-            "target_distance_miles": 8, "intensity": "threshold"},
-        7: {"workout_type": "marathon_pace", "title": "MP Sharpener: 3mi",
-            "description": ("2mi warmup, 3mi at goal marathon pace, 1mi cooldown. Light — the "
-                            "tune-up half is Sunday. This is a pace primer, not a workout."),
-            "target_distance_miles": 6, "intensity": "moderate"},
+        6: {"workout_type": "easy_run", "title": "4mi Easy + 4 Strides",
+            "description": ("Race week for the tune-up half. 4mi easy with 4x100m strides — enough "
+                            "to stay sharp, nothing that costs anything on Saturday. The cruise "
+                            "intervals that normally live here come out; the race is the workout."),
+            "target_distance_miles": 4, "intensity": "easy"},
+        7: {"workout_type": "easy_run", "title": "4mi Easy",
+            "description": ("Four days after a raced half — all easy, no quality. Sunday's 18 with "
+                            "5 at marathon pace is the week's only hard effort, and it wants fresh "
+                            "legs more than this session wants to exist."),
+            "target_distance_miles": 4, "intensity": "easy"},
         8: {"workout_type": "tempo", "title": "Tempo: 5mi",
             "description": ("2mi warmup, 5mi at tempo, 1mi cooldown. Last big midweek effort — "
                             "Sunday's 20 with 8 @ MP is the priority, so hold something back."),
@@ -196,10 +214,9 @@ def _long_run_description(week_num, distance, mp_miles):
         return ("RACE DAY — Columbus Marathon. Goal pace throughout. The first 10K should feel "
                 "too easy; that is the plan working, not a reason to speed up. Fuel every 30-40 "
                 "min from the start. The race starts at mile 20.")
-    if week_num == 7:
-        return ("Tune-up half marathon, 3 weeks out. Full race-day rehearsal: same breakfast, "
-                "same kit, same first-mile restraint. Run it at or slightly faster than goal "
-                "marathon pace — this is a fitness check, not a PR attempt. Result re-sets targets.")
+    if week_num == TUNE_UP_RACE["week"]:
+        return (f"{distance}mi very easy, the morning after the tune-up half. Loosen the legs and "
+                f"nothing more — no pace, no strides. Skip it entirely if anything hurts.")
     if mp_miles:
         return (f"{distance}mi long run with {mp_miles}mi at goal marathon pace in the back half. "
                 f"Warm up easy, settle into MP once you're loose, finish easy. The MP miles are "
@@ -258,6 +275,23 @@ def _saturday(date, week_num, week_type):
                 "Run it honestly — a soft number here mis-sets seven weeks of training."
             ),
             "target_distance_miles": 6,
+            "intensity": "hard",
+            "is_benchmark": True,
+        }
+    if week_num == TUNE_UP_RACE["week"]:
+        return {
+            "scheduled_date": date.strftime("%Y-%m-%d"),
+            "workout_type": "race",
+            "title": TUNE_UP_RACE["name"],
+            "description": (
+                f"TUNE-UP RACE — {TUNE_UP_RACE['where']}, {TUNE_UP_RACE['start_time']} start. "
+                "Race it honestly; do not run it at marathon pace. You already have the 5K for "
+                "targeting — what this buys is an updated prediction and, more importantly, "
+                "practice at sustaining discomfort with nowhere to hide. Full race-day rehearsal: "
+                "same breakfast, same kit, same first-mile restraint. Conversion: 2:09:30 projects "
+                "to a 4:30 marathon, 2:15 to 4:41, 2:20 to 4:52. Result re-sets every target."
+            ),
+            "target_distance_miles": TUNE_UP_RACE["miles"],
             "intensity": "hard",
             "is_benchmark": True,
         }
@@ -331,11 +365,14 @@ def _daily_workouts_for_week(week_num, week_type, start_date):
     # Saturday — shakeout or rest
     days.append(_saturday(dm["pre_long"], week_num, week_type))
 
-    # Sunday — long run (or the tune-up half / the race itself)
+    # Sunday — long run, or the race itself
     if week_num == 10:
         workout_type, title, intensity = "race", "Columbus Marathon", "hard"
-    elif week_num == 7:
-        workout_type, title, intensity = "race", "Half Marathon Tune-Up", "hard"
+    elif week_num == TUNE_UP_RACE["week"]:
+        # The long effort was yesterday. Sunday is a shakeout, not a session.
+        workout_type = "easy_run"
+        title = f"{long_run}mi Recovery Jog"
+        intensity = "easy"
     elif mp_miles:
         workout_type = "marathon_pace"
         title = f"{long_run}mi Long Run w/ {mp_miles} @ MP"
@@ -353,7 +390,7 @@ def _daily_workouts_for_week(week_num, week_type, start_date):
         "target_distance_miles": long_run,
         "target_hr_zone": "Zone 2, allow Zone 3 during MP miles" if mp_miles else "Zone 2",
         "intensity": intensity,
-        "is_benchmark": week_num in (7, 8),
+        "is_benchmark": week_num == 8,
     })
 
     days.sort(key=lambda w: w["scheduled_date"])

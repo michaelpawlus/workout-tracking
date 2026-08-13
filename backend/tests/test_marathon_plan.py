@@ -26,6 +26,7 @@ from backend.marathon_plan import (
     PROVISIONAL_MARATHON_PACE,
     RACE_DATE,
     TOTAL_WEEKS,
+    TUNE_UP_RACE,
     WEEKS,
     create_columbus_plan,
     generate_marathon_plan_markdown,
@@ -74,19 +75,51 @@ class PlanStructureTest(MarathonPlanTestBase):
     def test_every_long_run_lands_on_sunday(self):
         # Columbus is a Sunday race, so long runs rehearse race-day timing. This is
         # the one structural difference from the ultra plan most likely to regress.
+        # The tune-up race is the deliberate exception — it is whatever day the race
+        # organiser picked, and is asserted separately below.
         with database.get_db() as conn:
             plan_id = create_columbus_plan(conn)
             rows = conn.execute(
                 """SELECT scheduled_date, title FROM daily_workouts
                    WHERE plan_id = ? AND workout_type IN ('long_run', 'marathon_pace', 'race')
                      AND target_distance_miles >= 8
+                     AND title != ?
                    ORDER BY scheduled_date""",
-                (plan_id,),
+                (plan_id, TUNE_UP_RACE["name"]),
             ).fetchall()
-        self.assertEqual(len(rows), TOTAL_WEEKS)
+        # Nine long-run Sundays; week 6's Sunday is a recovery jog after the race.
+        self.assertEqual(len(rows), TOTAL_WEEKS - 1)
         for r in rows:
             weekday = dt.date.fromisoformat(r["scheduled_date"]).weekday()
             self.assertEqual(weekday, 6, f"{r['title']} on {r['scheduled_date']} is not a Sunday")
+
+    def test_tune_up_race_sits_on_its_real_date_with_recovery_runway(self):
+        """The week 6/7 restructure exists to protect the week-8 key session."""
+        with database.get_db() as conn:
+            plan_id = create_columbus_plan(conn)
+            race = conn.execute(
+                "SELECT scheduled_date, workout_type, is_benchmark, target_distance_miles "
+                "FROM daily_workouts WHERE plan_id = ? AND title = ?",
+                (plan_id, TUNE_UP_RACE["name"]),
+            ).fetchone()
+            key = conn.execute(
+                """SELECT scheduled_date FROM daily_workouts
+                   WHERE plan_id = ? AND workout_type = 'marathon_pace' AND is_benchmark = 1""",
+                (plan_id,),
+            ).fetchone()
+
+        self.assertIsNotNone(race, "tune-up race missing from the plan")
+        self.assertEqual(race["scheduled_date"], "2026-09-19")
+        self.assertEqual(dt.date.fromisoformat(race["scheduled_date"]).weekday(), 5)  # Saturday
+        self.assertEqual(race["workout_type"], "race")
+        self.assertTrue(race["is_benchmark"])
+        self.assertAlmostEqual(race["target_distance_miles"], 13.1, places=1)
+
+        # The whole point of racing Sep 19 rather than Sep 26: a clear week between
+        # the race and the block's key session. Anything under ~14 days defeats it.
+        runway = (dt.date.fromisoformat(key["scheduled_date"])
+                  - dt.date.fromisoformat(race["scheduled_date"])).days
+        self.assertGreaterEqual(runway, 14, f"only {runway} days from tune-up race to key session")
 
     def test_race_day_is_the_final_workout(self):
         with database.get_db() as conn:
