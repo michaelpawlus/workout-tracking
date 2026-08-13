@@ -13,6 +13,24 @@ from datetime import datetime
 
 API_BASE = "https://intervals.icu/api/v1"
 
+# Distances in workout descriptions are frequently fractional ("1.5mi warmup",
+# "13.1mi"). A bare (\d+) silently matches the digit *after* the decimal point —
+# "1.5mi cooldown" parsed as a 5-mile cooldown — so every distance capture uses this.
+_DIST = r"(\d+(?:\.\d+)?)"
+
+
+def _find_dist(pattern, text, default):
+    """Search `text` for a decimal-safe distance, returning `default` if absent."""
+    m = re.search(pattern.replace("NUM", _DIST), text, re.IGNORECASE)
+    return float(m.group(1)) if m else default
+
+
+def _fmt_pace(pace_min_per_mile):
+    """Render a decimal min/mi pace as m:ss."""
+    if not pace_min_per_mile:
+        return None
+    return f"{int(pace_min_per_mile)}:{round((pace_min_per_mile % 1) * 60):02d}"
+
 
 def _auth():
     """Return (username, password) tuple for Basic Auth."""
@@ -63,10 +81,61 @@ def workout_to_icu_description(workout_dict, targets=None):
     if "strides" in lower:
         return _strides_description(desc, workout_dict)
 
+    # Checked on workout_type rather than description keywords: the marathon-pace
+    # miles are the core stimulus of the Columbus block, and if this branch is
+    # missed they silently collapse into a flat Z2 long run on the watch.
+    if wtype == "marathon_pace":
+        return _marathon_pace_description(desc, workout_dict)
+
+    if wtype == "race":
+        return _race_description(workout_dict)
+
     if wtype in ("long_run", "back_to_back"):
         return _long_run_description(workout_dict)
 
     return _default_description(workout_dict)
+
+
+def _marathon_pace_description(desc, w):
+    """Long run or sharpener with marathon-pace miles inside it.
+
+    Two shapes appear in the plan:
+      "2mi warmup, 3mi at goal marathon pace, 1mi cooldown"   (midweek sharpener)
+      "20mi long run with 8mi at goal marathon pace ..."       (Sunday long run)
+    """
+    total = w.get("target_distance_miles") or 0
+    pace = _fmt_pace(w.get("target_pace_min_per_mile"))
+    mp_mi = _find_dist(r"NUM\s*mi\s*(?:at\s*)?(?:goal\s*)?marathon pace", desc, 0)
+    if not mp_mi:
+        mp_mi = _find_dist(r"w/\s*NUM\s*@\s*MP", w.get("title", ""), 0)
+    if not mp_mi or mp_mi >= total:
+        return _default_description(w)
+
+    # Intervals.icu only accepts zone targets (`Zn HR` / `Zn Pace`) — absolute paces
+    # and absolute bpm ranges are silently dropped, and this athlete has no pace
+    # zones configured. Parenthesised text in the step label *does* survive parsing,
+    # so the number rides there and the step carries no zone: marathon pace is a
+    # pace target, and forcing an HR zone onto it would fight the actual instruction.
+    mp_step = (f"- Marathon pace ({pace} per mile) {mp_mi}mi" if pace
+               else f"- Marathon pace {mp_mi}mi")
+
+    has_warmup = re.search(r"warmup", desc, re.IGNORECASE)
+    if has_warmup:
+        wu_mi = _find_dist(r"NUM\s*mi\s*(?:\w+\s+)?warmup", desc, 2.0)
+        cd_mi = _find_dist(r"NUM\s*mi\s*cooldown", desc, 1.0)
+        return "\n".join([f"- Warmup {wu_mi}mi Z1-Z2 HR", mp_step,
+                          f"- Cooldown {cd_mi}mi Z1-Z2 HR"])
+
+    # Long-run shape: settle in easy, run the MP block in the back half, jog it out.
+    cd_mi = 2.0 if total - mp_mi > 4 else 1.0
+    easy_mi = round(total - mp_mi - cd_mi, 1)
+    return "\n".join([f"- Easy {easy_mi}mi Z2 HR", mp_step, f"- Easy {cd_mi}mi Z2 HR"])
+
+
+def _race_description(w):
+    """A race is not a prescribed workout — no HR cap, no structure to follow."""
+    dist = w.get("target_distance_miles") or 0
+    return f"- Race {dist}mi\n\nRace effort. No HR ceiling — run the race, not a zone."
 
 
 def _default_description(w):
@@ -85,19 +154,21 @@ def _maf_description(desc, w):
     warmup_match = re.search(r"warm\s*up\s+(\d+)\s*min", desc, re.IGNORECASE)
     warmup_min = int(warmup_match.group(1)) if warmup_match else 10
     maf_min = w.get("target_duration_minutes") or 30
+    # `135-139bpm HR` looks like a target but Intervals.icu drops absolute bpm ranges
+    # on the floor, so this step used to push with no target at all. Z1 is the zone
+    # that actually binds (this athlete's Z1 ceiling is 137, i.e. the MAF number), and
+    # the exact band rides in the label, where parenthesised text survives parsing.
     lines = [
         f"- Warmup {warmup_min}m Z1 HR",
-        f"- MAF Test {maf_min}m 135-139bpm HR",
+        f"- MAF Test (135-139 bpm) {maf_min}m Z1 HR",
     ]
     return "\n".join(lines)
 
 
 def _5k_tt_description(desc):
     """5K Time Trial: warmup + 5K all-out + cooldown."""
-    wu_match = re.search(r"(\d+)\s*mi\s*warmup", desc, re.IGNORECASE)
-    wu_mi = float(wu_match.group(1)) if wu_match else 1.0
-    cd_match = re.search(r"(\d+)\s*mi\s*cooldown", desc, re.IGNORECASE)
-    cd_mi = float(cd_match.group(1)) if cd_match else 1.0
+    wu_mi = _find_dist(r"NUM\s*mi\s*(?:\w+\s+)?warmup", desc, 1.0)
+    cd_mi = _find_dist(r"NUM\s*mi\s*cooldown", desc, 1.0)
     lines = [
         f"- Warmup {wu_mi}mi Z1-Z2 HR",
         "- 5K Time Trial 5km",
@@ -111,8 +182,7 @@ def _tempo_description(desc):
     lower = desc.lower()
     lines = []
 
-    wu_match = re.search(r"(\d+)\s*mi\s*warmup", desc, re.IGNORECASE)
-    wu_mi = float(wu_match.group(1)) if wu_match else 2.0
+    wu_mi = _find_dist(r"NUM\s*mi\s*(?:\w+\s+)?warmup", desc, 2.0)
     lines.append(f"- Warmup {wu_mi}mi Z1-Z2 HR")
 
     # Interval tempo: NxMmi
@@ -134,8 +204,7 @@ def _tempo_description(desc):
         tempo_mi = float(tempo_match.group(1)) if tempo_match else 4.0
         lines.append(f"- Tempo {tempo_mi}mi Z3 HR")
 
-    cd_match = re.search(r"(\d+)\s*mi\s*cooldown", desc, re.IGNORECASE)
-    cd_mi = float(cd_match.group(1)) if cd_match else 1.0
+    cd_mi = _find_dist(r"NUM\s*mi\s*cooldown", desc, 1.0)
     lines.append(f"- Cooldown {cd_mi}mi Z1-Z2 HR")
 
     return "\n".join(lines)
@@ -146,8 +215,7 @@ def _hills_description(desc):
     lower = desc.lower()
     lines = []
 
-    wu_match = re.search(r"(\d+)\s*mi\s*warmup", desc, re.IGNORECASE)
-    wu_mi = float(wu_match.group(1)) if wu_match else 2.0
+    wu_mi = _find_dist(r"NUM\s*mi\s*(?:\w+\s+)?warmup", desc, 2.0)
     lines.append(f"- Warmup {wu_mi}mi Z1-Z2 HR")
 
     rep_match = re.search(r"(\d+)\s*x\s*(\d+)\s*(sec|min)", lower)
@@ -164,8 +232,7 @@ def _hills_description(desc):
         lines.append(f"- Jog down {rec_str} Z1-Z2 HR")
         lines.append("")
 
-    cd_match = re.search(r"(\d+)\s*mi\s*cooldown", desc, re.IGNORECASE)
-    cd_mi = float(cd_match.group(1)) if cd_match else 1.0
+    cd_mi = _find_dist(r"NUM\s*mi\s*cooldown", desc, 1.0)
     lines.append(f"- Cooldown {cd_mi}mi Z1-Z2 HR")
 
     return "\n".join(lines)
@@ -205,10 +272,18 @@ def create_event(workout_dict, dry_run=False):
     title = workout_dict.get("title", "Workout")
     date = workout_dict.get("scheduled_date", datetime.now().strftime("%Y-%m-%d"))
 
+    # Races go on the calendar as races, not workouts, so Intervals.icu treats them
+    # as goal events (and doesn't sync them to the watch as a structured session to
+    # execute). The goal marathon is the A race; tune-ups are B races.
+    if workout_dict.get("workout_type") == "race":
+        category = "RACE_A" if (workout_dict.get("target_distance_miles") or 0) >= 26 else "RACE_B"
+    else:
+        category = "WORKOUT"
+
     payload = {
         "start_date_local": f"{date}T00:00:00",
         "type": "Run",
-        "category": "WORKOUT",
+        "category": category,
         "name": title,
         "description": icu_desc,
         "indoor": False,
