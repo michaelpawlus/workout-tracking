@@ -245,6 +245,43 @@ class MarathonPaceTargetTest(MarathonPlanTestBase):
         for r in rows:
             self.assertAlmostEqual(r["p"], result["marathon_pace"], places=2)
 
+    def test_recorded_benchmark_reaches_the_adaptive_engine(self):
+        """A benchmark result must become visible to adapt, or the gate does nothing.
+
+        find_unprocessed_benchmarks() filters on completed = 1, and for a long time
+        nothing in the CLI ever set it — so results had no path to the targets.
+        """
+        from backend.adapt import find_unprocessed_benchmarks
+
+        with database.get_db() as conn:
+            plan_id = create_columbus_plan(conn)
+            self.assertEqual(find_unprocessed_benchmarks(conn, plan_id), [])
+
+            tt = conn.execute(
+                """SELECT id, scheduled_date FROM plan_benchmarks
+                   WHERE plan_id = ? AND benchmark_type = 'time_trial'""",
+                (plan_id,),
+            ).fetchone()
+            conn.execute(
+                "UPDATE plan_benchmarks SET completed = 1, result_value = ? WHERE id = ?",
+                (27 * 60 + 40, tt["id"]),
+            )
+
+            pending = find_unprocessed_benchmarks(conn, plan_id)
+            self.assertEqual(len(pending), 1)
+
+            adapt_from_5k_tt(conn, plan_id, tt["id"], 27 * 60 + 40)
+            # Processed benchmarks must not be picked up twice.
+            self.assertEqual(find_unprocessed_benchmarks(conn, plan_id), [])
+
+            # The adaptation is dated to the benchmark, not to today, so it applies
+            # from the time trial onward and leaves earlier weeks alone.
+            before = get_current_targets(conn, plan_id, as_of_date="2026-08-28")
+            after = get_current_targets(conn, plan_id, as_of_date="2026-08-30")
+            self.assertEqual(before["marathon_pace"], PROVISIONAL_MARATHON_PACE)
+            self.assertLess(after["marathon_pace"], PROVISIONAL_MARATHON_PACE)
+            self.assertEqual(after["source"], "5k_tt")
+
     def test_ultra_plan_leaves_marathon_pace_unset(self):
         # NULL means "not applicable to this race", not "not yet measured".
         from backend.ultra_plan import create_br100_plan

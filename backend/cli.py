@@ -894,6 +894,51 @@ def cmd_benchmarks(args):
         if not plan:
             _err(_no_plan_msg(), args.json, 2)
 
+        # Recording a result is what makes a benchmark visible to `adapt` —
+        # find_unprocessed_benchmarks() only returns rows with completed = 1, and
+        # nothing else in the CLI ever set it, so benchmark results had no way to
+        # reach the adaptive engine at all.
+        if getattr(args, "record", None):
+            if args.result is None:
+                _err("--record needs --result (miles covered for a MAF test, "
+                     "total seconds for a time trial)", args.json)
+            matches = conn.execute(
+                """SELECT * FROM plan_benchmarks
+                   WHERE plan_id = ? AND (scheduled_date = ? OR LOWER(benchmark_name) LIKE ?)
+                   ORDER BY scheduled_date""",
+                (plan["id"], args.record, f"%{args.record.lower()}%"),
+            ).fetchall()
+            if not matches:
+                _err(f"No benchmark matching {args.record!r}. "
+                     f"Run `benchmarks` to list them.", args.json, 2)
+            if len(matches) > 1:
+                names = ", ".join(f"{m['benchmark_name']} ({m['scheduled_date']})" for m in matches)
+                _err(f"{args.record!r} matches several benchmarks: {names}. "
+                     f"Use the scheduled date instead.", args.json)
+            bm = matches[0]
+            conn.execute(
+                """UPDATE plan_benchmarks
+                   SET completed = 1, result_value = ?, result_notes = ? WHERE id = ?""",
+                (args.result, args.result_notes, bm["id"]),
+            )
+            unit = {"maf_test": "mi covered", "time_trial": "seconds"}.get(
+                bm["benchmark_type"], "")
+            result = {
+                "recorded": bm["benchmark_name"],
+                "scheduled_date": bm["scheduled_date"],
+                "type": bm["benchmark_type"],
+                "result_value": args.result,
+                "unit": unit,
+                "next": f"ultra {'marathon' if _ACTIVE_PLAN_NAME == COLUMBUS_PLAN_NAME else 'ultra'} adapt",
+            }
+            if args.json:
+                _print(result, True)
+            else:
+                print(f"Recorded {bm['benchmark_name']} ({bm['scheduled_date']}): "
+                      f"{args.result} {unit}")
+                print(f"Now run `{result['next']}` to fold it into your targets.")
+            return
+
         rows = conn.execute(
             """SELECT pb.*, tpw.week_number, tpw.week_type
                FROM plan_benchmarks pb
@@ -2563,6 +2608,11 @@ def _add_training_subcommands(sub, init_help):
 
     # benchmarks
     bm_p = sub.add_parser("benchmarks", help="Benchmark schedule + results")
+    bm_p.add_argument("--record", type=str,
+                      help="Benchmark name (or its scheduled date) to record a result for")
+    bm_p.add_argument("--result", type=float,
+                      help="Result value: miles covered for a MAF test, total seconds for a time trial")
+    bm_p.add_argument("--result-notes", type=str, help="Conditions, caveats, how it felt")
     bm_p.add_argument("--json", action="store_true")
 
     # upcoming
