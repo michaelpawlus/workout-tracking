@@ -13,8 +13,8 @@
 
 | Zone | Target |
 |------|--------|
-| Easy | 10:15/mi |
-| Long Run | 10:45/mi |
+| Easy | 12:00/mi |
+| Long Run | 12:30/mi |
 | Marathon Pace | 10:18/mi |
 | Tempo | 9:15/mi |
 | MAF HR | 137 bpm |
@@ -35,10 +35,10 @@ Target: 16-20 miles
 | 2026-08-10 | Rest Day | — | — | easy |
 | 2026-08-11 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
 | 2026-08-12 | MAF Test #5 | — | — | easy |
-| 2026-08-13 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-08-13 | 3mi Easy Run | 3.0mi | 12:00/mi | easy |
 | 2026-08-14 | Rest Day | — | — | easy |
 | 2026-08-15 | Rest Day | — | — | easy |
-| 2026-08-16 | 8mi Long Run | 8.0mi | 10:45/mi | easy |
+| 2026-08-16 | 8mi Long Run | 8.0mi | 12:30/mi | easy |
 
 **2026-08-11 — 4mi Easy Run**
 > Easy pace. Conversational — you should be able to speak in full sentences.
@@ -64,12 +64,12 @@ Target: 26-30 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-08-17 | Rest / Cross-Train | — | — | easy |
-| 2026-08-18 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
-| 2026-08-19 | 5mi Easy + 6 Strides | 5.0mi | 10:15/mi | easy |
-| 2026-08-20 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-08-18 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
+| 2026-08-19 | 5mi Easy + 6 Strides | 5.0mi | 12:00/mi | easy |
+| 2026-08-20 | 4mi Easy Run | 4.0mi | 12:00/mi | easy |
 | 2026-08-21 | Rest Day | — | — | easy |
-| 2026-08-22 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
-| 2026-08-23 | 10mi Long Run | 10.0mi | 10:45/mi | easy |
+| 2026-08-22 | 3mi Shakeout | 3.0mi | 12:00/mi | easy |
+| 2026-08-23 | 10mi Long Run | 10.0mi | 12:30/mi | easy |
 
 **2026-08-18 — 5mi Easy Run**
 > Easy pace. Conversational — you should be able to speak in full sentences.
@@ -98,12 +98,12 @@ Target: 28-32 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-08-24 | Rest / Cross-Train | — | — | easy |
-| 2026-08-25 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
-| 2026-08-26 | 4mi Easy + 4 Strides | 4.0mi | 10:15/mi | easy |
-| 2026-08-27 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-08-25 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
+| 2026-08-26 | 4mi Easy + 4 Strides | 4.0mi | 12:00/mi | easy |
+| 2026-08-27 | 4mi Easy Run | 4.0mi | 12:00/mi | easy |
 | 2026-08-28 | Rest Day | — | — | easy |
 | 2026-08-29 | 5K Time Trial #3 | 6.0mi | — | hard |
-| 2026-08-30 | 11mi Long Run | 11.0mi | 10:45/mi | easy |
+| 2026-08-30 | 11mi Long Run | 11.0mi | 12:30/mi | easy |
 
 **2026-08-25 — 5mi Easy Run**
 > Easy pace. Conversational — you should be able to speak in full sentences.
@@ -132,12 +132,12 @@ Target: 32-36 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-08-31 | Rest / Cross-Train | — | — | easy |
-| 2026-09-01 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-09-01 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
 | 2026-09-02 | Threshold: 3x1mi | 8.0mi | 9:15/mi | threshold |
-| 2026-09-03 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-09-03 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
 | 2026-09-04 | Rest Day | — | — | easy |
-| 2026-09-05 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
-| 2026-09-06 | 13mi Long Run | 13.0mi | 10:45/mi | easy |
+| 2026-09-05 | 3mi Shakeout | 3.0mi | 12:00/mi | easy |
+| 2026-09-06 | 13mi Long Run | 13.0mi | 12:30/mi | easy |
 
 **2026-09-01 — 6mi Easy Run**
 > Easy pace. Conversational — you should be able to speak in full sentences.
@@ -166,15 +166,15 @@ Target: 36-40 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-09-07 | Rest / Cross-Train | — | — | easy |
-| 2026-09-08 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-09-08 | MAF Test #6 | — | — | easy |
 | 2026-09-09 | Tempo: 4mi Continuous | 7.0mi | 9:15/mi | threshold |
-| 2026-09-10 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-09-10 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
 | 2026-09-11 | Rest Day | — | — | easy |
-| 2026-09-12 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
+| 2026-09-12 | 3mi Shakeout | 3.0mi | 12:00/mi | easy |
 | 2026-09-13 | 15mi Long Run w/ 4 @ MP | 15.0mi | 10:18/mi | moderate |
 
-**2026-09-08 — 6mi Easy Run**
-> Easy pace. Conversational — you should be able to speak in full sentences.
+**2026-09-08 — MAF Test #6**
+> 30 min at HR ~137 bpm (band 135-139) on flat ground after a 10 min easy warmup. RUN IT AS TWO LAPS — hit lap at 10:00 and again at 40:00 — so the 30-min window is readable without reconstructing it from streams (Test #5 had to be rebuilt from 1Hz data). Same route and same time of day as Test #5, and RECORD TEMPERATURE + HUMIDITY (the 82F omission invalidated Test #4). Trend on the 30-min window: #1 2.58mi/11:38 @139.3 | #2 2.63mi/11:23 @138.0 | #4 2.66mi/11:17 @146.7 (invalid, HR +8 over band) | #5 2.54mi/11:49 @139.2. This reads whether post-BR100 durability has returned: watch the decay across the three 10-min thirds (Test #5 lost 125 s/mi at flat HR). Do not chase pace; hold the HR.
 
 **2026-09-09 — Tempo: 4mi Continuous**
 > 2mi warmup, 4mi continuous at tempo, 1mi cooldown.
@@ -200,12 +200,12 @@ Target: 29-33 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-09-14 | Rest / Cross-Train | — | — | easy |
-| 2026-09-15 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-09-16 | 4mi Easy + 4 Strides | 4.0mi | 10:15/mi | easy |
-| 2026-09-17 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-09-15 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
+| 2026-09-16 | 4mi Easy + 4 Strides | 4.0mi | 12:00/mi | easy |
+| 2026-09-17 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
 | 2026-09-18 | Rest Day | — | — | easy |
 | 2026-09-19 | Air Force Half Marathon | 13.1mi | — | hard |
-| 2026-09-20 | 4mi Recovery Jog | 4.0mi | 10:15/mi | easy |
+| 2026-09-20 | 4mi Recovery Jog | 4.0mi | 12:00/mi | easy |
 
 **2026-09-15 — 6mi Easy Run**
 > Easy pace. Conversational — you should be able to speak in full sentences.
@@ -234,11 +234,11 @@ Target: 33-37 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-09-21 | Rest / Cross-Train | — | — | easy |
-| 2026-09-22 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
-| 2026-09-23 | 4mi Easy | 4.0mi | 10:15/mi | easy |
-| 2026-09-24 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-09-22 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
+| 2026-09-23 | 4mi Easy | 4.0mi | 12:00/mi | easy |
+| 2026-09-24 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
 | 2026-09-25 | Rest Day | — | — | easy |
-| 2026-09-26 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
+| 2026-09-26 | 3mi Shakeout | 3.0mi | 12:00/mi | easy |
 | 2026-09-27 | 18mi Long Run w/ 5 @ MP | 18.0mi | 10:18/mi | moderate |
 
 **2026-09-22 — 6mi Easy Run**
@@ -268,11 +268,11 @@ Target: 38-42 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-09-28 | Rest / Cross-Train | — | — | easy |
-| 2026-09-29 | 6mi Easy Run | 6.0mi | 10:15/mi | easy |
+| 2026-09-29 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
 | 2026-09-30 | Tempo: 5mi | 8.0mi | 9:15/mi | threshold |
-| 2026-10-01 | 5mi Easy Run | 5.0mi | 10:15/mi | easy |
+| 2026-10-01 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
 | 2026-10-02 | Rest Day | — | — | easy |
-| 2026-10-03 | 3mi Shakeout | 3.0mi | 10:15/mi | easy |
+| 2026-10-03 | 3mi Shakeout | 3.0mi | 12:00/mi | easy |
 | 2026-10-04 | 20mi Long Run w/ 8 @ MP | 20.0mi | 10:18/mi | moderate |
 
 **2026-09-29 — 6mi Easy Run**
@@ -302,9 +302,9 @@ Target: 24-28 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-10-05 | Rest Day | — | — | easy |
-| 2026-10-06 | 4mi Easy Run | 4.0mi | 10:15/mi | easy |
+| 2026-10-06 | 4mi Easy Run | 4.0mi | 12:00/mi | easy |
 | 2026-10-07 | MP Sharpener: 3mi | 6.0mi | 10:18/mi | moderate |
-| 2026-10-08 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-10-08 | 3mi Easy Run | 3.0mi | 12:00/mi | easy |
 | 2026-10-09 | Rest Day | — | — | easy |
 | 2026-10-10 | Rest Day | — | — | easy |
 | 2026-10-11 | 12mi Long Run w/ 4 @ MP | 12.0mi | 10:18/mi | moderate |
@@ -333,9 +333,9 @@ Target: 12-40 miles
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-10-12 | Rest Day | — | — | easy |
-| 2026-10-13 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
-| 2026-10-14 | 3mi Easy + 4 Strides | 3.0mi | 10:15/mi | easy |
-| 2026-10-15 | 3mi Easy Run | 3.0mi | 10:15/mi | easy |
+| 2026-10-13 | 3mi Easy Run | 3.0mi | 12:00/mi | easy |
+| 2026-10-14 | 3mi Easy + 4 Strides | 3.0mi | 12:00/mi | easy |
+| 2026-10-15 | 3mi Easy Run | 3.0mi | 12:00/mi | easy |
 | 2026-10-16 | Rest Day | — | — | easy |
 | 2026-10-17 | Rest — Race Eve | — | — | easy |
 | 2026-10-18 | Columbus Marathon | 26.2mi | — | hard |
