@@ -73,9 +73,56 @@ def _err(msg, as_json=False, code=1):
     sys.exit(code)
 
 
-def _get_plan(conn):
+BR100_PLAN_NAME = "Burning River 100"
+COLUMBUS_PLAN_NAME = "Columbus Marathon"
+
+# Which race the shared commands operate on. main() pins this from the invoked
+# subgroup (`ultra` -> BR100, `marathon` -> Columbus) via argparse set_defaults,
+# so today/week/submit/feedback/... resolve against the right plan without every
+# command having to thread the name through. Defaults to BR100 so any caller that
+# bypasses main() behaves exactly as it did before the marathon plan existed.
+_ACTIVE_PLAN_NAME = BR100_PLAN_NAME
+
+
+def _set_active_plan_name(name):
+    global _ACTIVE_PLAN_NAME
+    _ACTIVE_PLAN_NAME = name or BR100_PLAN_NAME
+
+
+def _no_plan_msg():
+    """Error text naming the plan the current subgroup is scoped to."""
+    group = "marathon" if _ACTIVE_PLAN_NAME == COLUMBUS_PLAN_NAME else "ultra"
+    return f"No active {_ACTIVE_PLAN_NAME} plan. Run: ultra {group} init"
+
+
+def _plan_spec(plan_name=None):
+    """Per-race wiring for the shared commands: how to build the plan and how to
+    render it to markdown. Adding a race = one entry here + a subgroup in main()."""
+    name = plan_name or _ACTIVE_PLAN_NAME
+    if name == COLUMBUS_PLAN_NAME:
+        from .marathon_plan import create_columbus_plan, generate_marathon_plan_markdown
+        return {
+            "name": COLUMBUS_PLAN_NAME,
+            "create": create_columbus_plan,
+            "render": generate_marathon_plan_markdown,
+            "filename": "MARATHON_PLAN.md",
+            "summary": "10 weeks: Aug 10 - Oct 18, 2026 (Mon-Sun weeks, long run Sunday)",
+        }
+    from .ultra_plan import generate_training_plan_markdown
+    return {
+        "name": BR100_PLAN_NAME,
+        "create": create_br100_plan,
+        "render": generate_training_plan_markdown,
+        "filename": "TRAINING_PLAN.md",
+        "summary": "20 weeks: Mar 9 - Jul 26, 2026 (Mon-Sun weeks)",
+    }
+
+
+def _get_plan(conn, plan_name=None):
     plan = conn.execute(
-        "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
+        "SELECT * FROM training_plans WHERE name = ? AND status = 'active' "
+        "ORDER BY id DESC LIMIT 1",
+        (plan_name or _ACTIVE_PLAN_NAME,),
     ).fetchone()
     return plan
 
@@ -106,13 +153,14 @@ def cmd_init(args):
             if not args.json:
                 print(f"Deleted existing plan (id={plan_id})", file=sys.stderr)
 
-        plan_id = create_br100_plan(conn)
+        spec = _plan_spec()
+        plan_id = spec["create"](conn)
         plan = _get_plan(conn)
 
-    result = {"plan_id": plan_id, "message": "Burning River 100 plan created"}
+    result = {"plan_id": plan_id, "message": f"{spec['name']} plan created"}
     if not args.json:
-        print(f"Created Burning River 100 plan (id={plan_id})")
-        print("20 weeks: Mar 9 - Jul 26, 2026 (Mon-Sun weeks)")
+        print(f"Created {spec['name']} plan (id={plan_id})")
+        print(spec["summary"])
         print(f"Goal: {plan['goal']}")
     else:
         _print(result, True)
@@ -123,7 +171,7 @@ def cmd_today(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         workout = conn.execute(
             "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
@@ -187,7 +235,7 @@ def cmd_week(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         if args.week_num:
             week_row = conn.execute(
@@ -269,7 +317,7 @@ def _submit_run(distance, duration=None, hr=None, max_hr=None, elevation=None,
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", as_json, 2)
+            _err(_no_plan_msg(), as_json, 2)
 
         daily = conn.execute(
             "SELECT * FROM daily_workouts WHERE plan_id = ? AND scheduled_date = ?",
@@ -614,7 +662,7 @@ def cmd_feedback(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         rows = conn.execute(
             """SELECT rf.*, dw.title as workout_title
@@ -656,7 +704,7 @@ def _save_feedback_to_vault(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         if getattr(args, "id", None):
             row = conn.execute(
@@ -784,7 +832,7 @@ def cmd_progress(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         total = conn.execute(
             "SELECT COUNT(*) as total FROM daily_workouts WHERE plan_id = ? AND workout_type != 'rest'",
@@ -844,7 +892,52 @@ def cmd_benchmarks(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
+
+        # Recording a result is what makes a benchmark visible to `adapt` —
+        # find_unprocessed_benchmarks() only returns rows with completed = 1, and
+        # nothing else in the CLI ever set it, so benchmark results had no way to
+        # reach the adaptive engine at all.
+        if getattr(args, "record", None):
+            if args.result is None:
+                _err("--record needs --result (miles covered for a MAF test, "
+                     "total seconds for a time trial)", args.json)
+            matches = conn.execute(
+                """SELECT * FROM plan_benchmarks
+                   WHERE plan_id = ? AND (scheduled_date = ? OR LOWER(benchmark_name) LIKE ?)
+                   ORDER BY scheduled_date""",
+                (plan["id"], args.record, f"%{args.record.lower()}%"),
+            ).fetchall()
+            if not matches:
+                _err(f"No benchmark matching {args.record!r}. "
+                     f"Run `benchmarks` to list them.", args.json, 2)
+            if len(matches) > 1:
+                names = ", ".join(f"{m['benchmark_name']} ({m['scheduled_date']})" for m in matches)
+                _err(f"{args.record!r} matches several benchmarks: {names}. "
+                     f"Use the scheduled date instead.", args.json)
+            bm = matches[0]
+            conn.execute(
+                """UPDATE plan_benchmarks
+                   SET completed = 1, result_value = ?, result_notes = ? WHERE id = ?""",
+                (args.result, args.result_notes, bm["id"]),
+            )
+            unit = {"maf_test": "mi covered", "time_trial": "seconds"}.get(
+                bm["benchmark_type"], "")
+            result = {
+                "recorded": bm["benchmark_name"],
+                "scheduled_date": bm["scheduled_date"],
+                "type": bm["benchmark_type"],
+                "result_value": args.result,
+                "unit": unit,
+                "next": f"ultra {'marathon' if _ACTIVE_PLAN_NAME == COLUMBUS_PLAN_NAME else 'ultra'} adapt",
+            }
+            if args.json:
+                _print(result, True)
+            else:
+                print(f"Recorded {bm['benchmark_name']} ({bm['scheduled_date']}): "
+                      f"{args.result} {unit}")
+                print(f"Now run `{result['next']}` to fold it into your targets.")
+            return
 
         rows = conn.execute(
             """SELECT pb.*, tpw.week_number, tpw.week_type
@@ -874,7 +967,7 @@ def cmd_upcoming(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         rows = conn.execute(
             """SELECT * FROM daily_workouts
@@ -977,7 +1070,7 @@ def cmd_strava_import(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
     for a in activities:
         activity_id = a["id"]
@@ -1039,7 +1132,7 @@ def cmd_export_fit(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         # Fetch adaptive HR zones
         targets = get_current_targets(conn, plan["id"])
@@ -1098,7 +1191,7 @@ def cmd_icu_push(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         if args.upcoming:
             today = datetime.now().strftime("%Y-%m-%d")
@@ -1216,15 +1309,13 @@ def _targets_to_hr_zones(targets):
 
 
 def cmd_adapt(args):
-    from database import get_connection
+    from .database import get_connection
 
     conn = get_connection()
     try:
-        plan = conn.execute(
-            "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
-        ).fetchone()
+        plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         plan_id = plan["id"]
         old_targets = get_current_targets(conn, plan_id)
@@ -1311,17 +1402,15 @@ def cmd_adapt(args):
 
 
 def cmd_targets(args):
-    from database import get_connection
+    from .database import get_connection
 
     if getattr(args, 'set', False):
         # Manual target override mode
         conn = get_connection()
         try:
-            plan = conn.execute(
-                "SELECT * FROM training_plans WHERE name = 'Burning River 100' AND status = 'active' ORDER BY id DESC LIMIT 1"
-            ).fetchone()
+            plan = _get_plan(conn)
             if not plan:
-                _err("No active BR100 plan", args.json, 2)
+                _err(_no_plan_msg(), args.json, 2)
 
             result = set_manual_targets(
                 conn, plan["id"],
@@ -1352,7 +1441,7 @@ def cmd_targets(args):
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
         if args.history:
             history = get_targets_history(conn, plan["id"])
@@ -2401,23 +2490,23 @@ def cmd_race_capstone(args):
 
 def cmd_export_md(args):
     import os
-    from .ultra_plan import generate_training_plan_markdown
 
+    spec = _plan_spec()
     with get_db() as conn:
         plan = _get_plan(conn)
         if not plan:
-            _err("No active BR100 plan. Run: python cli.py ultra init", args.json, 2)
+            _err(_no_plan_msg(), args.json, 2)
 
-        md = generate_training_plan_markdown(conn, plan["id"])
+        md = spec["render"](conn, plan["id"])
 
     if not md:
         _err("Failed to generate markdown", args.json)
 
-    output_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "TRAINING_PLAN.md")
+    output_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), spec["filename"])
     with open(output_path, "w") as f:
         f.write(md)
 
-    result = {"path": output_path, "message": "TRAINING_PLAN.md regenerated"}
+    result = {"path": output_path, "message": f"{spec['filename']} regenerated"}
     if args.json:
         _print(result, True)
     else:
@@ -2430,30 +2519,54 @@ def _fmt_pace(pace):
     return f"{int(pace)}:{int((pace % 1) * 60):02d}/mi"
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Workout tracker CLI")
-    subparsers = parser.add_subparsers(dest="command")
+def _training_commands():
+    """Command name -> handler for the shared training surface. Both the `ultra`
+    and `marathon` subgroups dispatch through this; the handlers are plan-agnostic
+    because they resolve their plan via _get_plan()."""
+    return {
+        "init": cmd_init,
+        "today": cmd_today,
+        "week": cmd_week,
+        "submit": cmd_submit,
+        "feedback": cmd_feedback,
+        "progress": cmd_progress,
+        "benchmarks": cmd_benchmarks,
+        "upcoming": cmd_upcoming,
+        "icu-push": cmd_icu_push,
+        "export-fit": cmd_export_fit,
+        "strava-connect": cmd_strava_connect,
+        "strava-status": cmd_strava_status,
+        "strava-import": cmd_strava_import,
+        "adapt": cmd_adapt,
+        "targets": cmd_targets,
+        "plan": cmd_export_md,
+        "nutrition": cmd_nutrition,
+    }
 
-    # ultra subcommand
-    ultra_parser = subparsers.add_parser("ultra", help="Burning River 100 training")
-    ultra_sub = ultra_parser.add_subparsers(dest="ultra_command")
 
-    # ultra init
-    init_p = ultra_sub.add_parser("init", help="Create the 20-week BR100 plan")
+def _add_training_subcommands(sub, init_help):
+    """Register the plan-driven training commands on a race subgroup.
+
+    Shared verbatim by `ultra` (BR100) and `marathon` (Columbus); what differs is
+    only which plan _ACTIVE_PLAN_NAME resolves to at dispatch, so both subgroups
+    get an identical command surface without duplicating the argument definitions.
+    """
+    # init
+    init_p = sub.add_parser("init", help=init_help)
     init_p.add_argument("--force", action="store_true", help="Delete and recreate existing plan")
     init_p.add_argument("--json", action="store_true")
 
-    # ultra today
-    today_p = ultra_sub.add_parser("today", help="Today's prescribed workout")
+    # today
+    today_p = sub.add_parser("today", help="Today's prescribed workout")
     today_p.add_argument("--json", action="store_true")
 
-    # ultra week
-    week_p = ultra_sub.add_parser("week", help="Full week schedule")
+    # week
+    week_p = sub.add_parser("week", help="Full week schedule")
     week_p.add_argument("week_num", nargs="?", type=int, default=None)
     week_p.add_argument("--json", action="store_true")
 
-    # ultra submit
-    submit_p = ultra_sub.add_parser("submit", help="Submit run data + get feedback")
+    # submit
+    submit_p = sub.add_parser("submit", help="Submit run data + get feedback")
     submit_p.add_argument("--distance", type=float)
     submit_p.add_argument("--duration", type=float)
     submit_p.add_argument("--hr", type=int, help="Average heart rate")
@@ -2482,28 +2595,33 @@ def main():
     submit_p.add_argument("--no-vault", action="store_true", help="Skip writing the run report to Obsidian")
     submit_p.add_argument("--json", action="store_true")
 
-    # ultra feedback
-    fb_p = ultra_sub.add_parser("feedback", help="Recent run feedback")
+    # feedback
+    fb_p = sub.add_parser("feedback", help="Recent run feedback")
     fb_p.add_argument("--save", action="store_true",
                       help="Render feedback to the Obsidian vault (use --id to pick a specific row)")
     fb_p.add_argument("--id", type=int, help="run_feedback row id to render with --save")
     fb_p.add_argument("--json", action="store_true")
 
-    # ultra progress
-    prog_p = ultra_sub.add_parser("progress", help="Overall progress dashboard")
+    # progress
+    prog_p = sub.add_parser("progress", help="Overall progress dashboard")
     prog_p.add_argument("--json", action="store_true")
 
-    # ultra benchmarks
-    bm_p = ultra_sub.add_parser("benchmarks", help="Benchmark schedule + results")
+    # benchmarks
+    bm_p = sub.add_parser("benchmarks", help="Benchmark schedule + results")
+    bm_p.add_argument("--record", type=str,
+                      help="Benchmark name (or its scheduled date) to record a result for")
+    bm_p.add_argument("--result", type=float,
+                      help="Result value: miles covered for a MAF test, total seconds for a time trial")
+    bm_p.add_argument("--result-notes", type=str, help="Conditions, caveats, how it felt")
     bm_p.add_argument("--json", action="store_true")
 
-    # ultra upcoming
-    up_p = ultra_sub.add_parser("upcoming", help="Next N days of workouts")
+    # upcoming
+    up_p = sub.add_parser("upcoming", help="Next N days of workouts")
     up_p.add_argument("--days", type=int, default=7)
     up_p.add_argument("--json", action="store_true")
 
-    # ultra icu-push
-    icu_p = ultra_sub.add_parser("icu-push", help="Push workouts to Intervals.icu (syncs to Coros)")
+    # icu-push
+    icu_p = sub.add_parser("icu-push", help="Push workouts to Intervals.icu (syncs to Coros)")
     icu_p.add_argument("--week", type=int, help="Push all workouts for a specific week")
     icu_p.add_argument("--date", type=str, help="Push workout for specific date (YYYY-MM-DD)")
     icu_p.add_argument("--upcoming", type=int, metavar="DAYS", help="Push next N days of workouts")
@@ -2515,27 +2633,27 @@ def main():
     icu_p.add_argument("--dry-run", action="store_true", help="Show what would be pushed without calling API")
     icu_p.add_argument("--json", action="store_true")
 
-    # ultra export-fit
-    ef_p = ultra_sub.add_parser("export-fit", help="Export FIT workout files for Coros")
+    # export-fit
+    ef_p = sub.add_parser("export-fit", help="Export FIT workout files for Coros")
     ef_p.add_argument("--week", type=int, help="Export all workouts for a specific week")
     ef_p.add_argument("--date", type=str, help="Export workout for specific date (YYYY-MM-DD)")
     ef_p.add_argument("--all", action="store_true", help="Export entire plan")
     ef_p.add_argument("--json", action="store_true")
 
-    # ultra strava-connect
-    sc_p = ultra_sub.add_parser("strava-connect", help="Seed Strava tokens")
+    # strava-connect
+    sc_p = sub.add_parser("strava-connect", help="Seed Strava tokens")
     sc_p.add_argument("--access-token", type=str, required=True)
     sc_p.add_argument("--refresh-token", type=str, required=True)
     sc_p.add_argument("--expires-at", type=int, default=None, help="Token expiry unix timestamp")
     sc_p.add_argument("--force", action="store_true", help="Overwrite existing tokens")
     sc_p.add_argument("--json", action="store_true")
 
-    # ultra strava-status
-    ss_p = ultra_sub.add_parser("strava-status", help="Check Strava connection")
+    # strava-status
+    ss_p = sub.add_parser("strava-status", help="Check Strava connection")
     ss_p.add_argument("--json", action="store_true")
 
-    # ultra strava-import
-    si_p = ultra_sub.add_parser("strava-import", help="Import runs from Strava")
+    # strava-import
+    si_p = sub.add_parser("strava-import", help="Import runs from Strava")
     si_p.add_argument("--count", type=int, default=10, help="Number of activities to fetch")
     si_p.add_argument("--list", action="store_true", help="List activities without importing")
     si_p.add_argument("--all-types", action="store_true", help="Include non-run activities")
@@ -2543,13 +2661,13 @@ def main():
     si_p.add_argument("--no-vault", action="store_true", help="Skip writing run reports to Obsidian")
     si_p.add_argument("--json", action="store_true")
 
-    # ultra adapt
-    adapt_p = ultra_sub.add_parser("adapt", help="Run adaptive target adjustments")
+    # adapt
+    adapt_p = sub.add_parser("adapt", help="Run adaptive target adjustments")
     adapt_p.add_argument("--dry-run", action="store_true", help="Show proposed changes without applying")
     adapt_p.add_argument("--json", action="store_true")
 
-    # ultra targets
-    tgt_p = ultra_sub.add_parser("targets", help="Show or set pace/HR targets")
+    # targets
+    tgt_p = sub.add_parser("targets", help="Show or set pace/HR targets")
     tgt_p.add_argument("--history", action="store_true", help="Show full target timeline")
     tgt_p.add_argument("--set", action="store_true", help="Set targets manually")
     tgt_p.add_argument("--easy", type=float, help="Easy pace (min/mi, e.g. 10.25)")
@@ -2558,17 +2676,28 @@ def main():
     tgt_p.add_argument("--notes", type=str, help="Note for this target change")
     tgt_p.add_argument("--json", action="store_true")
 
-    # ultra plan
-    plan_p = ultra_sub.add_parser("plan", help="Export/manage the training plan")
-    plan_p.add_argument("--export-md", action="store_true", help="Regenerate TRAINING_PLAN.md from DB")
+    # plan
+    plan_p = sub.add_parser("plan", help="Export/manage the training plan")
+    plan_p.add_argument("--export-md", action="store_true", help="Regenerate the plan markdown from DB")
     plan_p.add_argument("--json", action="store_true")
 
-    # ultra nutrition
-    nut_p = ultra_sub.add_parser("nutrition", help="Nutrition guidelines for a workout")
+    # nutrition
+    nut_p = sub.add_parser("nutrition", help="Nutrition guidelines for a workout")
     nut_p.add_argument("--distance", type=float, help="Distance in miles")
     nut_p.add_argument("--duration", type=float, help="Duration in minutes")
     nut_p.add_argument("--workout-type", type=str, default=None, help="Workout type (easy_run, long_run, etc)")
     nut_p.add_argument("--json", action="store_true")
+
+def main():
+    parser = argparse.ArgumentParser(description="Workout tracker CLI")
+    subparsers = parser.add_subparsers(dest="command")
+
+    # ultra subcommand
+    ultra_parser = subparsers.add_parser("ultra", help="Burning River 100 training")
+    ultra_parser.set_defaults(plan_name=BR100_PLAN_NAME)
+    ultra_sub = ultra_parser.add_subparsers(dest="ultra_command")
+
+    _add_training_subcommands(ultra_sub, "Create the 20-week BR100 plan")
 
     # -----------------------------------------------------------------------
     # ultra race — Race Day Engine subcommands
@@ -2794,6 +2923,14 @@ def main():
     # -----------------------------------------------------------------------
     # gym subcommand — strength & gym workout tracking
     # -----------------------------------------------------------------------
+    # marathon subcommand — same training surface, pinned to the Columbus plan.
+    # No `race` subgroup: the Race Day Engine (GPX segments, crew manual, aid
+    # stations, peer splits) is built for the 100-miler and has no marathon analogue.
+    marathon_parser = subparsers.add_parser("marathon", help="Columbus Marathon training")
+    marathon_parser.set_defaults(plan_name=COLUMBUS_PLAN_NAME)
+    marathon_sub = marathon_parser.add_subparsers(dest="marathon_command")
+    _add_training_subcommands(marathon_sub, "Create the 10-week Columbus Marathon plan")
+
     gym_parser = subparsers.add_parser("gym", help="Strength & gym workout tracking")
     gym_sub = gym_parser.add_subparsers(dest="gym_command")
 
@@ -2840,6 +2977,10 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    # Pin which race the shared commands resolve against. Each training subgroup
+    # sets plan_name via set_defaults; anything else falls back to BR100.
+    _set_active_plan_name(getattr(args, "plan_name", None))
+
     init_db()
 
     if args.command == "ultra":
@@ -2879,31 +3020,23 @@ def main():
                 sys.exit(1)
             return
 
-        ultra_commands = {
-            "init": cmd_init,
-            "today": cmd_today,
-            "week": cmd_week,
-            "submit": cmd_submit,
-            "feedback": cmd_feedback,
-            "progress": cmd_progress,
-            "benchmarks": cmd_benchmarks,
-            "upcoming": cmd_upcoming,
-            "icu-push": cmd_icu_push,
-            "export-fit": cmd_export_fit,
-            "strava-connect": cmd_strava_connect,
-            "strava-status": cmd_strava_status,
-            "strava-import": cmd_strava_import,
-            "adapt": cmd_adapt,
-            "targets": cmd_targets,
-            "plan": cmd_export_md,
-            "nutrition": cmd_nutrition,
-        }
-
-        cmd = ultra_commands.get(args.ultra_command)
+        cmd = _training_commands().get(args.ultra_command)
         if cmd:
             cmd(args)
         else:
             ultra_parser.print_help()
+            sys.exit(1)
+
+    elif args.command == "marathon":
+        if not getattr(args, "marathon_command", None):
+            marathon_parser.print_help()
+            sys.exit(1)
+
+        cmd = _training_commands().get(args.marathon_command)
+        if cmd:
+            cmd(args)
+        else:
+            marathon_parser.print_help()
             sys.exit(1)
 
     elif args.command == "gym":

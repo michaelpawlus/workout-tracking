@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Daily snapshot of backend/workouts.db into the Obsidian vault.
+
+  The 20-week BR100 training record was lost in the macOS migration because the
+  database existed on one machine with no copy. The vault survived, so that is
+  where snapshots go. Install with:
+
+    cp backend/launchd/com.michaelpawlus.workout-db-backup.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.michaelpawlus.workout-db-backup.plist
+
+  Check status / logs / run it now:
+
+    launchctl print gui/$(id -u)/com.michaelpawlus.workout-db-backup
+    tail -f /tmp/workout-db-backup.{out,err}.log
+    launchctl kickstart -p gui/$(id -u)/com.michaelpawlus.workout-db-backup
+
+  Restore the newest snapshot:
+
+    gzip -dc "$OBSIDIAN_VAULT_PATH/.workout-db-backups/$(command ls -1t \
+      "$OBSIDIAN_VAULT_PATH/.workout-db-backups" | head -1)" > backend/workouts.db
+
+  Uninstall:
+
+    launchctl bootout gui/$(id -u)/com.michaelpawlus.workout-db-backup
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.michaelpawlus.workout-db-backup</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/michaelpawlus/dev/projects/workout-tracking/backend/backup-db.sh</string>
+    </array>
+
+    <!-- Daily at 21:00, after evening runs have been logged. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>21</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Snapshot on install and on every login, so a machine that is asleep at
+         21:00 still gets a copy rather than silently skipping days. -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- launchd's default PATH lacks Homebrew, where sqlite3 lives. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>OBSIDIAN_VAULT_PATH</key>
+        <string>/Users/michaelpawlus/dev/vault</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/workout-db-backup.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/workout-db-backup.err.log</string>
+</dict>
+</plist>

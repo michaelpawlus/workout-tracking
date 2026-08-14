@@ -36,13 +36,35 @@ fueling:
   fluid_oz_per_hr: [20, 24]
   primary_carb: "NeverSecond C30 gels (30 g carb each)"
   gel_carb_g: 30
-  electrolyte: "Flash IV"
+  # 2026-07-23: Flash I.V. demoted from the hourly electrolyte to a 4-dose schedule.
+  # It is vitamin-fortified (zinc, B6, vitamin C) and formulated for 1-3 servings/day.
+  # ~26 sticks approaches the 40 mg/day zinc upper limit, and the acute risk is worse
+  # than the chronic one: high-dose zinc causes nausea, which kills a fueling plan.
+  electrolyte: "Precision Hydration tablets (hourly), strength varied by time of day"
   salt_backup: "salt capsules"
+  # Precision numbering is mg sodium PER LITRE -> one tablet in 500 ml delivers half.
+  # Hourly PH 1000 alone is only ~500 mg/hr, the floor of the range, so the heat
+  # window steps up to PH 1500 (~750 mg) to hit the 700-800 mg/hr hot-day target.
+  electrolyte_schedule:
+    - { tablet: "PH 1000", na_mg: 500, window: "start -> Oak Hill 22.9" }
+    - { tablet: "PH 1500", na_mg: 750, window: "Oak Hill 22.9 -> Rt. 8 55.9 (heat crucible)" }
+    - { tablet: "PH 1000", na_mg: 500, window: "Rt. 8 55.9 -> Oak Hill 78.2" }
+    - { tablet: "PH 500/1000", na_mg: 250, window: "Oak Hill 78.2 -> finish (overnight)" }
+  flash_iv_doses:                # 4 only; ~10 mg zinc total
+    - { n: 1, eta: "04:00", where: "Start (in the flask)" }
+    - { n: 2, eta: "10:57", where: "Pine Hollow 34.5 (crew)" }
+    - { n: 3, eta: "17:28", where: "Kendall Lake 61.2 (drop bag)" }
+    - { n: 4, eta: "01:00", where: "Botzum 87.7 (crew)" }
+  caffeine_gels:                 # peaks 30-45 min, runs 3-5 hr
+    - { where: "Oak Hill 78.2", eta: "22:02" }
+    - { where: "Botzum 87.7", eta: "01:00", note: "brackets the ~mile 90 hallucination window" }
+    - { where: "Schumacher 97.1", eta: "04:30", note: "optional, only if fading" }
   savory_switch_hour: 12         # after ~12 h / dark, shift to broth, ramen, potatoes
   notes:
     - "Hand exactly the gels needed for the next leg + 1 spare."
     - "Keep the carb mix cold too, not just the water."
     - "Eat before hungry; walk while eating on climbs."
+    - "Botzum has NO real food in either direction and he arrives at 1:00 AM - crew brings a thermos of broth."
 
 # The heart of this athlete's race. Every item escalates in heat (see hot_threshold_f).
 cooling:
@@ -67,47 +89,108 @@ cooling:
     - Robinson Field
     - Indigo Lake (self-serve jugs)
   interaction_warning: "Dousing wets the skin, which raises chafing risk — reapply lube after dousing."
+  # 2026-07-23: with no vest during the day he CANNOT carry ice out of an aid station.
+  # The reframe that makes this solvable: the cooling gap is aid-to-aid, not crew-to-crew.
+  # During the crucible he is never more than ~90 min from water (max gap 5.9 mi).
+  between_station_protocol:
+    - "Ice = a 20-30 min tool. Front-load at EVERY station. Priority: bandana at the neck (carotids) -> cap -> hood of the sun hoodie -> wrists."
+    - "Water = a 60-90 min tool. Soak the hoodie completely at every station; re-wet from the plain-water hand bottle mid-leg. Ohio humidity blunts evaporation, so conduction does the work - re-wetting matters more than airflow."
+    - "Pace = continuous, and the only tool that never runs out. You cannot out-equip a heat load, only out-pace it."
+  crew_action_highest_value: >
+    FROZEN BOTTLES. Freeze several solid the night before; hand over a slushy/partly-frozen
+    bottle at every stop. Stays cold 1-2 h instead of 20 min, gives cold fluid all leg, and
+    puts something genuinely cold in each palm - recovering most of the palmar cooling lost
+    by dropping the vest.
 
 chafing:
   lube: "Squirrel's Nut Butter / BodyGlide"
   reapply_every_crew_stop: true
   hotspots: [thighs/groin, underarms, nipples, waistband, between toes]
+  # 2026-07-23: NO hydration vest miles 0-67.2. Pack straps over a wet shirt is his
+  # documented failure mode (Laurel Highlands). He carries two handheld bottles (one per
+  # hand) plus a waist belt. Vest returns at Pine Hollow 67.2 with a DRY shirt underneath.
+  no_vest_until_mile: 67.2
+  vest_return_order: "hoodie off -> dry the skin -> lube the strap lines (shoulders, sternum, ribs, underarms) -> dry long-sleeve -> vest"
   prevention:
     - "Pre-race: lube all hotspots; tape nipples"
     - "Seamless, well-fitted, wicking apparel — no cotton"
     - "Crew reapplies lube at every stop (more critical once wet from sweat/dousing/rain)"
-    - "Sock + foot-powder change at drop-bag stops"
+    - "Sock + foot-powder change at Oak Hill 22.9, Silver Springs 50.7, Oak Hill 78.2"
     - "Fix hotspots before they blister — leukotape on first contact"
   blister_kit: [leukotape, needle, alcohol wipes, foot powder, spare socks]
+  # With one drop bag, nothing is staged on course - crew carries all of it, every stop.
+  foot_care_carried_by: crew
 
-drop_bags:                       # staged at stations flagged drop_bag = 1 in the course data
+# 2026-07-23: cut from four bags to ONE. Oak Hill (22.9/78.2) and Silver Springs (50.7)
+# are crew-accessible, and Chestnut (89.4) sits between two crewed stops - all redundant.
+# Kendall Lake is the only station that is drop-bag-but-not-crew AND falls inside both of
+# the longest crew gaps (PH 34.5 -> SS 50.7, 16.2 mi; SS 50.7 -> PH 67.2, 16.5 mi).
+# TRADEOFF: no redundancy if crew misses a stop. Silver Springs is crew-or-nothing.
+drop_bags:
+  only_station: "Kendall Lake"   # hit twice: mile 40.4 (~12:16) and mile 61.2 (~17:28)
+  # `contents` is what race_engine renders into a generated crew manual - keep it populated
+  # or the drop-bag section silently disappears from the output.
   contents:
-    - Spare socks x2
-    - Spare shorts + shirt
-    - Lube stick
-    - Blister / foot kit
-    - Gel resupply
+    - "ONE BAG ONLY, at Kendall Lake (mile 40.4 outbound / 61.2 return)"
+    - "Packed as two labelled ziplocs so the outbound pass cannot raid the return supplies"
+    - "OUT 40: 8x C30 gels, 3x PH 1500 tablets, salt caps"
+    - "BACK 61: 4x C30 gels, 2x PH 1000 tablets, Flash I.V. dose 3, Black Diamond backup headlamp, light long-sleeve, salt caps"
+  # Packed as two labelled ziplocs so the outbound pass cannot raid the return supplies.
+  out_40:
+    - 8x C30 gels
+    - 3x PH 1500 tablets
     - Salt capsules
-  night_bag_extras:              # added to drop bags reached after sunset
-    - Headlamp + spare batteries
-    - Warm dry layer
+  back_61:
+    - 4x C30 gels
+    - 2x PH 1000 tablets
+    - Flash I.V. stick (dose 3)
+    - Black Diamond backup headlamp   # take it regardless of pace - only backup for 11 h of dark
+    - Light long-sleeve
+    - Salt capsules
 
 night_kit:
   hand_off_before: "20:50"       # = sunset; hand at the last crew stop before this
-  contents: [headlamp, spare batteries, backup light, reflective vest, dry warm shirt]
+  hand_off_at: "Pine Hollow 67.2"
+  contents:
+    - "headlamp (recharged by crew)"
+    - "spare cells"
+    - "backup light"
+    - "reflective vest"
+    - "dry long-sleeve"
+    - "hydration vest"
+    - "trekking poles (optional)"
   pacer_pickup: "Silver Springs (mile 50.7)"
+  # 2026-07-23 CORRECTION: do NOT use the one-way headlamp drop buckets at North Hawkins /
+  # Chestnut / Botzum. They assume a daylight finish; at the 26h governor he is dark from
+  # mile 67 to the line (passes those three 01:00-03:19, sunrise 06:15, finish 06:00).
+  # Lamp goes to CREW at Botzum 14.0 and comes back at Pine Hollow 67.2.
+  headlamp_drop_buckets_usable: false
+
+pacers:                          # legal from Silver Springs 50.7; both handoffs crew-accessible
+  no_muling: true                # pacers cannot carry his fuel, fluid, or ice
+  assignments:
+    - id: A
+      from: "Silver Springs 50.7"
+      to: "Oak Hill 78.2"
+      miles: 27.5
+      carries: "Bike & Hike return, dark patch 61-71, light-up at Pine Hollow"
+    - id: B
+      from: "Oak Hill 78.2"
+      to: "Finish 101.8"
+      miles: 23.6
+      carries: "deep night, ~mile 90 hallucination window, the divergence segments"
 
 # The repeatable checklist rendered at EVERY crew stop — this is "what I do at every stop."
 per_stop_workflow:
   before_arrival:
-    - "Stage 2 cold bottles (1 carb + 1 water) from the cooler"
-    - "Fresh ice bandana + a ziploc of ice to carry out"
-    - "Count gels for the next leg (+1 spare); salt caps; Flash IV"
+    - "Stage 2 FROZEN or slushy bottles from the cooler (1 PH tablet + 1 plain water)"
+    - "Fresh ice for the bandana, cap, and hoodie hood"
+    - "Count gels for the next leg (+1 spare); PH tablets at the right strength; salt caps"
     - "Dry / night kit ready if the next leg runs past sunset"
   on_arrival:
-    - "Swap (don't refill) both bottles — cold"
-    - "Refresh the ice bandana; ice in hat / sleeves"
-    - "Hand fuel; restock the pack"
+    - "Swap (don't refill) both bottles — as cold as possible"
+    - "Refresh the ice bandana; ice in cap / hood"
+    - "Hand fuel; restock the waist belt (no vest before mile 67.2)"
     - "Reapply lube to hotspots"
     - "Run the 4 checks: stomach, feet/chafing, mood, urine color"
   out_the_door:

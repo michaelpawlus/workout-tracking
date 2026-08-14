@@ -207,6 +207,7 @@ def init_db():
                 long_run_pace REAL NOT NULL,
                 tempo_pace REAL NOT NULL,
                 threshold_pace REAL,
+                marathon_pace REAL,     -- goal race pace; NULL for ultra plans
                 maf_hr INTEGER NOT NULL DEFAULT 137,
                 zone2_ceiling INTEGER NOT NULL DEFAULT 137,
                 zone3_ceiling INTEGER NOT NULL DEFAULT 155,
@@ -409,6 +410,13 @@ def init_db():
                          AND plan_id IN (SELECT id FROM training_plans WHERE name = 'Burning River 100')""",
                     (prescription, week_number),
                 )
+
+        # Add goal marathon-pace column to athlete_targets (migration, Columbus block).
+        # Nullable on purpose: ultra plans have no meaningful marathon pace, so NULL
+        # means "not applicable" rather than "not yet measured".
+        at_cols = {row[1] for row in conn.execute("PRAGMA table_info(athlete_targets)").fetchall()}
+        if "marathon_pace" not in at_cols:
+            conn.execute("ALTER TABLE athlete_targets ADD COLUMN marathon_pace REAL")
 
         # Seed athlete_targets for existing plans that lack them
         plans_without_targets = conn.execute(
