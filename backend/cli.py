@@ -1267,11 +1267,18 @@ def cmd_icu_push(args):
         return
 
     if not getattr(args, "no_replace", False):
-        push_dates = sorted({w["scheduled_date"] for w in workout_list
-                             if w.get("workout_type") not in ("rest", "cross_train")})
-        if push_dates:
-            existing = list_events(push_dates[0], push_dates[-1])
-            to_drop = [e for e in existing if e.get("start_date_local", "")[:10] in set(push_dates)]
+        # Sweep EVERY date in the selection, rest and cross-train days included.
+        # create_events_bulk skips those, so they push nothing — but a day that
+        # *becomes* a rest day still carries the event from when it was a run.
+        # Excluding them here orphaned that event: it survived every subsequent
+        # push and kept syncing to the watch, so reshaping a plan (5 days/week
+        # down to 3) left the old sessions sitting alongside the new ones.
+        # The plan in the DB is the source of truth for these dates, so anything
+        # already on the calendar for them is replaced or cleared.
+        sweep_dates = sorted({w["scheduled_date"] for w in workout_list})
+        if sweep_dates:
+            existing = list_events(sweep_dates[0], sweep_dates[-1])
+            to_drop = [e for e in existing if e.get("start_date_local", "")[:10] in set(sweep_dates)]
             for e in to_drop:
                 try:
                     delete_event(e["id"])
