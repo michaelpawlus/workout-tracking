@@ -15,8 +15,8 @@
 |------|--------|
 | Easy | 12:00/mi |
 | Long Run | 12:30/mi |
-| Marathon Pace | 10:18/mi |
-| Tempo | 9:15/mi |
+| Marathon Pace | 10:11/mi |
+| Tempo | 9:43/mi |
 | MAF HR | 137 bpm |
 
 *Targets update automatically from benchmark results (MAF tests, 5K TTs).*
@@ -158,137 +158,113 @@ Target: 32-36 miles
 
 ## Week 5 (BUILD) — 2026-09-07 to 2026-09-13
 
-**Focus:** Marathon pace enters the long run
+**Focus:** MAF #6, then the first MP miles. 3 days/week reset
 
 **Mental:** Marathon pace is a feeling, not a number. On the MP miles, look away from the watch for a minute and learn the effort from the inside.
-Target: 36-40 miles
+Target: 24 miles
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-09-07 | Rest / Cross-Train | — | — | easy |
-| 2026-09-08 | MAF Test #6 | — | — | easy |
-| 2026-09-09 | Tempo: 4mi Continuous | 7.0mi | 9:15/mi | threshold |
-| 2026-09-10 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
-| 2026-09-11 | Rest Day | — | — | easy |
-| 2026-09-12 | 3mi Shakeout | 3.0mi | 12:00/mi | easy |
-| 2026-09-13 | 15mi Long Run w/ 4 @ MP | 15.0mi | 10:18/mi | moderate |
+| 2026-09-08 | Rest Day | — | — | easy |
+| 2026-09-09 | MAF Test #6 | — | — | easy |
+| 2026-09-10 | Rest Day | — | — | easy |
+| 2026-09-11 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
+| 2026-09-12 | Rest Day | — | — | easy |
+| 2026-09-13 | 14mi Long Run w/ 4 @ MP | 14.0mi | 10:11/mi | moderate |
 
-**2026-09-08 — MAF Test #6**
+**2026-09-09 — MAF Test #6**
 > 30 min at HR ~137 bpm (band 135-139) on flat ground after a 10 min easy warmup. RUN IT AS TWO LAPS — hit lap at 10:00 and again at 40:00 — so the 30-min window is readable without reconstructing it from streams (Test #5 had to be rebuilt from 1Hz data). Same route and same time of day as Test #5, and RECORD TEMPERATURE + HUMIDITY (the 82F omission invalidated Test #4). Trend on the 30-min window: #1 2.58mi/11:38 @139.3 | #2 2.63mi/11:23 @138.0 | #4 2.66mi/11:17 @146.7 (invalid, HR +8 over band) | #5 2.54mi/11:49 @139.2. This reads whether post-BR100 durability has returned: watch the decay across the three 10-min thirds (Test #5 lost 125 s/mi at flat HR). Do not chase pace; hold the HR.
 
-**2026-09-09 — Tempo: 4mi Continuous**
-> 2mi warmup, 4mi continuous at tempo, 1mi cooldown.
+**2026-09-11 — 5mi Easy Run**
+> Easy, aerobic, unhurried. Hard cap: HR 140. If that means 12:30 or 13:00/mi, that is the workout being done correctly. Walk the hills to hold it.
 
-**2026-09-10 — 5mi Easy Run**
-> Easy pace. Recovery focus — slower than Tuesday if anything.
-
-**2026-09-12 — 3mi Shakeout**
-> Very short, very easy. Loosening the legs before tomorrow's long run.
-
-**2026-09-13 — 15mi Long Run w/ 4 @ MP**
-> 15mi long run with 4mi at goal marathon pace in the back half. Warm up easy, settle into MP once you're loose, finish easy. The MP miles are the point of the session — run them on tired legs, exactly as they'll come at Columbus. Practice race-day fueling throughout.
+**2026-09-13 — 14mi Long Run w/ 4 @ MP**
+> 14mi long run with 4mi at goal marathon pace in the back half. Warm up easy, settle into MP once you're loose, finish easy. The MP miles are the point of the session — run them on tired legs, exactly as they'll come at Columbus. Practice race-day fueling throughout. First MP miles of the block and a 3mi jump over the Sep 5 long run — trimmed from 15 because you're building off 11, not 18.
 
 ---
 
 ## Week 6 (PEAK) — 2026-09-14 to 2026-09-20
 
-**Focus:** Air Force Half Sat — tune-up race, 4 weeks out
+**Focus:** Air Force Half Sat — the decision gate, 4 weeks out
 
 **Mental:** Race-day rehearsal, and the one honest chance to practice pushing. Run the half with your full marathon routine — then in the last 5K, deliberately stay in it when it starts to hurt. That is the exact thing BR100 said you back away from.
-Target: 29-33 miles
+Target: 22 miles
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
-| 2026-09-14 | Rest / Cross-Train | — | — | easy |
-| 2026-09-15 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
-| 2026-09-16 | 4mi Easy + 4 Strides | 4.0mi | 12:00/mi | easy |
-| 2026-09-17 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
+| 2026-09-14 | Rest Day | — | — | easy |
+| 2026-09-15 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
+| 2026-09-16 | Rest Day | — | — | easy |
+| 2026-09-17 | 4mi Easy + 4 Strides | 4.0mi | 12:00/mi | easy |
 | 2026-09-18 | Rest Day | — | — | easy |
 | 2026-09-19 | Air Force Half Marathon | 13.1mi | — | hard |
-| 2026-09-20 | 4mi Recovery Jog | 4.0mi | 12:00/mi | easy |
+| 2026-09-20 | Rest Day | — | — | easy |
 
-**2026-09-15 — 6mi Easy Run**
-> Easy pace. Conversational — you should be able to speak in full sentences.
+**2026-09-15 — 5mi Easy Run**
+> Easy. Race week for the tune-up half — nothing here should cost you Saturday. Hard cap: HR 140. If that means 12:30 or 13:00/mi, that is the workout being done correctly. Walk the hills to hold it.
 
-**2026-09-16 — 4mi Easy + 4 Strides**
-> Race week for the tune-up half. 4mi easy with 4x100m strides — enough to stay sharp, nothing that costs anything on Saturday. The cruise intervals that normally live here come out; the race is the workout.
-
-**2026-09-17 — 5mi Easy Run**
-> Easy pace. Recovery focus — slower than Tuesday if anything.
+**2026-09-17 — 4mi Easy + 4 Strides**
+> 4mi easy with 4x100m strides. Enough to stay sharp, nothing that costs anything on Saturday.
 
 **2026-09-19 — Air Force Half Marathon**
 > TUNE-UP RACE — Wright-Patterson AFB, Dayton, 7:15 a.m. start. Race it honestly; do not run it at marathon pace. You already have the 5K for targeting — what this buys is an updated prediction and, more importantly, practice at sustaining discomfort with nowhere to hide. Full race-day rehearsal: same breakfast, same kit, same first-mile restraint. Conversion: 2:09:30 projects to a 4:30 marathon, 2:15 to 4:41, 2:20 to 4:52. Result re-sets every target.
-
-**2026-09-20 — 4mi Recovery Jog**
-> 4mi very easy, the morning after the tune-up half. Loosen the legs and nothing more — no pace, no strides. Skip it entirely if anything hurts.
 
 ---
 
 ## Week 7 (PEAK) — 2026-09-21 to 2026-09-27
 
-**Focus:** Absorb the race, then the longest steady long run
+**Focus:** Absorb the race, then the longest run yet (17)
 
 **Mental:** Patience under a big base. Your engine will make MP feel easy at mile 3 of the long run. Refusing to bank time is the discipline — 'easy now is the plan working.'
-Target: 33-37 miles
+Target: 28 miles
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
-| 2026-09-21 | Rest / Cross-Train | — | — | easy |
-| 2026-09-22 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
-| 2026-09-23 | 4mi Easy | 4.0mi | 12:00/mi | easy |
-| 2026-09-24 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
-| 2026-09-25 | Rest Day | — | — | easy |
-| 2026-09-26 | 3mi Shakeout | 3.0mi | 12:00/mi | easy |
-| 2026-09-27 | 18mi Long Run w/ 5 @ MP | 18.0mi | 10:18/mi | moderate |
+| 2026-09-21 | Rest Day | — | — | easy |
+| 2026-09-22 | Rest Day | — | — | easy |
+| 2026-09-23 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
+| 2026-09-24 | Rest Day | — | — | easy |
+| 2026-09-25 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
+| 2026-09-26 | Rest Day | — | — | easy |
+| 2026-09-27 | 17mi Long Run w/ 5 @ MP | 17.0mi | 10:11/mi | moderate |
 
-**2026-09-22 — 6mi Easy Run**
-> Easy pace. Conversational — you should be able to speak in full sentences.
+**2026-09-23 — 6mi Easy Run**
+> Easy. The half is absorbed by now; this is aerobic maintenance, not a workout. Hard cap: HR 140. If that means 12:30 or 13:00/mi, that is the workout being done correctly. Walk the hills to hold it.
 
-**2026-09-23 — 4mi Easy**
-> Four days after a raced half — all easy, no quality. Sunday's 18 with 5 at marathon pace is the week's only hard effort, and it wants fresh legs more than this session wants to exist.
+**2026-09-25 — 5mi Easy Run**
+> Easy. Hard cap: HR 140. If that means 12:30 or 13:00/mi, that is the workout being done correctly. Walk the hills to hold it.
 
-**2026-09-24 — 5mi Easy Run**
-> Easy pace. Recovery focus — slower than Tuesday if anything.
-
-**2026-09-26 — 3mi Shakeout**
-> Very short, very easy. Loosening the legs before tomorrow's long run.
-
-**2026-09-27 — 18mi Long Run w/ 5 @ MP**
-> 18mi long run with 5mi at goal marathon pace in the back half. Warm up easy, settle into MP once you're loose, finish easy. The MP miles are the point of the session — run them on tired legs, exactly as they'll come at Columbus. Practice race-day fueling throughout.
+**2026-09-27 — 17mi Long Run w/ 5 @ MP**
+> 17mi long run with 5mi at goal marathon pace in the back half. Warm up easy, settle into MP once you're loose, finish easy. The MP miles are the point of the session — run them on tired legs, exactly as they'll come at Columbus. Practice race-day fueling throughout. Longest run of the block so far. Fuel it like the race: something every 30-40 min from the start, not once you feel empty.
 
 ---
 
 ## Week 8 (PEAK) — 2026-09-28 to 2026-10-04
 
-**Focus:** Key session: 20mi with 8 @ MP
+**Focus:** Key session: 18mi with 8 @ MP
 
 **Mental:** The 20-mile conversation. In the last MP miles, practice the exact self-talk you'll need at Columbus mile 22. Write down what worked.
-Target: 38-42 miles
+Target: 29 miles
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
-| 2026-09-28 | Rest / Cross-Train | — | — | easy |
-| 2026-09-29 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
-| 2026-09-30 | Tempo: 5mi | 8.0mi | 9:15/mi | threshold |
-| 2026-10-01 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
-| 2026-10-02 | Rest Day | — | — | easy |
-| 2026-10-03 | 3mi Shakeout | 3.0mi | 12:00/mi | easy |
-| 2026-10-04 | 20mi Long Run w/ 8 @ MP | 20.0mi | 10:18/mi | moderate |
+| 2026-09-28 | Rest Day | — | — | easy |
+| 2026-09-29 | Rest Day | — | — | easy |
+| 2026-09-30 | 6mi Easy Run | 6.0mi | 12:00/mi | easy |
+| 2026-10-01 | Rest Day | — | — | easy |
+| 2026-10-02 | 5mi Easy Run | 5.0mi | 12:00/mi | easy |
+| 2026-10-03 | Rest Day | — | — | easy |
+| 2026-10-04 | 18mi Long Run w/ 8 @ MP | 18.0mi | 10:11/mi | moderate |
 
-**2026-09-29 — 6mi Easy Run**
-> Easy pace. Conversational — you should be able to speak in full sentences.
+**2026-09-30 — 6mi Easy Run**
+> Easy. Keep it genuinely easy — Sunday is the session the whole block points at. Hard cap: HR 140. If that means 12:30 or 13:00/mi, that is the workout being done correctly. Walk the hills to hold it.
 
-**2026-09-30 — Tempo: 5mi**
-> 2mi warmup, 5mi at tempo, 1mi cooldown. Last big midweek effort — Sunday's 20 with 8 @ MP is the priority, so hold something back.
+**2026-10-02 — 5mi Easy Run**
+> Easy, short, unremarkable. Legs fresh for Sunday. Hard cap: HR 140. If that means 12:30 or 13:00/mi, that is the workout being done correctly. Walk the hills to hold it.
 
-**2026-10-01 — 5mi Easy Run**
-> Easy pace. Recovery focus — slower than Tuesday if anything.
-
-**2026-10-03 — 3mi Shakeout**
-> Very short, very easy. Loosening the legs before tomorrow's long run.
-
-**2026-10-04 — 20mi Long Run w/ 8 @ MP**
-> 20mi long run with 8mi at goal marathon pace in the back half. Warm up easy, settle into MP once you're loose, finish easy. The MP miles are the point of the session — run them on tired legs, exactly as they'll come at Columbus. Practice race-day fueling throughout.
+**2026-10-04 — 18mi Long Run w/ 8 @ MP**
+> 18mi long run with 8mi at goal marathon pace in the back half. Warm up easy, settle into MP once you're loose, finish easy. The MP miles are the point of the session — run them on tired legs, exactly as they'll come at Columbus. Practice race-day fueling throughout. THE key session of the block — 8 continuous miles at goal pace on tired legs, roughly 3:15 on feet. Trimmed from 20 because the extra two miles add fatigue and risk without adding specificity; the last 8 at MP is what transfers. If you hit these 8 on pace, sub-4:30 is real.
 
 ---
 
@@ -297,29 +273,26 @@ Target: 38-42 miles
 **Focus:** Taper. Sharpen, don't build
 
 **Mental:** Trust the taper. Reduced volume will feel like losing fitness. It isn't. Decide now what you'll say when that doubt shows up.
-Target: 24-28 miles
+Target: 22 miles
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-10-05 | Rest Day | — | — | easy |
-| 2026-10-06 | 4mi Easy Run | 4.0mi | 12:00/mi | easy |
-| 2026-10-07 | MP Sharpener: 3mi | 6.0mi | 10:18/mi | moderate |
-| 2026-10-08 | 3mi Easy Run | 3.0mi | 12:00/mi | easy |
-| 2026-10-09 | Rest Day | — | — | easy |
+| 2026-10-06 | Rest Day | — | — | easy |
+| 2026-10-07 | MP Sharpener: 3mi | 6.0mi | 10:11/mi | moderate |
+| 2026-10-08 | Rest Day | — | — | easy |
+| 2026-10-09 | 4mi Easy Run | 4.0mi | 12:00/mi | easy |
 | 2026-10-10 | Rest Day | — | — | easy |
-| 2026-10-11 | 12mi Long Run w/ 4 @ MP | 12.0mi | 10:18/mi | moderate |
-
-**2026-10-06 — 4mi Easy Run**
-> Easy pace. Conversational — you should be able to speak in full sentences.
+| 2026-10-11 | 12mi Long Run w/ 4 @ MP | 12.0mi | 10:11/mi | moderate |
 
 **2026-10-07 — MP Sharpener: 3mi**
 > 2mi warmup, 3mi at goal marathon pace, 1mi cooldown. Taper work: enough to stay sharp, not enough to cost anything.
 
-**2026-10-08 — 3mi Easy Run**
-> Easy pace. Recovery focus — slower than Tuesday if anything.
+**2026-10-09 — 4mi Easy Run**
+> Easy and short. Taper: the fitness is banked, the only job left is arriving fresh.
 
 **2026-10-11 — 12mi Long Run w/ 4 @ MP**
-> 12mi long run with 4mi at goal marathon pace in the back half. Warm up easy, settle into MP once you're loose, finish easy. The MP miles are the point of the session — run them on tired legs, exactly as they'll come at Columbus. Practice race-day fueling throughout.
+> 12mi long run with 4mi at goal marathon pace in the back half. Warm up easy, settle into MP once you're loose, finish easy. The MP miles are the point of the session — run them on tired legs, exactly as they'll come at Columbus. Practice race-day fueling throughout. Last long run. The MP miles should feel controlled and almost boring — that is the feeling you want to recognise at mile 20 of Columbus.
 
 ---
 
@@ -328,26 +301,23 @@ Target: 24-28 miles
 **Focus:** Race week. Oct 18: Columbus Marathon
 
 **Mental:** Deploy, don't rehearse. The first 10K should feel too easy — that's the plan working. One mile at a time; the race starts at 20.
-Target: 12-40 miles
+Target: 32 miles
 
 | Date | Workout | Distance | Pace | Intensity |
 |------|---------|----------|------|-----------|
 | 2026-10-12 | Rest Day | — | — | easy |
 | 2026-10-13 | 3mi Easy Run | 3.0mi | 12:00/mi | easy |
-| 2026-10-14 | 3mi Easy + 4 Strides | 3.0mi | 12:00/mi | easy |
-| 2026-10-15 | 3mi Easy Run | 3.0mi | 12:00/mi | easy |
+| 2026-10-14 | Rest Day | — | — | easy |
+| 2026-10-15 | 3mi Easy + 4 Strides | 3.0mi | 12:00/mi | easy |
 | 2026-10-16 | Rest Day | — | — | easy |
-| 2026-10-17 | Rest — Race Eve | — | — | easy |
+| 2026-10-17 | Rest Day | — | — | easy |
 | 2026-10-18 | Columbus Marathon | 26.2mi | — | hard |
 
 **2026-10-13 — 3mi Easy Run**
-> Easy pace. Conversational — you should be able to speak in full sentences.
+> Easy shakeout. Resist doing more; there is nothing left to gain and something to lose.
 
-**2026-10-14 — 3mi Easy + 4 Strides**
-> Race week. 3mi very easy with 4x100m strides. Run in race-day shoes and kit — final gear check.
-
-**2026-10-15 — 3mi Easy Run**
-> Easy pace. Recovery focus — slower than Tuesday if anything.
+**2026-10-15 — 3mi Easy + 4 Strides**
+> 3mi easy with 4x100m strides at goal pace effort. Wakes the legs up without touching them.
 
 **2026-10-18 — Columbus Marathon**
 > RACE DAY — Columbus Marathon. Goal pace throughout. The first 10K should feel too easy; that is the plan working, not a reason to speed up. Fuel every 30-40 min from the start. The race starts at mile 20.
